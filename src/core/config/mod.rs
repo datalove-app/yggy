@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 ///
+/// TODO? generic over key pairs?
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
     /// List of connection strings for outbound peer connections in URI

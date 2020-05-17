@@ -1,8 +1,12 @@
 [package]
 name = "yggy"
 version = "0.0.0"
-authors = ["sunny-g <sunny.gonna@gmail.com>"]
 edition = "2018"
+authors = ["sunny-g <sunny.gonna@gmail.com>"]
+readme = "README.md"
+repository = "https://github.com/datalove-app/yggy"
+keywords = ["cryptography", "networking", "p2p"]
+categories = ["cryptography"]
 
 [lib]
 name = "yggy"
@@ -20,9 +24,19 @@ path = "src/lib.rs"
 anyhow = "1.0"
 boringtun = "0.3"
 derive_more = "0.99"
-libp2p = "0.18"
+ed25519-dalek = { version = "0.9", features = ["serde"] }
+rand = "0.6"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
 
 [features]
-default = []
+default = ["std", "u64_backend"]
+# re-exports of ed25519-dalek features
+std = ["ed25519-dalek/std"]
+alloc = ["ed25519-dalek/alloc"]
+nightly = ["ed25519-dalek/nightly"]
+asm = ["ed25519-dalek/asm"]
+yolocrypto = ["ed25519-dalek/yolocrypto"]
+u64_backend = ["ed25519-dalek/u64_backend"]
+u32_backend = ["ed25519-dalek/u32_backend"]
+avx2_backend = ["ed25519-dalek/avx2_backend"]

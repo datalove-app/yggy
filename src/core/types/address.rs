@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::core::error::Error;
 use derive_more::From;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, net::Ipv6Addr, str::FromStr};

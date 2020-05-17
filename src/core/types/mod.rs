@@ -4,7 +4,7 @@ mod ids;
 pub use address::{Address, Subnet};
 pub use ids::{NodeId, TreeId};
 
-use crate::error::{ConfigError, Error};
+use crate::core::error::{ConfigError, Error};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -16,7 +16,7 @@ use std::{
 pub type Peers = Vec<PeerURI>;
 
 ///
-pub type InterfacePeers = HashMap<String, PeerURI>;
+pub type InterfacePeers = HashMap<String, Peers>;
 
 ///
 pub type ListenAddresses = Vec<PeerURI>;
@@ -69,10 +69,22 @@ pub enum InterfaceName {
     Custom(String),
 }
 
+impl Default for InterfaceName {
+    fn default() -> Self {
+        unimplemented!()
+    }
+}
+
 ///
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(try_from = "u16")]
 pub struct MTU(u16);
+
+impl Default for MTU {
+    fn default() -> Self {
+        unimplemented!()
+    }
+}
 
 impl TryFrom<u16> for MTU {
     type Error = Error;
