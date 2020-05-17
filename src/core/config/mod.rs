@@ -2,15 +2,17 @@ use crate::core::types::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-///
+/// Contains configuration options necessary for an Yggdrasil node
+/// to run. You will need to supply one of these structs to the
+/// Yggdrasil core when starting a node.
 /// TODO? generic over key pairs?
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-    /// List of connection strings for outbound peer connections in URI
-    /// format, e.g. `tcp://a.b.c.d:e` or `socks://a.b.c.d:e/f.g.h.i:j`.
-    /// These connections will obey the operating system routing table,
-    /// therefore you should use this section when you may connect via
-    /// different interfaces.
+    /// List of connection strings for outbound peer connections in
+    /// URI format, e.g. `tcp://a.b.c.d:e` or `socks://a.b.c.d:e/f.g.h.i:j`.
+    /// These connections will obey the operating system routing
+    /// table, therefore you should use this section when you may
+    /// connect via different interfaces.
     #[serde(rename = "Peers")]
     peers: Peers,
 
@@ -30,11 +32,11 @@ pub struct Config {
     #[serde(rename = "Listen", default)]
     listen: ListenAddresses,
 
-    /// Listen address for admin connections. Default is to listen for
-    /// local connections either on TCP/9001 or a UNIX socket
+    /// Listen address for admin connections. Default is to listen
+    /// for local connections either on TCP/9001 or a UNIX socket
     /// depending on your platform. Use this value for `yggyctl -endpoint=X`.
     /// To disable the admin socket, use the value "none" instead.
-    #[serde(rename = "AdminListen")]
+    #[serde(rename = "AdminListen", default)]
     admin_listen: Option<PeerURI>,
     // /// Regular expressions for which interfaces multicast peer discovery\nshould be enabled on. If none specified, multicast peer discovery is\ndisabled. The default value is .* which uses all interfaces."`
     // MulticastInterfaces         []string
@@ -54,13 +56,13 @@ pub struct Config {
     /// plan to firewall link-local traffic, it is best to leave this
     /// as the default value of 0. This option cannot currently be
     /// changed by reloading config during runtime.
-    #[serde(rename = "LinkLocalTCPPort")]
+    #[serde(rename = "LinkLocalTCPPort", default)]
     link_local_tcp_port: u16,
 
     /// Local network interface name for TUN adapter, or "auto" to
     /// select an interface automatically, or "none" to run without
     /// TUN.
-    #[serde(rename = "IfName")]
+    #[serde(rename = "IfName", default)]
     interface_name: InterfaceName,
 
     /// Maximum Transmission Unit (MTU) size for your local TUN
@@ -68,12 +70,29 @@ pub struct Config {
     /// platform. The lowest possible value is 1280.
     #[serde(rename = "IfMTU")]
     interface_mtu: MTU,
-    // /// The session firewall controls who can send/receive network traffic\nto/from. This is useful if you want to protect this node without\nresorting to using a real firewall. This does not affect traffic\nbeing routed via this node to somewhere else. Rules are prioritised as\nfollows: blacklist, whitelist, always allow outgoing, direct, remote."`
-    // SessionFirewall             SessionFirewall
-    // /// Allow tunneling non-Yggdrasil traffic over Yggdrasil. This effectively\nallows you to use Yggdrasil to route to, or to bridge other networks,\nsimilar to a VPN tunnel. Tunnelling works between any two nodes and\ndoes not require them to be directly peered."`
-    // TunnelRouting               TunnelRouting
-    // /// Advanced options for tuning the switch. Normally you will not need\nto edit these options."`
-    // SwitchOptions               SwitchOptions
+
+    /// Controls who can send/receive network traffic to/from this
+    /// node. This is useful if you want to protect this node
+    /// without resorting to using a real firewall. This does not
+    /// affect traffic being routed via this node to somewhere else.
+    ///
+    /// Rules are prioritised as follows: blacklist, whitelist,
+    /// always allow outgoing, direct, remote."`
+    #[serde(rename = "SessionFirewall")]
+    firewall: SessionFirewall,
+
+    /// Allow tunneling non-Yggdrasil traffic over Yggdrasil. This
+    /// effectively allows you to use Yggdrasil to route or bridge
+    /// to other networks, similar to a VPN tunnel. Tunnelling works
+    /// between any two nodes and does not require them to be
+    /// directly peered.
+    #[serde(rename = "TunnelRouting")]
+    tunnel_routing: TunnelRouting,
+
+    /// Advanced options for tuning the switch. Normally you will not need\nto edit these options."`
+    #[serde(rename = "SwitchOptions")]
+    switch_opts: SwitchOptions,
+
     /// By default, nodeinfo contains some defaults including the
     /// platform, architecture and Yggdrasil version. These can help
     /// when surveying the network and diagnosing network routing
@@ -86,6 +105,7 @@ pub struct Config {
     // NodeInfo                    map[string]interface{}
 }
 
+/// Controls the session firewall configuration.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SessionFirewall {
     /// Enable or disable the session firewall. If disabled, network
@@ -124,10 +144,41 @@ pub struct SessionFirewall {
     blacklisted_encryption_pub_keys: Vec<String>,
 }
 
-///
+/// Contains the crypto-key routing tables for tunneling regular
+/// IPv4 or IPv6 subnets across the Yggdrasil network.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct TunnelRouting;
+pub struct TunnelRouting {
+    /// Enable or disable tunnel routing.
+    #[serde(rename = "Enable")]
+    enable: bool,
 
-///
+    /// IPv6 subnets belonging to remote nodes, mapped to the node's
+    /// public key, e.g. `{ "aaaa:bbbb:cccc::/e": "boxpubkey", ... }`.
+    #[serde(rename = "Ipv4RemoteSubnets")]
+    ipv4_remote_subnets: Ipv4Subnets,
+
+    /// IPv6 subnets belonging to this node's end of the tunnels.
+    /// Only traffic from these ranges (or the Yggdrasil node's IPv6
+    /// address/subnet) will be tunnelled.
+    #[serde(rename = "Ipv4LocalSubnets")]
+    ipv4_local_subnets: Ipv4Subnets,
+
+    /// IPv4 subnets belonging to remote nodes, mapped to the node's
+    /// public key, e.g. `{ "a.b.c.d/e": "boxpubkey", ... }`.
+    #[serde(rename = "Ipv6RemoteSubnets")]
+    ipv6_remote_subnets: Ipv6Subnets,
+
+    /// IPv4 subnets belonging to this node's end of the tunnels.
+    /// Only traffic from these ranges will be tunnelled.
+    #[serde(rename = "Ipv6LocalSubnets")]
+    ipv6_local_subnets: Ipv6Subnets,
+}
+
+/// Contains tuning options for the switch. These are advanced
+/// options and shouldn't be changed unless necessary.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SwitchOptions;
+pub struct SwitchOptions {
+    /// Maximum size of all switch queues combined (in bytes).
+    #[serde(rename = "MaxTotalQueueSize")]
+    max_total_queue_size: u64,
+}

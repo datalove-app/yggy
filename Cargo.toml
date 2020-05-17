@@ -27,12 +27,13 @@ derive_more = "0.99"
 ed25519-dalek = { version = "0.9", features = ["serde"] }
 rand = "0.6"
 serde = { version = "1.0", features = ["derive"] }
+sodiumoxide = { version = "0.2", default-features = false, features = ["serde"] }
 thiserror = "1.0"
 
 [features]
 default = ["std", "u64_backend"]
 # re-exports of ed25519-dalek features
-std = ["ed25519-dalek/std"]
+std = ["ed25519-dalek/std", "sodiumoxide/std"]
 alloc = ["ed25519-dalek/alloc"]
 nightly = ["ed25519-dalek/nightly"]
 asm = ["ed25519-dalek/asm"]

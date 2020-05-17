@@ -10,6 +10,7 @@ use std::{
     collections::HashMap,
     convert::TryFrom,
     net::{IpAddr, Ipv4Addr, SocketAddr},
+    str::FromStr,
 };
 
 ///
@@ -22,27 +23,34 @@ pub type InterfacePeers = HashMap<String, Peers>;
 pub type ListenAddresses = Vec<PeerURI>;
 
 ///
+pub type Ipv4Subnets = HashMap<(), ()>;
+
+///
+pub type Ipv6Subnets = HashMap<(), ()>;
+
+///
 #[derive(Debug, Deserialize, Serialize)]
 pub enum PeerURI {
     TCP(SocketAddr),
     SOCKS(SocketAddr),
 }
 
-impl PeerURI {
-    // fn from
-}
+impl PeerURI {}
 
+// TODO handle platform-specific opts
+// #[cfg(any(target_os = "macos", target_os = "ios"))] and
+// #[cfg(target_os = "linux")]
 impl Default for PeerURI {
     fn default() -> Self {
-        // TODO: #[cfg()]
         Self::TCP(SocketAddr::new(Ipv4Addr::new(127, 0, 0, 1).into(), 9001))
     }
 }
 
-impl TryFrom<&str> for PeerURI {
-    type Error = Error;
+impl FromStr for PeerURI {
+    type Err = Error;
 
-    fn try_from(raw: &str) -> Result<Self, Self::Error> {
+    #[inline]
+    fn from_str(raw: &str) -> Result<Self, Self::Err> {
         let prefix = match raw {
             _ if raw.starts_with("tcp://") => "tcp://",
             _ if raw.starts_with("socks://") => "socks://",
@@ -54,6 +62,15 @@ impl TryFrom<&str> for PeerURI {
             .parse()
             .map_err(|_| ConfigError::InvalidPeerURI(raw.into()))?;
         Ok(Self::TCP(addr))
+    }
+}
+
+impl TryFrom<&str> for PeerURI {
+    type Error = Error;
+
+    #[inline]
+    fn try_from(raw: &str) -> Result<Self, Self::Error> {
+        raw.parse()
     }
 }
 
@@ -71,7 +88,7 @@ pub enum InterfaceName {
 
 impl Default for InterfaceName {
     fn default() -> Self {
-        unimplemented!()
+        Self::Auto
     }
 }
 
@@ -80,12 +97,18 @@ impl Default for InterfaceName {
 #[serde(try_from = "u16")]
 pub struct MTU(u16);
 
+// TODO handle platform-specific
+// #[cfg(any(target_os = "macos", target_os = "ios"))] and
+// #[cfg(target_os = "linux")]
 impl Default for MTU {
     fn default() -> Self {
         unimplemented!()
     }
 }
 
+// TODO handle platform-specific maximum
+// #[cfg(any(target_os = "macos", target_os = "ios"))] and
+// #[cfg(target_os = "linux")]
 impl TryFrom<u16> for MTU {
     type Error = Error;
 

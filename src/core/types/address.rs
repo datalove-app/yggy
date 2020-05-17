@@ -1,10 +1,10 @@
-use crate::core::error::Error;
+use crate::core::{crypto::SigningPublicKey, error::Error};
 use derive_more::From;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, net::Ipv6Addr, str::FromStr};
 
 ///
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(try_from = "Ipv6Addr")]
 pub struct Address(Ipv6Addr);
 
@@ -26,14 +26,11 @@ impl TryFrom<Ipv6Addr> for Address {
     }
 }
 
-// impl FromStr for Address {
-//     type Err = Error;
-
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         // Self(Ipv6Addr::from_str(s))
-//         unimplemented!()
-//     }
-// }
+impl From<SigningPublicKey> for Address {
+    fn from(pub_key: ed25519_dalek::PublicKey) -> Self {
+        unimplemented!()
+    }
+}
 
 ///
 #[derive(Debug)]
