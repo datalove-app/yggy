@@ -12,16 +12,17 @@ categories = ["cryptography"]
 name = "yggy"
 path = "src/lib.rs"
 
-#[[bin]]
-#name = "yggy"
-#path = "src/bin.rs"
-#
-#[[bin]]
-#name = "yggyctl"
-#path = "src/ctl.rs"
+[[bin]]
+name = "yggy"
+path = "bin/yggy/main.rs"
+
+[[bin]]
+name = "yggyctl"
+path = "bin/yggyctl/main.rs"
 
 [dependencies]
 anyhow = "1.0"
+async-trait = "0.1"
 boringtun = "0.3"
 derive_more = "0.99"
 ed25519-dalek = { version = "0.9", features = ["serde"] }
@@ -29,6 +30,7 @@ rand = "0.6"
 serde = { version = "1.0", features = ["derive"] }
 sodiumoxide = { version = "0.2", default-features = false, features = ["serde"] }
 thiserror = "1.0"
+tokio = { version = "0.2", features = ["full"] }
 
 [features]
 default = ["std", "u64_backend"]

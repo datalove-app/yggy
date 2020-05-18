@@ -1,4 +1,4 @@
-use super::TunAdapter;
+use crate::core::tuntap::TunAdapter;
 
 const SIOAIFADDR_IN6: u32           = 2155899162;
 const IN6_IFF_NODAD: u8             = 0x0020;
@@ -6,7 +6,7 @@ const IN6_IFF_SECURED: u8           = 0x0400;
 const ND6_INFINITE_LIFETIME: u64    = 0xFFFFFFFF;
 
 #[derive(Debug)]
-pub struct In6AddrLifetime {
+struct In6AddrLifetime {
     expire: f64,
     preferred: f64,
     vltime: u32,
@@ -14,7 +14,7 @@ pub struct In6AddrLifetime {
 }
 
 #[derive(Debug)]
-pub struct SockAddrIn6 struct {
+struct SockAddrIn6 struct {
 	len: u8,
 	family: u8,
 	port: u8,
@@ -24,7 +24,7 @@ pub struct SockAddrIn6 struct {
 }
 
 #[derive(Debug)]
-pub struct In6AliasReq struct {
+struct In6AliasReq struct {
 	name: [u8; 16],
 	addr: SockAddrIn6,
 	dst_addr: SockAddrIn6,
@@ -34,7 +34,7 @@ pub struct In6AliasReq struct {
 }
 
 #[derive(Debug)]
-pub struct IFreq struct {
+struct IFreq struct {
 	name: [u8; 16],
 	mtu: u32,
 }
