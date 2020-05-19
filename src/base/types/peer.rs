@@ -1,7 +1,5 @@
-use crate::core::{
-    crypto::*,
-    error::{ConfigError, Error},
-};
+use super::{BoxPublicKey, SigningPublicKey};
+use crate::base::error::{ConfigError, Error};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -19,7 +17,8 @@ pub type InterfacePeers = HashMap<String, Peers>;
 
 #[derive(Debug)]
 pub struct Peer {
-    public_key: EncryptionPublicKey,
+    pub_sign_key: SigningPublicKey,
+    pub_box_key: BoxPublicKey,
     endpoint: PeerURI, // TODO protocol + endpoint + port
     bytes_sent: u64,
     bytes_recv: u64,
@@ -33,9 +32,7 @@ pub enum PeerURI {
     SOCKS(SocketAddr, SocketAddr),
 }
 
-impl PeerURI {
-
-}
+impl PeerURI {}
 
 // TODO handle platform-specific opts
 // #[cfg(any(target_os = "macos", target_os = "ios"))] and

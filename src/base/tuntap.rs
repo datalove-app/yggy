@@ -1,4 +1,5 @@
-use crate::core::{error::Error, types::*};
+use super::{error::Error, types::*};
+use actix::ActorStream;
 
 const TUN_IPV6_HEADER_LENGTH: u8 = 40;
 
@@ -19,3 +20,5 @@ pub trait TunAdapter {
 ///     handles and forwards (streams?) all recv'd packets to to a listener
 ///     handles
 pub trait TunConn {}
+// where
+//     Self: ActorStream {}
