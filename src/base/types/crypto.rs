@@ -26,7 +26,13 @@ pub struct SigningKeypair(ed25519_dalek::Keypair);
 #[derive(Clone, Copy, Debug)]
 pub struct TreeID(sha512::Digest);
 
-impl From<&SigningPublicKey> for NodeID {
+impl Default for TreeID {
+    fn default() -> Self {
+        Self(sha512::Digest::from_slice([0; 64].as_ref()).expect("this should never fail"))
+    }
+}
+
+impl From<&SigningPublicKey> for TreeID {
     #[inline]
     fn from(pub_key: &SigningPublicKey) -> Self {
         Self(sha512::hash(pub_key.as_bytes()))
@@ -38,13 +44,37 @@ impl From<&SigningPublicKey> for NodeID {
  */
 
 ///
-pub type BoxPublicKey = x25519::X25519PublicKey;
+#[derive(Debug, From)]
+#[from(forward)]
+pub struct BoxPublicKey(x25519::X25519PublicKey);
+
+impl BoxPublicKey {
+    fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
+impl Default for BoxPublicKey {
+    fn default() -> Self {
+        Self::from([0; 32].as_ref())
+    }
+}
 
 ///
-pub type BoxSecretKey = x25519::X25519SecretKey;
+#[derive(Debug, From)]
+#[from(forward)]
+pub struct BoxSecretKey(x25519::X25519SecretKey);
+
+impl BoxSecretKey {
+    fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
 
 ///
-pub type BoxSharedKey = x25519::X25519EphemeralKey;
+#[derive(Debug, From)]
+#[from(forward)]
+pub struct BoxSharedKey(x25519::X25519EphemeralKey);
 
 ///
 pub type BoxNonce = [u8; 24];
@@ -54,7 +84,7 @@ pub type BoxNonce = [u8; 24];
 #[derive(Debug)]
 pub struct BoxKeypair {
     public: BoxPublicKey,
-    private: BoxSecretKey,
+    secret: BoxSecretKey,
 }
 
 /// The identifier of an yggdrasil node in the DHT, used to derive IPv6
@@ -67,6 +97,12 @@ impl NodeID {
     /// returns the number of bits set in a masked `NodeID`.
     pub fn prefix_len(&self) -> u8 {
         unimplemented!()
+    }
+}
+
+impl Default for NodeID {
+    fn default() -> Self {
+        Self(sha512::Digest::from_slice([0; 64].as_ref()).expect("this should never fail"))
     }
 }
 

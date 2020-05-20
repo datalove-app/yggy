@@ -15,7 +15,7 @@ pub type Peers = Vec<PeerURI>;
 ///
 pub type InterfacePeers = HashMap<String, Peers>;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Peer {
     pub_sign_key: SigningPublicKey,
     pub_box_key: BoxPublicKey,

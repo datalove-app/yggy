@@ -4,6 +4,28 @@ use derive_more::From;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, io::Write, net::Ipv6Addr, str::FromStr};
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum NetworkID {
+    NodeID,
+    Curve25519,
+}
+
+impl Default for NetworkID {
+    fn default() -> Self {
+        Self::NodeID
+    }
+}
+
+impl PartialEq<str> for NetworkID {
+    fn eq(&self, other: &str) -> bool {
+        match other {
+            "nodeid" => Self::NodeID.eq(self),
+            "curve25519" => Self::Curve25519.eq(self),
+            _ => false,
+        }
+    }
+}
+
 // /// The current address prefix used by yggdrasil.
 // pub const ADDRESS_PREFIX: [u8; 1] = [0x02];
 
@@ -28,6 +50,12 @@ impl Address {
     /// This is used to look up `NodeID`s in the DHT and determine if they match
     /// an `Address`.
     pub fn node_id_and_mask(&self) -> (NodeID, NodeID) {
+        unimplemented!()
+    }
+}
+
+impl Default for Address {
+    fn default() -> Self {
         unimplemented!()
     }
 }

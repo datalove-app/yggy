@@ -1,13 +1,23 @@
 pub mod config;
+mod conn;
 mod dialer;
 pub mod error;
 mod listener;
+mod multicast;
+mod router;
+mod search;
+mod session;
 mod tuntap;
 pub mod types;
 
+pub use conn::Conn;
 pub use dialer::Dialer;
 pub use error::*;
 pub use listener::Listener;
+pub use multicast::Multicast;
+pub use router::Router;
+pub use search::{Search, SearchManager};
+pub use session::Session;
 pub use tuntap::TunAdapter;
 
 use self::{
@@ -15,13 +25,13 @@ use self::{
     error::{ConfigError, Error},
     types::{BoxKeypair, SigningKeypair},
 };
-use actix::{Actor, SystemService};
+use actix::prelude::*;
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 
 ///
 ///
-/// startup from yggdrasil-go
+/// TODO: follow startup from yggdrasil-go
 ///     - init random or from stdin or file config
 ///     ...
 ///     - init a logger
@@ -41,18 +51,26 @@ use std::sync::{Arc, Mutex};
 ///         setup admin handlers
 ///     - log info, catch interrupts for quit/reload config
 ///     -
+///
+/// ?? Handle<...>
 #[async_trait]
-pub trait Node</* AdminSocket, Multicast */ TunAdapter>
+pub trait Node<C: Conn, T: TunAdapter<C>>
 where
     Self: SystemService,
 {
+    type Dialer: Dialer<C>;
+
     ///
     fn from_config(config: Config) -> Result<Self, Error>;
 
     /// Augments/replaces
     /// TODO
-    fn with_signing_keys(self, kp: SigningKeypair) -> Self;
-    fn with_box_keys(self, kp: BoxKeypair) -> Self;
+    async fn with_signing_keys<F>(self, load_kp: F) -> Result<Self, Error>
+    where
+        F: Future<Output = SigningKeypair>;
+    async fn with_box_keys<F>(self, load_kp: F) -> Result<Self, Error>
+    where
+        F: Future<Output = BoxKeypair>;
 }
 
 // #[async_trait]
