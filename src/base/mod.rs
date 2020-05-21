@@ -1,35 +1,39 @@
-pub mod config;
+mod config;
 mod conn;
 mod dialer;
-pub mod error;
+mod error;
 mod listener;
 mod multicast;
-mod router;
 mod search;
+pub mod services;
 mod session;
 mod tuntap;
 pub mod types;
 
+#[doc(inline)]
+pub use config::Config;
+#[doc(inline)]
 pub use conn::Conn;
+#[doc(inline)]
 pub use dialer::Dialer;
+#[doc(inline)]
 pub use error::*;
+#[doc(inline)]
 pub use listener::Listener;
+#[doc(inline)]
 pub use multicast::Multicast;
-pub use router::Router;
+#[doc(inline)]
 pub use search::{Search, SearchManager};
+#[doc(inline)]
 pub use session::Session;
-pub use tuntap::TunAdapter;
+#[doc(inline)]
+pub use tuntap::Tun;
 
-use self::{
-    config::Config,
-    error::{ConfigError, Error},
-    types::{BoxKeypair, SigningKeypair},
-};
+use self::types::{BoxKeypair, SigningKeypair};
 use actix::prelude::*;
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 
-///
 ///
 /// TODO: follow startup from yggdrasil-go
 ///     - init random or from stdin or file config
@@ -54,14 +58,17 @@ use std::sync::{Arc, Mutex};
 ///
 /// ?? Handle<...>
 #[async_trait]
-pub trait Node<C: Conn, T: TunAdapter<C>>
+pub trait Node
 where
     Self: SystemService,
 {
-    type Dialer: Dialer<C>;
+    // type Dialer: Dialer<C>;
+    // type Listener: Listener;
 
     ///
-    fn from_config(config: Config) -> Result<Self, Error>;
+    async fn from_config<F>(load_config: F) -> Result<Self, Error>
+    where
+        F: Future<Output = Config>;
 
     /// Augments/replaces
     /// TODO

@@ -1,3 +1,5 @@
+//! Core protocol types.
+
 mod address;
 mod crypto;
 mod peer;

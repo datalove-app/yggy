@@ -17,7 +17,7 @@ where
 /// ?? can be polled until completion, producing a Session
 pub trait Search<S>
 where
-    Self: Actor + ActorFuture<Actor = Self, Output = Addr<S>>,
+    Self: ActorFuture<Actor = Self, Output = Addr<S>> + Actor,
     S: Session,
 {
 }

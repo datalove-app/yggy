@@ -1,4 +1,4 @@
-use crate::base::TunAdapter;
+use crate::base::Tun;
 
 // impl TunAdapter {
 //     pub fn setup()

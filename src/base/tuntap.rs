@@ -22,7 +22,7 @@ use actix::prelude::*;
 ///
 ///
 /// ?? Handle<IncomingConnection> -> subscribed to stream from Listener, producing C -> TunConn
-pub trait TunAdapter<C: Conn> {
+pub trait Tun<C: Conn> {
     const IPV6_HEADER_LEN: u8 = 40;
 
     ///

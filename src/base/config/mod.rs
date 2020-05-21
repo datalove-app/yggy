@@ -1,6 +1,6 @@
 use super::types::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// Contains configuration options necessary for an Yggdrasil node to run. You
 /// will need to supply one of these structs to the Yggdrasil core when starting
@@ -128,13 +128,13 @@ pub struct SessionFirewall {
     /// regardless of `AllowFromDirect` or `AllowFromRemote`.
     /// TODO
     #[serde(rename = "WhitelistEncryptionPublicKeys")]
-    whitelisted_encryption_pub_keys: Vec<String>,
+    whitelisted_encryption_pub_keys: HashSet<BoxPublicKey>,
 
     /// List of public keys from which network traffic is always rejected,
     /// regardless of the whitelist, `AllowFromDirect` or `AllowFromRemote`.
     /// TODO
     #[serde(rename = "BlacklistEncryptionPublicKeys")]
-    blacklisted_encryption_pub_keys: Vec<String>,
+    blacklisted_encryption_pub_keys: HashSet<BoxPublicKey>,
 }
 
 /// Contains the crypto-key routing tables for tunneling regular IPv4 or IPv6
