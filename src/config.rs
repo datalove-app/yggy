@@ -1,6 +1,6 @@
-use super::types::*;
+use crate::types::primitives::*;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 /// Contains configuration options necessary for an Yggdrasil node to run. You
 /// will need to supply one of these structs to the Yggdrasil core when starting

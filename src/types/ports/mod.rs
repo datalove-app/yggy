@@ -1,0 +1,39 @@
+//! Ports required by core services.
+//!
+//! Ports are interfaces defined by core services that represent a
+//! non-core use case or service
+//!
+//! Input (outer) ports:
+//!
+//!     initialized and owned by a primary adapter
+//!         impls are likely driver-specific
+//!     ====================
+//!     >>>
+//!
+//! Output ports:
+//!     represents core service requirements for non-core use cases (persistance, network calls, etc)
+//!     implemented by a secondary adapter
+//!         impls are likely driver-specific
+//!     ====================
+//!     >>>
+//!
+//! Duplex ports:
+//!     shields core services + types from details of underlying drivers that carry out the use cases
+//!         impls are most likely driver-specific
+//!     ====================
+//!     >>>
+
+mod multicast;
+mod tun;
+
+pub use multicast::Multicast;
+pub use tun::Tun;
+
+//  Input (incoming) ports are interfaces that are:
+//      - generic OVER core services, and will call core service methods
+//      - ?? initialized and owned by a root application type
+//      -
+//  Output (outgoing) ports are interfaces that are:
+//      - generics FOR core services, such will be called by core services
+//      - ?? initalized and owned by core services
+//      -

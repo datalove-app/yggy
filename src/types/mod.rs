@@ -1,0 +1,95 @@
+mod conn;
+mod dialer;
+mod listener;
+mod ports;
+pub mod primitives;
+pub mod services;
+mod session;
+
+#[doc(inline)]
+pub use conn::Conn;
+#[doc(inline)]
+pub use dialer::Dialer;
+#[doc(inline)]
+pub use listener::Listener;
+#[doc(inline)]
+pub use ports::{Multicast, Tun};
+#[doc(inline)]
+pub use session::Session;
+
+use self::primitives::{BoxKeypair, SigningKeypair};
+use actix::prelude::*;
+use async_trait::async_trait;
+use std::sync::{Arc, Mutex};
+
+// ///
+// /// TODO: follow startup from yggdrasil-go
+// ///     - init random or from stdin or file config
+// ///     ...
+// ///     - init a logger
+// ///     - start node.core - starts DHT, router, switch, other core components
+// ///         inits core (structs; peers, router, switchtable)
+// ///         inits link
+// ///         inits switchtable
+// ///         inits router
+// ///         starts peer loop, to call each peer
+// ///             link.call tcp or socks
+// ///     - register session firewall
+// ///     - init AdminSocket, setup admin handlers
+// ///     - init Multicast, then connect admin handlers
+// ///     - init tuntap interface
+// ///         init Listener and Dialer (n.core.Conn{Listen,Dialer})
+// ///         init TunAdapter with l,d, then start
+// ///         setup admin handlers
+// ///     - log info, catch interrupts for quit/reload config
+// ///     -
+// ///
+// /// ?? Handle<...>
+// #[async_trait]
+// pub trait Node: Sized // where
+// //     Self: SystemService,
+// {
+//     // type Dialer: Dialer<C>;
+//     // type Listener: Listener;
+
+//     ///
+//     async fn from_config<F>(load_config: F) -> Result<Self, Error>
+//     where
+//         F: Future<Output = Config>;
+
+//     /// Augments/replaces
+//     /// TODO
+//     async fn with_signing_keys<F>(self, load_kp: F) -> Result<Self, Error>
+//     where
+//         F: Future<Output = SigningKeypair>;
+//     async fn with_box_keys<F>(self, load_kp: F) -> Result<Self, Error>
+//     where
+//         F: Future<Output = BoxKeypair>;
+// }
+
+// #[async_trait]
+// pub trait NodeAPI: Node {
+//     /// TODO
+//     async fn get_peers(self: Arc<Self>) -> Result<(), Error>;
+
+//     /// TODO
+//     async fn get_switch_peers(self: Arc<Self>) -> Result<(), Error>;
+
+//     /// TODO
+//     async fn get_dht(self: Arc<Self>) -> Result<(), Error>;
+
+//     /// TODO
+//     async fn get_switch_queues(self: Arc<Self>) -> Result<(), Error>;
+
+//     /// TODO
+//     async fn get_sessions(self: Arc<Self>) -> Result<(), Error>;
+
+//     // /// TODO
+//     // async fn get_dialer(self: Arc<Self>) -> Result<(), Error>;
+
+//     // /// TODO
+//     // async fn get_listener(self: Arc<Self>) -> Result<(), Error>;
+
+//     /// TODO
+//     async fn get_tcp_listener(self: Arc<Self>) -> Result<(), Error>;
+// }

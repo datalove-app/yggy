@@ -1,16 +1,16 @@
 use super::{
-    types::{Address, NetworkID},
-    Conn, Error,
+    primitives::{Address, NetworkID},
+    Conn,
 };
+use crate::error::Error;
 use actix::prelude::*;
 use async_trait::async_trait;
 
 ///
-/// ?? Handle<...>
-#[async_trait]
-pub trait Dialer<C: Conn>
-where
-    Self: Actor + ActorFuture<Actor = Self, Output = C>,
+///
+/// ? Handle<...>
+pub trait Dialer<C: Conn> // where
+//     Self: ActorFuture<Actor = Self, Output = C> + Actor,
 {
     //
     //  TODO follow flow

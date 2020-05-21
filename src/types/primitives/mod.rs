@@ -8,7 +8,7 @@ pub use address::*;
 pub use crypto::*;
 pub use peer::*;
 
-use super::error::{ConfigError, Error};
+use crate::error::{ConfigError, Error};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,

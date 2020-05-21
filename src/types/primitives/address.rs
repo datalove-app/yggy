@@ -1,10 +1,10 @@
 use super::{NodeID, TreeID};
-use crate::base::Error;
+use crate::error::Error;
 use derive_more::From;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, io::Write, net::Ipv6Addr, str::FromStr};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, Hash, PartialEq)]
 pub enum NetworkID {
     NodeID,
     Curve25519,

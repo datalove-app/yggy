@@ -3,9 +3,13 @@ use tokio::io::{AsyncBufRead, AsyncWrite};
 
 /// Represents an active connection session between the local node and a remote
 /// node.
+///
+/// It posesses a read buffer that
+///
+/// ?? is a Port
 pub trait Conn
 where
-    Self: Actor + AsyncBufRead + AsyncWrite,
+    Self: AsyncBufRead + AsyncWrite,
 {
     const READ_BUFFER_SIZE: u16 = 1024;
 
