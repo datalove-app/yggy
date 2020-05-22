@@ -4,16 +4,16 @@ use digest::{generic_array::GenericArray, Digest};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Sha512;
 
-type InnerDigest = GenericArray<u8, <Sha512 as Digest>::OutputSize>;
-
 /*
  * IDs
  */
 
-/// The identifier of an yggdrasil node in the DHT, used to derive IPv6
-/// addresses and subnets.
-/// It is the SHA-512 digest of the node's `BoxPublicKey`.
-#[derive(Clone, Copy, Debug, Default, Hash)]
+/// The identifier of a node in the DHT, used to derive IPv6 addresses and
+/// subnets.
+/// It is the SHA-512 digest of the node's [`BoxPublicKey`].
+///
+/// [`BoxPublicKey`]: ./struct.BoxPublicKey
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct NodeID(InnerDigest);
 
 impl NodeID {
@@ -30,10 +30,12 @@ impl From<&BoxPublicKey> for NodeID {
     }
 }
 
-/// The identifier of an yggrdasil node in the root selection algorithm used to
-/// construct the spanning tree.
-/// It is the SHA-512 digest of the node's `SigningPublicKey`.
-#[derive(Clone, Copy, Debug, Default, Hash)]
+/// The identifier of a node in the root selection algorithm used to construct
+/// the spanning tree.
+/// It is the SHA-512 digest of the node's [`SigningPublicKey`].
+///
+/// [`SigningPublicKey`]: ./struct.SigningPublicKey
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct TreeID(InnerDigest);
 
 impl From<&SigningPublicKey> for TreeID {
@@ -162,3 +164,5 @@ impl BoxSecretKey {
 #[derive(Debug, From)]
 #[from(forward)]
 pub struct BoxSharedKey(x25519::X25519EphemeralKey);
+
+type InnerDigest = GenericArray<u8, <Sha512 as Digest>::OutputSize>;

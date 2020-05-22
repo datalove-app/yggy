@@ -13,14 +13,14 @@ pub struct Config {
     /// These connections will obey the operating system routing table, therefore
     /// you should use this section when you may connect via different interfaces.
     #[serde(rename = "Peers")]
-    peers: Peers,
+    peers: PeerURIs,
 
     /// List of connection strings for outbound peer connections in URI format,
     /// arranged by source interface, e.g. `{ "eth0": [ tcp://a.b.c.d:e ] }`.
     /// Note that SOCKS peerings will NOT be affected by this option and should
     /// go in the "Peers" section instead.
     #[serde(rename = "InterfacePeers")]
-    interface_peers: InterfacePeers,
+    interface_peers: InterfacePeerURIs,
 
     /// Listen addresses for incoming connections. You will need to add listeners
     /// in order to accept incoming peerings from non-local nodes. Multicast
@@ -76,14 +76,14 @@ pub struct Config {
     /// Rules are prioritised as follows: blacklist, whitelist, always allow
     /// outgoing, direct, remote.
     #[serde(rename = "SessionFirewall")]
-    firewall: SessionFirewall,
+    firewall: SessionFirewallConfig,
 
     /// Allow tunneling non-Yggdrasil traffic over Yggdrasil. This effectively
     /// allows you to use Yggdrasil to route or bridge to other networks,
     /// similar to a VPN tunnel. Tunnelling works between any two nodes and does
     /// not require them to be directly peered.
     #[serde(rename = "TunnelRouting")]
-    tunnel_routing: TunnelRouting,
+    tunnel_routing: TunnelRoutingConfig,
 
     /// Advanced options for tuning the switch. Normally you will not need nto
     /// edit these options.
@@ -103,7 +103,7 @@ pub struct Config {
 
 /// Controls the session firewall configuration.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SessionFirewall {
+pub struct SessionFirewallConfig {
     /// Enable or disable the session firewall. If disabled, network traffic
     /// from any node will be allowed. If enabled, the below rules apply.
     #[serde(rename = "Enable")]
@@ -140,7 +140,7 @@ pub struct SessionFirewall {
 /// Contains the crypto-key routing tables for tunneling regular IPv4 or IPv6
 /// subnets across the Yggdrasil network.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct TunnelRouting {
+pub struct TunnelRoutingConfig {
     /// Enable or disable tunnel routing.
     #[serde(rename = "Enable")]
     enable: bool,

@@ -4,8 +4,8 @@
 //! non-core use case or service
 //!
 //! Input (outer) ports:
-//!
-//!     initialized and owned by a primary adapter
+//!     represents external use case APIs exposed by core services
+//!     initialized and owned (or implemented?) by a primary adapter
 //!         impls are likely driver-specific
 //!     ====================
 //!     >>>

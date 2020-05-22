@@ -3,6 +3,9 @@
 
 #![warn(rust_2018_idioms, missing_debug_implementations, missing_docs)]
 
+#[macro_use]
+extern crate log;
+
 mod config;
 pub mod core;
 pub mod error;

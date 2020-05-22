@@ -12,19 +12,22 @@ use actix::prelude::*;
 ///     ? (why) initialized with a core.Dialer and core.Listener
 /// on startup:
 ///     init handler loop
-///         for each ygg.Conn in Listener.await
+///         for each yg.Conn in Listener.await
 ///             wrap each in TunConn (driving adapter)
 ///             close existing ones (by asking Tun.has_conn)
 ///                 save it
 ///             ? yconn.subscribe(TunnConn._read).or_timeout()
+///                 in reality, yg.Conn drains an inner buffer
+///                 calls
 ///             packets will come from a session (crypto-boxed!)
+///
 ///     start a tunReader (actor)
 ///
 ///     start the ckr
 ///
 /// ???? is a Port
 /// ? Handle<IncomingConnection>
-///     ? spawns TunConn `for ygg.Conn in Listener.await`
+///     ? spawns TunConn `for yg.Conn in Listener.await`
 ///     ? stores `Addr<TunConn>` by remote address and subnet
 pub trait Tun<C: Conn> {
     const IPV6_HEADER_LEN: u8 = 40;
@@ -41,7 +44,7 @@ pub trait Tun<C: Conn> {
 
 ///
 /// is an actor that represents a connection (session?) with a remote peer
-///     polling polls internal ygg.Conn
+///     polling polls internal yg.Conn
 ///         pulling from a readBuffer (created upon dialing)
 ///
 /// created:

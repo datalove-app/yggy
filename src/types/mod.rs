@@ -4,7 +4,6 @@ mod listener;
 mod ports;
 pub mod primitives;
 pub mod services;
-mod session;
 
 #[doc(inline)]
 pub use conn::Conn;
@@ -14,8 +13,6 @@ pub use dialer::Dialer;
 pub use listener::Listener;
 #[doc(inline)]
 pub use ports::{Multicast, Tun};
-#[doc(inline)]
-pub use session::Session;
 
 use self::primitives::{BoxKeypair, SigningKeypair};
 use actix::prelude::*;

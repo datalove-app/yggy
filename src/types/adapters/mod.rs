@@ -18,7 +18,7 @@
 //          rest/news.rs: takes `impl NewsPort`
 //          AdminService: would wrap an `impl AdminAPI` that would translate (cli, socket) reqs to AdminAPI service calls
 //          ?TunConn:
-//!
+//
 //  Driven (secondary, infra-facing) adapters:
 //      ** translates core use cases + types into driver types + method calls
 //      owns/is given/has access to a driver instance

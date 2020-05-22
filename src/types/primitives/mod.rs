@@ -21,20 +21,26 @@ use std::{
 pub type ListenAddresses = Vec<PeerURI>;
 
 ///
+/// TODO
 pub type Ipv4Subnets = HashMap<(), ()>;
 
 ///
+/// TODO
 pub type Ipv6Subnets = HashMap<(), ()>;
 
 ///
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum InterfaceName {
+    ///
     #[serde(rename = "auto")]
     Auto,
 
+    ///
     #[serde(rename = "none")]
     None,
+
+    ///
     Custom(String),
 }
 
