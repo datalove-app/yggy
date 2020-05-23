@@ -2650,6 +2650,7 @@ dependencies = [
  "rand 0.6.5",
  "serde",
  "sha2",
+ "smallvec 1.4.0",
  "thiserror",
  "tokio 0.2.21",
 ]

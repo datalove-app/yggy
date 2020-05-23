@@ -1,8 +1,8 @@
 //! Core protocol services.
 
-mod router;
-mod session;
-mod switch;
+pub mod router;
+pub mod session;
+pub mod switch;
 
 #[doc(inline)]
 pub use router::Router;

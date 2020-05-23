@@ -1,4 +1,4 @@
-use super::{BoxPublicKey, SigningPublicKey};
+use super::{BoxPublicKey, SigningPublicKey, SwitchLocator, SwitchMessage, SwitchPort};
 use crate::error::{ConfigError, Error};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -7,10 +7,11 @@ use std::{
     convert::TryFrom,
     net::{Ipv4Addr, SocketAddr},
     str::FromStr,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 ///
+/// TODO
 type SourceInterface = String;
 
 ///
@@ -51,23 +52,17 @@ impl FromStr for PeerURI {
 
     #[inline]
     fn from_str(raw: &str) -> Result<Self, Self::Err> {
-        let prefix = match raw {
-            _ if raw.starts_with("tcp://") => "tcp://",
-            _ if raw.starts_with("socks://") => "socks://",
-            _ => Err(ConfigError::UnknownPeerURI(raw.into()))?,
-        };
-
-        match prefix {
-            "tcp://" => {
+        match raw {
+            _ if raw.starts_with("tcp://") => {
                 let addr = raw
-                    .trim_start_matches(prefix)
+                    .trim_start_matches("tcp://")
                     .parse()
                     .map_err(ConfigError::InvalidPeerURI)?;
                 Ok(Self::TCP(addr))
             }
-            "socks://" => {
+            _ if raw.starts_with("socks://") => {
                 let (addr1, addr2): (&str, &str) = raw
-                    .trim_start_matches(prefix)
+                    .trim_start_matches("socks://")
                     .split("/")
                     .take(2)
                     .collect_tuple()
@@ -91,4 +86,16 @@ pub struct Peer {
     bytes_sent: u64,
     bytes_recv: u64,
     uptime: Duration,
+}
+
+///
+#[derive(Debug)]
+pub struct PeerInfo {
+    key: SigningPublicKey,
+    locator: SwitchLocator,
+    degree: u64,
+    last_seen: Instant,
+    port: SwitchPort,
+    // msg: SwitchMessage,
+    is_blocked: bool,
 }

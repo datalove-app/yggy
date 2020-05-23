@@ -3,6 +3,12 @@
 //! Ports are interfaces defined by core services that represent a
 //! non-core use case or service
 //!
+//! Duplex ports:
+//!     shields core services + types from details of underlying drivers that carry out the use cases
+//!         impls are most likely driver-specific
+//!     ====================
+//!     >>>
+//!
 //! Input (outer) ports:
 //!     represents external use case APIs exposed by core services
 //!     initialized and owned (or implemented?) by a primary adapter
@@ -14,12 +20,6 @@
 //!     represents core service requirements for non-core use cases (persistance, network calls, etc)
 //!     implemented by a secondary adapter
 //!         impls are likely driver-specific
-//!     ====================
-//!     >>>
-//!
-//! Duplex ports:
-//!     shields core services + types from details of underlying drivers that carry out the use cases
-//!         impls are most likely driver-specific
 //!     ====================
 //!     >>>
 

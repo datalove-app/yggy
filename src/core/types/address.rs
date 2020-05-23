@@ -8,6 +8,7 @@ use std::{convert::TryFrom, io::Write, net::Ipv6Addr, str::FromStr};
 pub enum NetworkID {
     NodeID,
     Curve25519,
+    // Custom(String),
 }
 
 impl Default for NetworkID {
@@ -18,10 +19,10 @@ impl Default for NetworkID {
 
 impl PartialEq<str> for NetworkID {
     fn eq(&self, other: &str) -> bool {
-        match other {
-            "nodeid" => Self::NodeID.eq(self),
-            "curve25519" => Self::Curve25519.eq(self),
-            _ => false,
+        match self {
+            Self::NodeID => other == "nodeid",
+            Self::Curve25519 => other == "curve25519",
+            // Self::Custom(s) => s == other,
         }
     }
 }

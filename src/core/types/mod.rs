@@ -3,10 +3,16 @@
 mod address;
 mod crypto;
 mod peer;
+mod session;
+mod switch;
+mod wire;
 
 pub use address::*;
 pub use crypto::*;
 pub use peer::*;
+pub use session::*;
+pub use switch::*;
+pub use wire::Header as WireHeader;
 
 use crate::error::{ConfigError, Error};
 use serde::{Deserialize, Serialize};
@@ -72,7 +78,7 @@ impl TryFrom<u16> for MTU {
 
     fn try_from(raw: u16) -> Result<Self, Self::Error> {
         if raw < 1280 {
-            Err(ConfigError::InvalidMTU(raw).into())
+            Err(ConfigError::InvalidMTU(raw))?
         } else {
             Ok(Self(raw))
         }

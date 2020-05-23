@@ -3,6 +3,7 @@ use derive_more::{From, FromStr};
 use digest::{generic_array::GenericArray, Digest};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Sha512;
+use std::cmp::Ordering;
 
 /*
  * IDs
@@ -12,12 +13,12 @@ use sha2::Sha512;
 /// subnets.
 /// It is the SHA-512 digest of the node's [`BoxPublicKey`].
 ///
-/// [`BoxPublicKey`]: ./struct.BoxPublicKey
+/// [`BoxPublicKey`]: ./struct.BoxPublicKey.html
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct NodeID(InnerDigest);
 
 impl NodeID {
-    /// returns the number of bits set in a masked `NodeID`.
+    /// Returns the number of bits set in a masked `NodeID`.
     pub fn prefix_len(&self) -> u8 {
         unimplemented!()
     }
@@ -34,8 +35,8 @@ impl From<&BoxPublicKey> for NodeID {
 /// the spanning tree.
 /// It is the SHA-512 digest of the node's [`SigningPublicKey`].
 ///
-/// [`SigningPublicKey`]: ./struct.SigningPublicKey
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+/// [`SigningPublicKey`]: ./struct.SigningPublicKey.html
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct TreeID(InnerDigest);
 
 impl From<&SigningPublicKey> for TreeID {
@@ -45,19 +46,55 @@ impl From<&SigningPublicKey> for TreeID {
     }
 }
 
+///
+pub(crate) type Handle = [u8; 8];
+
 /*
  * Keys
  */
 
 ///
 /// Used for protocol traffic.
-#[derive(Debug, Deserialize, From, Serialize)]
-#[from(forward)]
-#[serde(transparent)]
-pub struct SigningKeypair(ed25519_dalek::Keypair);
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct SigningKeypair {
+    public: SigningPublicKey,
+    secret: SigningSecretKey,
+}
 
 ///
-pub type SigningPublicKey = ed25519_dalek::PublicKey;
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, From, PartialEq, Serialize)]
+#[from(forward)]
+pub struct SigningPublicKey(ed25519_dalek::PublicKey);
+
+impl SigningPublicKey {
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
+/// Computes the [`TreeID`] from the key's digest, then compares them.
+/// This is used to compute new [spanning tree roots]().
+///
+/// [`TreeID`]: struct.TreeID
+impl PartialOrd for SigningPublicKey {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let id1 = TreeID::from(self);
+        let id2 = TreeID::from(other);
+        id1.partial_cmp(&id2)
+    }
+}
+
+/// Computes the [`TreeID`] from the key's digest, then compares them.
+/// This is used to compute new [spanning tree roots]().
+///
+/// [`TreeID`]: struct.TreeID
+impl Ord for SigningPublicKey {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let id1 = TreeID::from(self);
+        let id2 = TreeID::from(other);
+        id1.cmp(&id2)
+    }
+}
 
 ///
 pub type SigningSecretKey = ed25519_dalek::SecretKey;
@@ -79,7 +116,7 @@ pub type BoxNonce = [u8; 24];
 pub struct BoxPublicKey(x25519::X25519PublicKey);
 
 impl BoxPublicKey {
-    fn as_bytes(&self) -> &[u8] {
+    pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
 }

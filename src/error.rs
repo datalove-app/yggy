@@ -3,11 +3,18 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
+    /// TODO:
     #[error("TODO")]
     Init,
 
-    #[error("configuration error: ")]
+    #[error("configuration error: {0}")]
     Config(#[from] ConfigError),
+
+    #[error("wire read error: {0}")]
+    WireReadError(std::io::Error),
+
+    #[error("wire write error: {0}")]
+    WireWriteError(std::io::Error),
 }
 
 #[derive(Debug, Error)]

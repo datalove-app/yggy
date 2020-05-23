@@ -1,12 +1,15 @@
 use crate::{
+    core::{types::*, Conn},
     error::Error,
-    types::{primitives::*, Conn},
 };
 use actix::prelude::*;
 
 // TODO? look at https://github.com/actix/actix/blob/master/examples/chat/src/main.rs
 
 /// Represents a running TUN interface.
+///
+/// ## What is TUN, what is Wireguard, and why do we use them?
+/// TODO
 ///
 /// flow:
 ///     ? (why) initialized with a core.Dialer and core.Listener

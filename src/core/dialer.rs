@@ -1,5 +1,5 @@
 use super::{
-    primitives::{Address, NetworkID},
+    types::{Address, NetworkID},
     Conn,
 };
 use crate::error::Error;

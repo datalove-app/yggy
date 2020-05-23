@@ -1,4 +1,4 @@
-use crate::types::primitives::*;
+use crate::core::types::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 

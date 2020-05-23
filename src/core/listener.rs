@@ -6,7 +6,11 @@ use actix::prelude::*;
 /// Provided by core
 ///
 /// ? Handle<...>
-pub trait Listener<C: Conn> // where
+pub trait Listener
+// pub trait Listener<C: Core>
+// where
 //     Self: ActorStream<Actor = Self, Item = C> + Actor,
 {
+    /// The type of connection used to produce
+    type Conn: Conn;
 }

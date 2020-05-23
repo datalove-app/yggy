@@ -1,16 +1,19 @@
 //! `yggy`
 //!
 
-#![warn(rust_2018_idioms, missing_debug_implementations, missing_docs)]
+// #![warn(rust_2018_idioms, missing_debug_implementations, missing_docs)]
 
+#[macro_use]
+extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
 mod config;
 pub mod core;
 pub mod error;
+pub mod multicast;
 pub mod notes;
-pub mod types;
+pub mod tun;
 
 #[doc(inline)]
 pub use config::Config;
