@@ -19,8 +19,8 @@ pub enum Header {
     // NodeInfoResponse,
 }
 
-///
-pub trait WireHeader: Sized {
+/// Encodes and decodes
+pub trait Wire: Sized {
     fn wire_len(&self) -> Option<usize> {
         None
     }
@@ -30,7 +30,7 @@ pub trait WireHeader: Sized {
     fn encode<W: Write>(&self, writer: W) -> Result<usize, Error>;
 }
 
-impl WireHeader for i64 {
+impl Wire for i64 {
     fn wire_len(&self) -> Option<usize> {
         None
     }
@@ -44,7 +44,7 @@ impl WireHeader for i64 {
     }
 }
 
-impl WireHeader for u64 {
+impl Wire for u64 {
     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
         unimplemented!()
     }
@@ -54,7 +54,7 @@ impl WireHeader for u64 {
     }
 }
 
-impl WireHeader for Coords {
+impl Wire for Coords {
     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
         unimplemented!()
     }
@@ -64,7 +64,7 @@ impl WireHeader for Coords {
     }
 }
 
-impl WireHeader for WireCoords {
+impl Wire for WireCoords {
     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
         unimplemented!()
     }
@@ -80,7 +80,7 @@ impl WireHeader for WireCoords {
 #[derive(Clone, Debug)]
 pub struct Traffic;
 
-impl WireHeader for Traffic {
+impl Wire for Traffic {
     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
         unimplemented!()
     }
@@ -95,7 +95,7 @@ impl WireHeader for Traffic {
 #[derive(Clone, Debug)]
 pub struct ProtocolTraffic;
 
-impl WireHeader for ProtocolTraffic {
+impl Wire for ProtocolTraffic {
     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
         unimplemented!()
     }
@@ -110,7 +110,7 @@ impl WireHeader for ProtocolTraffic {
 #[derive(Clone, Debug)]
 pub struct LinkProtocolTraffic;
 
-impl WireHeader for LinkProtocolTraffic {
+impl Wire for LinkProtocolTraffic {
     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
         unimplemented!()
     }
@@ -120,7 +120,7 @@ impl WireHeader for LinkProtocolTraffic {
     }
 }
 
-impl WireHeader for SwitchMessage {
+impl Wire for SwitchMessage {
     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
         unimplemented!()
     }
@@ -130,7 +130,7 @@ impl WireHeader for SwitchMessage {
     }
 }
 
-impl WireHeader for SessionPingPong {
+impl Wire for SessionPingPong {
     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
         unimplemented!()
     }
@@ -140,14 +140,14 @@ impl WireHeader for SessionPingPong {
     }
 }
 
-// impl WireHeader for u64
-// impl WireHeader for i64 (? encoded as a special u64)
-// impl WireHeader for Coords
-// impl WireHeader for SwitchMessage
-// impl WireHeader for TrafficPacket
-// impl WireHeader for ProtocolTrafficPacket
-// impl WireHeader for LinkProtocolTrafficPacket
-// impl WireHeader for SessionPingPong
-// impl WireHeader for NodeInfoReqRes
-// impl WireHeader for DHTRequest
-// impl WireHeader for DHTResponse
+// impl Wire for u64
+// impl Wire for i64 (? encoded as a special u64)
+// impl Wire for Coords
+// impl Wire for SwitchMessage
+// impl Wire for TrafficPacket
+// impl Wire for ProtocolTrafficPacket
+// impl Wire for LinkProtocolTrafficPacket
+// impl Wire for SessionPingPong
+// impl Wire for NodeInfoReqRes
+// impl Wire for DHTRequest
+// impl Wire for DHTResponse

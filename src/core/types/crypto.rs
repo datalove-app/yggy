@@ -19,6 +19,7 @@ pub struct NodeID(InnerDigest);
 
 impl NodeID {
     /// Returns the number of bits set in a masked `NodeID`.
+    #[inline]
     pub fn prefix_len(&self) -> u8 {
         unimplemented!()
     }
@@ -62,11 +63,15 @@ pub struct SigningKeypair {
 }
 
 ///
+pub type Signature = ed25519_dalek::Signature;
+
+///
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, From, PartialEq, Serialize)]
 #[from(forward)]
 pub struct SigningPublicKey(ed25519_dalek::PublicKey);
 
 impl SigningPublicKey {
+    #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -77,10 +82,15 @@ impl SigningPublicKey {
 ///
 /// [`TreeID`]: struct.TreeID
 impl PartialOrd for SigningPublicKey {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let id1 = TreeID::from(self);
-        let id2 = TreeID::from(other);
-        id1.partial_cmp(&id2)
+        if self == other {
+            Some(Ordering::Equal)
+        } else {
+            let id1 = TreeID::from(self);
+            let id2 = TreeID::from(other);
+            Some(id1.cmp(&id2))
+        }
     }
 }
 
@@ -89,10 +99,10 @@ impl PartialOrd for SigningPublicKey {
 ///
 /// [`TreeID`]: struct.TreeID
 impl Ord for SigningPublicKey {
+    #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
-        let id1 = TreeID::from(self);
-        let id2 = TreeID::from(other);
-        id1.cmp(&id2)
+        self.partial_cmp(&other)
+            .expect("comparing two `SigningPublicKey`s should never fail")
     }
 }
 
@@ -116,6 +126,7 @@ pub type BoxNonce = [u8; 24];
 pub struct BoxPublicKey(x25519::X25519PublicKey);
 
 impl BoxPublicKey {
+    #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -192,6 +203,7 @@ impl<'de> Deserialize<'de> for BoxPublicKey {
 pub struct BoxSecretKey(x25519::X25519SecretKey);
 
 impl BoxSecretKey {
+    #[inline]
     fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }

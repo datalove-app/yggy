@@ -3,7 +3,6 @@ use super::{
     Conn,
 };
 use crate::error::Error;
-use actix::prelude::*;
 use async_trait::async_trait;
 
 ///

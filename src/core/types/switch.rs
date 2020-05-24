@@ -29,6 +29,7 @@ pub const DEFAULT_COORDS_BYTES_SIZE: usize = 64;
 pub struct Coords(SmallVec<[SwitchPort; DEFAULT_COORDS_SIZE]>);
 
 impl Coords {
+    #[inline]
     pub fn distance(&self, other: &Self) -> i64 {
         // TODO: other might need to be bytes from the wire protocol
         unimplemented!()
@@ -49,12 +50,14 @@ impl std::convert::TryFrom<&WireCoords> for Coords {
 pub struct WireCoords(SmallVec<[u8; DEFAULT_COORDS_BYTES_SIZE]>);
 
 impl WireCoords {
+    #[inline]
     pub fn distance(&self, other: &Self) -> i64 {
         unimplemented!()
     }
 }
 
 impl From<&Coords> for WireCoords {
+    #[inline]
     fn from(coords: &Coords) -> Self {
         unimplemented!()
     }
@@ -83,7 +86,7 @@ impl From<&Coords> for WireCoords {
 // }
 
 ///
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct SwitchPort(u64);
 
 /// Contains the root node's signing key, timestamp, and signed per-hop info
@@ -93,7 +96,7 @@ pub struct SwitchPort(u64);
 /// [`SwitchLocator`]s.
 ///
 /// [`SwitchLocator`]: struct.SwitchLocator
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct SwitchMessage {
     root: SigningPublicKey,
     timestamp: i64,
@@ -102,39 +105,42 @@ pub struct SwitchMessage {
 
 /// Represents the signed information about the path leading from the root to
 /// the `next` node, via the `port` specified here.
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct SwitchMessageHop {
     port: SwitchPort,
     next: SigningPublicKey,
     // signature: TODO:
 }
 
-///
-/// TODO
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct SwitchData;
-
 /// Represents the topology and network state-dependent info about a node, sans
 /// the signatures that accompany it. Nodes will pick the best root they see,
 /// provided that the root continues to push out updates with new timestamps.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SwitchLocator {
     root: SigningPublicKey,
     timestamp: i64,
-    coordinates: Coords,
+    coords: Coords,
 }
 
 impl SwitchLocator {
+    #[inline]
     pub fn distance(&self) -> i64 {
         unimplemented!()
     }
 
-    pub fn coordinates(&self) -> &Coords {
+    #[inline]
+    pub fn coords(&self) -> &Coords {
+        &self.coords
+    }
+
+    #[inline]
+    pub fn wirecoords(&self) -> WireCoords {
         unimplemented!()
     }
 
     /// Returns `true` if this locator represents an ancestor of the locator
     /// given as an argument.
+    #[inline]
     pub fn is_ancestor_of(&self, other: &Self) -> bool {
         self < other
     }
@@ -143,6 +149,7 @@ impl SwitchLocator {
 /// Returns an ordering of `SwitchLocator`s, with the lesser being closer to
 /// the root, i.e. the ancestor of the other.
 impl PartialOrd for SwitchLocator {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         unimplemented!()
     }
@@ -151,6 +158,7 @@ impl PartialOrd for SwitchLocator {
 /// Returns an ordering of `SwitchLocator`s, with the lesser being closer to
 /// the root, i.e. the ancestor of the other.
 impl Ord for SwitchLocator {
+    #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
         unimplemented!()
     }

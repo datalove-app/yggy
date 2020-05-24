@@ -1,3 +1,6 @@
+//!
+
+// mod admin;
 mod conn;
 mod dialer;
 mod listener;
@@ -5,6 +8,8 @@ mod ports;
 pub mod services;
 pub mod types;
 
+// #[doc(inline)]
+// pub use admin::Admin;
 #[doc(inline)]
 pub use conn::Conn;
 #[doc(inline)]
@@ -13,56 +18,60 @@ pub use dialer::Dialer;
 pub use listener::Listener;
 #[doc(inline)]
 pub use ports::{Multicast, Tun};
+#[doc(inline)]
+pub use services::Core;
 
 use self::types::{BoxKeypair, SigningKeypair};
-use actix::prelude::*;
+use crate::error::Error;
+use async_std::prelude::Future;
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 
-// ///
-// /// TODO: follow startup from yggdrasil-go
-// ///     - init random or from stdin or file config
-// ///     ...
-// ///     - init a logger
-// ///     - start node.core - starts DHT, router, switch, other core components
-// ///         inits core (structs; peers, router, switchtable)
-// ///         inits link
-// ///         inits switchtable
-// ///         inits router
-// ///         starts peer loop, to call each peer
-// ///             link.call tcp or socks
-// ///     - register session firewall
-// ///     - init AdminSocket, setup admin handlers
-// ///     - init Multicast, then connect admin handlers
-// ///     - init tuntap interface
-// ///         init Listener and Dialer (n.core.Conn{Listen,Dialer})
-// ///         init TunAdapter with l,d, then start
-// ///         setup admin handlers
-// ///     - log info, catch interrupts for quit/reload config
-// ///     -
-// ///
-// /// ?? Handle<...>
-// #[async_trait]
-// pub trait Node: Sized // where
-// //     Self: SystemService,
-// {
-//     // type Dialer: Dialer<C>;
-//     // type Listener: Listener;
+///
+/// TODO: follow startup from yggdrasil-go
+///     - init random or from stdin or file config
+///     ...
+///     - init a logger
+///     - start node.core - starts DHT, router, switch, other core components
+///         inits core (structs; peers, router, switchtable)
+///         inits link
+///         inits switchtable
+///         inits router
+///         starts peer loop, to call each peer
+///             link.call tcp or socks
+///     - register session firewall
+///     - init AdminSocket, setup admin handlers
+///     - init Multicast, then connect admin handlers
+///     - init tuntap interface
+///         init Listener and Dialer (n.core.Conn{Listen,Dialer})
+///         init TunAdapter with l,d, then start
+///         setup admin handlers
+///     - log info, catch interrupts for quit/reload config
+///     -
+///
+/// ?? Handle<...>
+#[async_trait]
+pub trait Node<C: Core, /* A: Admin */ M: Multicast, T: Tun>: Sized // where
+//     Self: SystemService,
+{
+    type Config;
+    // type Dialer: Dialer<C>;
+    // type Listener: Listener;
 
-//     ///
-//     async fn from_config<F>(load_config: F) -> Result<Self, Error>
-//     where
-//         F: Future<Output = Config>;
+    ///
+    async fn from_config<F>(load_config: F) -> Result<Self, Error>
+    where
+        F: Future<Output = Self::Config>;
 
-//     /// Augments/replaces
-//     /// TODO
-//     async fn with_signing_keys<F>(self, load_kp: F) -> Result<Self, Error>
-//     where
-//         F: Future<Output = SigningKeypair>;
-//     async fn with_box_keys<F>(self, load_kp: F) -> Result<Self, Error>
-//     where
-//         F: Future<Output = BoxKeypair>;
-// }
+    /// Augments/replaces
+    /// TODO
+    async fn with_signing_keys<F>(self, load_kp: F) -> Result<Self, Error>
+    where
+        F: Future<Output = SigningKeypair>;
+    async fn with_box_keys<F>(self, load_kp: F) -> Result<Self, Error>
+    where
+        F: Future<Output = BoxKeypair>;
+}
 
 // #[async_trait]
 // pub trait NodeAPI: Node {

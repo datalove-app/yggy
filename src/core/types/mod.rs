@@ -3,16 +3,18 @@
 mod address;
 mod crypto;
 mod peer;
+mod search;
 mod session;
 mod switch;
-mod wire;
+pub mod wire;
 
 pub use address::*;
 pub use crypto::*;
 pub use peer::*;
+pub use search::*;
 pub use session::*;
 pub use switch::*;
-pub use wire::Header as WireHeader;
+pub use wire::{Header as WireHeader, Wire};
 
 use crate::error::{ConfigError, Error};
 use serde::{Deserialize, Serialize};

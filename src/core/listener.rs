@@ -1,5 +1,4 @@
 use super::Conn;
-use actix::prelude::*;
 
 /// Produces a stream of `Conn`s.
 ///

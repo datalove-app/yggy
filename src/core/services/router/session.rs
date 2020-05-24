@@ -1,6 +1,3 @@
-// use super::Listener;
-use actix::prelude::*;
-
 ///
 /// ? Handle<...>
 pub trait SessionManager // where
@@ -12,6 +9,8 @@ pub trait SessionManager // where
 
     // ///
     // type Listener: Listener;
+
+    fn reconfigure(&mut self);
 }
 
 ///

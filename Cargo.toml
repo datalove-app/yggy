@@ -14,7 +14,7 @@ license = "LGPL-3.0" # TODO
 name = "yggy"
 path = "src/lib.rs"
 
-# TODO restrict binary building to linux/mac/windows
+# TODO? restrict binary building to linux/mac/windows
 [[bin]]
 name = "yggyd"
 path = "bin/yggyd/main.rs"
@@ -23,10 +23,13 @@ path = "bin/yggyd/main.rs"
 name = "yggyctl"
 path = "bin/yggyctl/main.rs"
 
+[[bin]]
+name = "yggysim"
+path = "bin/yggysim/main.rs"
+
 [dependencies]
-actix = "0.9"
-actix-net = "0.2"
 anyhow = "1.0"
+async-std = "1.6"
 async-trait = "0.1"
 boringtun = "0.3"
 derive_more = "0.99"
@@ -40,7 +43,7 @@ serde = { version = "1.0", features = ["derive"] }
 sha2 = { version = "0.8.1", default-features = false }
 smallvec = { version = "1.4", features = ["write"] }
 thiserror = "1.0"
-tokio = { version = "0.2", features = ["full"] }
+xactor = "0.6"
 
 [features]
 default = ["std", "u64_backend"]

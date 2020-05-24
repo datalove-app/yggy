@@ -1,5 +1,4 @@
-use actix::prelude::*;
-use tokio::io::{AsyncBufRead, AsyncWrite};
+use async_std::io::{BufRead, Write};
 
 /// Represents an active connection session between the local node and a remote
 /// node.
@@ -9,7 +8,7 @@ use tokio::io::{AsyncBufRead, AsyncWrite};
 /// ?? is a Port
 pub trait Conn
 where
-    Self: AsyncBufRead + AsyncWrite,
+    Self: BufRead + Write,
 {
     const READ_BUFFER_SIZE: u16 = 1024;
 

@@ -2,7 +2,6 @@ use crate::{
     core::{types::*, Conn},
     error::Error,
 };
-use actix::prelude::*;
 
 // TODO? look at https://github.com/actix/actix/blob/master/examples/chat/src/main.rs
 
@@ -32,11 +31,11 @@ use actix::prelude::*;
 /// ? Handle<IncomingConnection>
 ///     ? spawns TunConn `for yg.Conn in Listener.await`
 ///     ? stores `Addr<TunConn>` by remote address and subnet
-pub trait Tun<C: Conn> {
+pub trait Tun /* <C: Conn> */ {
     const IPV6_HEADER_LEN: u8 = 40;
 
-    ///
-    type Conn: TunConn<C>;
+    // ///
+    // type Conn: TunConn<C>;
 
     fn name(&self) -> &str;
 

@@ -29,9 +29,9 @@ pub enum PeerURI {
 
 impl PeerURI {}
 
+// TODO handle platform-specific opts
 impl Default for PeerURI {
     fn default() -> Self {
-        // TODO handle platform-specific opts
         // #[cfg(any(target_os = "macos", target_os = "ios"))] and
         // #[cfg(target_os = "linux")]
         Self::TCP(SocketAddr::new(Ipv4Addr::new(127, 0, 0, 1).into(), 9001))
@@ -89,7 +89,7 @@ pub struct Peer {
 }
 
 ///
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PeerInfo {
     key: SigningPublicKey,
     locator: SwitchLocator,
