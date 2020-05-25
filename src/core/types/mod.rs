@@ -26,7 +26,16 @@ use std::{
 };
 
 ///
-pub type ListenAddresses = Vec<PeerURI>;
+/// TODO
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(transparent)]
+pub struct ListenAddresses(Vec<PeerURI>);
+
+impl Default for ListenAddresses {
+    fn default() -> Self {
+        Self(vec![PeerURI::default_listen()])
+    }
+}
 
 ///
 /// TODO

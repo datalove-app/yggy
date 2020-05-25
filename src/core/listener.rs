@@ -1,15 +1,13 @@
-use super::Conn;
+use super::{Conn, Core};
+use xactor::Actor;
 
 /// Produces a stream of `Conn`s.
 ///
 /// Provided by core
 ///
 /// ? Handle<...>
-pub trait Listener
-// pub trait Listener<C: Core>
-// where
-//     Self: ActorStream<Actor = Self, Item = C> + Actor,
+pub trait Listener<C: Core>
+where
+    Self: Actor,
 {
-    /// The type of connection used to produce
-    type Conn: Conn;
 }

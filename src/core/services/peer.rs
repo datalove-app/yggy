@@ -1,5 +1,5 @@
 use crate::core::{types::*, Core};
-use xactor::*;
+use xactor::{Actor, Addr, Handler, Message};
 
 /// Represents peer
 pub trait PeerManager<C: Core, P: Peer<C, Self>>

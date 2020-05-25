@@ -10,7 +10,7 @@ use std::cmp::Ordering;
  */
 
 /// The identifier of a node in the DHT, used to derive IPv6 addresses and
-/// subnets.
+/// subnets, as well as route authenticated protocol traffic.
 /// It is the SHA-512 digest of the node's [`BoxPublicKey`].
 ///
 /// [`BoxPublicKey`]: ./struct.BoxPublicKey.html
@@ -21,6 +21,12 @@ impl NodeID {
     /// Returns the number of bits set in a masked `NodeID`.
     #[inline]
     pub fn prefix_len(&self) -> u8 {
+        unimplemented!()
+    }
+
+    ///
+    #[inline]
+    pub fn mask(&self) {
         unimplemented!()
     }
 }

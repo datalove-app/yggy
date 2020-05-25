@@ -1,15 +1,17 @@
 use super::{
     types::{Address, NetworkID},
-    Conn,
+    Conn, Core,
 };
 use crate::error::Error;
 use async_trait::async_trait;
+use xactor::Actor;
 
 ///
 ///
 /// ? Handle<...>
-pub trait Dialer<C: Conn> // where
-//     Self: ActorFuture<Actor = Self, Output = C> + Actor,
+pub trait Dialer<C: Core>
+where
+    Self: Actor,
 {
     //
     //  TODO follow flow

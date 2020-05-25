@@ -15,26 +15,44 @@ use std::{
 type SourceInterface = String;
 
 ///
-pub type PeerURIs = Vec<PeerURI>;
+/// TODO feature-flag public/bootstrap nodes
+#[derive(Clone, Debug, Deserialize, Default, Eq, Serialize, PartialEq)]
+#[serde(transparent)]
+pub struct PeerURIs(Vec<PeerURI>);
 
 ///
 pub type InterfacePeerURIs = HashMap<SourceInterface, PeerURIs>;
 
 ///
-#[derive(Debug, Deserialize, Serialize)]
+/// TODO ensure untagged
+#[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum PeerURI {
     TCP(SocketAddr),
-    SOCKS(SocketAddr, SocketAddr),
+    // TODO SOCKS(SocketAddr, SocketAddr),
 }
 
-impl PeerURI {}
+impl PeerURI {
+    pub fn default_admin() -> Option<Self> {
+        Some(Self::TCP(SocketAddr::new(
+            Ipv4Addr::new(127, 0, 0, 1).into(),
+            9000,
+        )))
+    }
 
-// TODO handle platform-specific opts
-impl Default for PeerURI {
-    fn default() -> Self {
+    // TODO handle platform-specific opts
+    pub fn default_listen() -> Self {
         // #[cfg(any(target_os = "macos", target_os = "ios"))] and
         // #[cfg(target_os = "linux")]
-        Self::TCP(SocketAddr::new(Ipv4Addr::new(127, 0, 0, 1).into(), 9001))
+        Self::default()
+    }
+
+    // pub fn endpoint(&self) ->
+    // pub fn port(&self)
+}
+
+impl Default for PeerURI {
+    fn default() -> Self {
+        Self::TCP(SocketAddr::new(Ipv4Addr::new(0, 0, 0, 0).into(), 0))
     }
 }
 
@@ -60,18 +78,18 @@ impl FromStr for PeerURI {
                     .map_err(ConfigError::InvalidPeerURI)?;
                 Ok(Self::TCP(addr))
             }
-            _ if raw.starts_with("socks://") => {
-                let (addr1, addr2): (&str, &str) = raw
-                    .trim_start_matches("socks://")
-                    .split("/")
-                    .take(2)
-                    .collect_tuple()
-                    .ok_or_else(|| ConfigError::UnknownPeerURI(raw.into()))?;
+            // TODO: _ if raw.starts_with("socks://") => {
+            //     let (addr1, addr2): (&str, &str) = raw
+            //         .trim_start_matches("socks://")
+            //         .split("/")
+            //         .take(2)
+            //         .collect_tuple()
+            //         .ok_or_else(|| ConfigError::UnknownPeerURI(raw.into()))?;
 
-                let addr1 = addr1.parse().map_err(ConfigError::InvalidPeerURI)?;
-                let addr2 = addr2.parse().map_err(ConfigError::InvalidPeerURI)?;
-                Ok(Self::SOCKS(addr1, addr2))
-            }
+            //     let addr1 = addr1.parse().map_err(ConfigError::InvalidPeerURI)?;
+            //     let addr2 = addr2.parse().map_err(ConfigError::InvalidPeerURI)?;
+            //     Ok(Self::SOCKS(addr1, addr2))
+            // }
             _ => Err(ConfigError::UnknownPeerURI(raw.into()))?,
         }
     }
@@ -83,9 +101,9 @@ pub struct Peer {
     pub_sign_key: SigningPublicKey,
     pub_box_key: BoxPublicKey,
     endpoint: PeerURI, // TODO protocol + endpoint + port
+    uptime: Duration,
     bytes_sent: u64,
     bytes_recv: u64,
-    uptime: Duration,
 }
 
 ///
@@ -93,9 +111,9 @@ pub struct Peer {
 pub struct PeerInfo {
     key: SigningPublicKey,
     locator: SwitchLocator,
+    port: SwitchPort,
     degree: u64,
     last_seen: Instant,
-    port: SwitchPort,
     // msg: SwitchMessage,
     is_blocked: bool,
 }

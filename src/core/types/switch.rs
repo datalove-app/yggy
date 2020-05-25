@@ -5,15 +5,15 @@ use std::{cmp::Ordering, time::Duration};
 
 lazy_static! {
     ///
-    pub static ref UPDATE_INTERVAL: Duration = SWITCH_ROOT_TIMEOUT / 2;
+    pub static ref UPDATE_INTERVAL: Duration = ROOT_TIMEOUT / 2;
     ///
     pub static ref THROTTLE_INTERVAL: Duration = *UPDATE_INTERVAL / 2;
 }
 
 ///
-pub const SWITCH_ROOT_TIMEOUT: Duration = Duration::from_secs(60);
+pub const ROOT_TIMEOUT: Duration = Duration::from_secs(60);
 /// Number of switch updates before switching to a faster parent.
-pub const SWITCH_PARENT_THRESHOLD: u8 = 240;
+pub const PARENT_UPDATE_THRESHOLD: u8 = 240;
 ///
 pub const MIN_TOTAL_QUEUE_SIZE: u64 = 4 * 1024 * 1024;
 ///

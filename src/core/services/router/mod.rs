@@ -9,7 +9,7 @@ pub use search::SearchManager;
 pub use session::{Session, SessionManager};
 
 use crate::core::{types::wire, Core};
-use xactor::*;
+use xactor::{Actor, StreamHandler};
 
 ///
 ///

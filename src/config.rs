@@ -27,14 +27,14 @@ pub struct Config {
     /// peer discovery will work regardless of any listeners set here. Each
     /// listener should be specified in URI format as above,
     /// e.g. `tcp://0.0.0.0:0` or `tcp://[::]:0` to listen on all interfaces.
-    #[serde(rename = "Listen", default)]
+    #[serde(rename = "Listen")]
     listen: ListenAddresses,
 
     /// Listen address for admin connections. Default is to listen for local
     /// connections either on TCP/9001 or a UNIX socket depending on your
     /// platform. Use this value for `yggyctl -endpoint=X`. To disable the admin
     /// socket, use the value "none" instead.
-    #[serde(rename = "AdminListen", default)]
+    #[serde(rename = "AdminListen", default = "PeerURI::default_admin")]
     admin_listen: Option<PeerURI>,
     // /// Regular expressions for which interfaces multicast peer discovery\nshould be enabled on. If none specified, multicast peer discovery is\ndisabled. The default value is .* which uses all interfaces."`
     // MulticastInterfaces         []string

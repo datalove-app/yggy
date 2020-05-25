@@ -17,7 +17,7 @@ where
 
     fn reconfigure(&mut self);
 
-    fn start_search(&self, dest: NodeID, mask: NodeID) -> Result<&SearchInfo, Error>;
+    fn new_search(&self, dest: NodeID, mask: NodeID) -> Result<&SearchInfo, Error>;
 }
 
 ///

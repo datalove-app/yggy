@@ -1,7 +1,8 @@
 use crate::{
-    core::{types::*, Conn},
+    core::{types::*, Conn, Core},
     error::Error,
 };
+use xactor::{Actor, StreamHandler};
 
 // TODO? look at https://github.com/actix/actix/blob/master/examples/chat/src/main.rs
 
@@ -31,7 +32,10 @@ use crate::{
 /// ? Handle<IncomingConnection>
 ///     ? spawns TunConn `for yg.Conn in Listener.await`
 ///     ? stores `Addr<TunConn>` by remote address and subnet
-pub trait Tun /* <C: Conn> */ {
+pub trait Tun<C: Core>
+where
+    Self: Actor,
+{
     const IPV6_HEADER_LEN: u8 = 40;
 
     // ///
@@ -40,8 +44,6 @@ pub trait Tun /* <C: Conn> */ {
     fn name(&self) -> &str;
 
     fn mtu(&self) -> &MTU;
-
-    fn start(&mut self);
 }
 
 ///
@@ -54,7 +56,9 @@ pub trait Tun /* <C: Conn> */ {
 ///
 /// ???? is a Port
 ///      ? Handle<...>
-pub trait TunConn<C: Conn> // where
-//     Self: ActorStream<Actor = Self, Item = Vec<u8>> + Actor,
+pub trait TunConn<C: Conn>
+where
+    Self: Actor,
 {
+    // type Reader: Conn::
 }

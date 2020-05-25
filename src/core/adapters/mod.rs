@@ -35,4 +35,3 @@
 //      == examples:
 //          gateway/news_gateway.rs: calls `news_driver` (db)
 //          Tun:
-//!

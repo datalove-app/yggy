@@ -17,15 +17,24 @@ pub use dialer::Dialer;
 #[doc(inline)]
 pub use listener::Listener;
 #[doc(inline)]
-pub use ports::{Multicast, Tun};
-#[doc(inline)]
-pub use services::Core;
+pub use ports::{Link, Multicast, Tun};
 
 use self::types::{BoxKeypair, SigningKeypair};
 use crate::error::Error;
 use async_std::prelude::Future;
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
+use xactor::Actor;
+
+///
+pub trait Core
+where
+    Self: Actor,
+{
+    type Conn: Conn;
+    type Dialer: Dialer<Self>;
+    type Listener: Listener<Self>;
+}
 
 ///
 /// TODO: follow startup from yggdrasil-go
@@ -51,12 +60,16 @@ use std::sync::{Arc, Mutex};
 ///
 /// ?? Handle<...>
 #[async_trait]
-pub trait Node<C: Core, /* A: Admin */ M: Multicast, T: Tun>: Sized // where
-//     Self: SystemService,
+pub trait Node<C, /* A: Admin */ L, M, T>
+where
+    C: Core,
+    // A: Admin,
+    L: Link<C>,
+    M: Multicast<C>,
+    T: Tun<C>,
+    Self: Sized,
 {
     type Config;
-    // type Dialer: Dialer<C>;
-    // type Listener: Listener;
 
     ///
     async fn from_config<F>(load_config: F) -> Result<Self, Error>
