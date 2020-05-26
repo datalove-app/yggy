@@ -16,7 +16,7 @@ pub use session::*;
 pub use switch::*;
 pub use wire::{Header as WireHeader, Wire};
 
-use crate::error::{ConfigError, Error};
+use crate::error::{Error, TypeError};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -89,7 +89,7 @@ impl TryFrom<u16> for MTU {
 
     fn try_from(raw: u16) -> Result<Self, Self::Error> {
         if raw < 1280 {
-            Err(ConfigError::InvalidMTU(raw))?
+            Err(TypeError::InvalidMTU(raw))?
         } else {
             Ok(Self(raw))
         }

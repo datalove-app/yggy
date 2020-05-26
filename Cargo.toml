@@ -31,10 +31,12 @@ path = "bin/yggysim/main.rs"
 anyhow = "1.0"
 async-std = "1.6"
 async-trait = "0.1"
+bitvec = "0.17.4"
 boringtun = "0.3"
 derive_more = "0.99"
 digest = "0.8.1"
 ed25519-dalek = { version = "0.9", features = ["serde"] }
+ipnet = { version = "2.3.0", features = ["serde"] }
 itertools = "0.9.0"
 lazy_static = "1.4"
 log = "0.4.8"

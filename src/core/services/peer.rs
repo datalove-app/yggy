@@ -24,6 +24,7 @@ pub struct NewPeer<P> {
     box_shared_key: BoxSharedKey,
     peer: std::marker::PhantomData<P>,
 }
+
 impl<P: Send + 'static> Message for NewPeer<P> {
     type Result = Addr<P>;
 }

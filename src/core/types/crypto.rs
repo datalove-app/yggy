@@ -1,9 +1,14 @@
+use crate::error::{Error, TypeError};
+use bitvec::{order::Msb0, slice::BitSlice};
 use boringtun::crypto::x25519;
-use derive_more::{From, FromStr};
-use digest::{generic_array::GenericArray, Digest};
+use derive_more::{AsRef, From, FromStr};
+use digest::{generic_array::GenericArray, Digest, FixedOutput};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Sha512;
-use std::cmp::Ordering;
+use std::{
+    cmp::Ordering,
+    convert::{TryFrom, TryInto},
+};
 
 /*
  * IDs
@@ -14,10 +19,14 @@ use std::cmp::Ordering;
 /// It is the SHA-512 digest of the node's [`BoxPublicKey`].
 ///
 /// [`BoxPublicKey`]: ./struct.BoxPublicKey.html
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[derive(AsRef, Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[as_ref(forward)]
 pub struct NodeID(InnerDigest);
 
 impl NodeID {
+    const BYTE_LENGTH: usize = 64;
+    const MAX_LEADING_ONES: u8 = 127;
+
     /// Returns the number of bits set in a masked `NodeID`.
     #[inline]
     pub fn prefix_len(&self) -> u8 {
@@ -29,14 +38,30 @@ impl NodeID {
     pub fn mask(&self) {
         unimplemented!()
     }
-}
 
-impl From<&BoxPublicKey> for NodeID {
     #[inline]
-    fn from(pub_key: &BoxPublicKey) -> Self {
-        Self(Sha512::digest(pub_key.as_bytes()))
+    pub(crate) fn leading_ones(bytes: &[u8]) -> Option<u8> {
+        let bits = BitSlice::<Msb0, u8>::from_slice(bytes);
+        let leading_ones: Option<u8> = bits.iter().take_while(|b| **b).count().try_into().ok();
+
+        leading_ones.filter(|ones| ones <= &Self::MAX_LEADING_ONES)
     }
 }
+
+/// TODO assert leading ones <= 127?
+impl TryFrom<&BoxPublicKey> for NodeID {
+    type Error = Error;
+
+    #[inline]
+    fn try_from(pub_key: &BoxPublicKey) -> Result<Self, Self::Error> {
+        let digest = Sha512::digest(pub_key.as_bytes());
+        Ok(Self::leading_ones(&digest)
+            .and(Some(Self(digest)))
+            .ok_or_else(|| TypeError::InvalidNodeID("too many leading ones".into()))?)
+    }
+}
+
+pub type NodeIDMask = InnerDigest;
 
 /// The identifier of a node in the root selection algorithm used to construct
 /// the spanning tree.
@@ -46,6 +71,10 @@ impl From<&BoxPublicKey> for NodeID {
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct TreeID(InnerDigest);
 
+impl TreeID {
+    const BYTE_LENGTH: usize = 64;
+}
+
 impl From<&SigningPublicKey> for TreeID {
     #[inline]
     fn from(pub_key: &SigningPublicKey) -> Self {
@@ -54,7 +83,7 @@ impl From<&SigningPublicKey> for TreeID {
 }
 
 ///
-pub(crate) type Handle = [u8; 8];
+pub type Handle = [u8; 8];
 
 /*
  * Keys

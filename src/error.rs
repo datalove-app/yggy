@@ -8,8 +8,8 @@ pub enum Error {
     #[error("TODO")]
     Init,
 
-    #[error("configuration error: {0}")]
-    Config(#[from] ConfigError),
+    #[error("type error: {0}")]
+    Type(#[from] TypeError),
 
     #[error("connection error: {0}")]
     Conn(ConnError),
@@ -21,13 +21,19 @@ pub enum Error {
     WireWrite(std::io::Error),
 }
 
-/// Errors that occur during node configuration.
+/// Type errors.
 #[derive(Debug, Error)]
-pub enum ConfigError {
+pub enum TypeError {
     #[error("invalid MTU `{0}`: minimum acceptable is 1280")]
     InvalidMTU(u16),
 
-    #[error("invalid peer URI `{0}`: must be `tcp://...` or `socks://.../...`")]
+    #[error("invalid IPv6 peer address `{0}`: must be within `200::/7`")]
+    OutOfBoundsAddress(ipnet::Ipv6Net),
+
+    #[error("invalid `NodeID`: {0}")]
+    InvalidNodeID(String),
+
+    #[error("invalid peer URI `{0}`")]
     InvalidPeerURI(#[from] std::net::AddrParseError),
 
     #[error("unknown peer URI `{0}`: must be `tcp://...` or `socks://.../...`")]

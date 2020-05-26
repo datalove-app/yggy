@@ -27,6 +27,7 @@ use std::sync::{Arc, Mutex};
 use xactor::Actor;
 
 ///
+/// TODO
 pub trait Core
 where
     Self: Actor,

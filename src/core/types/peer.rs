@@ -1,5 +1,5 @@
 use super::{BoxPublicKey, SigningPublicKey, SwitchLocator, SwitchMessage, SwitchPort};
-use crate::error::{ConfigError, Error};
+use crate::error::{Error, TypeError};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -75,7 +75,7 @@ impl FromStr for PeerURI {
                 let addr = raw
                     .trim_start_matches("tcp://")
                     .parse()
-                    .map_err(ConfigError::InvalidPeerURI)?;
+                    .map_err(TypeError::InvalidPeerURI)?;
                 Ok(Self::TCP(addr))
             }
             // TODO: _ if raw.starts_with("socks://") => {
@@ -84,13 +84,13 @@ impl FromStr for PeerURI {
             //         .split("/")
             //         .take(2)
             //         .collect_tuple()
-            //         .ok_or_else(|| ConfigError::UnknownPeerURI(raw.into()))?;
+            //         .ok_or_else(|| TypeError::UnknownPeerURI(raw.into()))?;
 
-            //     let addr1 = addr1.parse().map_err(ConfigError::InvalidPeerURI)?;
-            //     let addr2 = addr2.parse().map_err(ConfigError::InvalidPeerURI)?;
+            //     let addr1 = addr1.parse().map_err(TypeError::InvalidPeerURI)?;
+            //     let addr2 = addr2.parse().map_err(TypeError::InvalidPeerURI)?;
             //     Ok(Self::SOCKS(addr1, addr2))
             // }
-            _ => Err(ConfigError::UnknownPeerURI(raw.into()))?,
+            _ => Err(TypeError::UnknownPeerURI(raw.into()))?,
         }
     }
 }
