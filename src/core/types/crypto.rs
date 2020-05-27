@@ -1,5 +1,8 @@
 use crate::error::{Error, TypeError};
-use bitvec::{order::Msb0, slice::BitSlice};
+use bitvec::{
+    order::Msb0,
+    slice::{AsBits, BitSlice},
+};
 use boringtun::crypto::x25519;
 use derive_more::{AsRef, From, FromStr};
 use digest::{generic_array::GenericArray, Digest, FixedOutput};
@@ -25,12 +28,12 @@ pub struct NodeID(InnerDigest);
 
 impl NodeID {
     const BYTE_LENGTH: usize = 64;
-    const MAX_LEADING_ONES: u8 = 127;
+    const MAX_PREFIX_LEN: u8 = 127;
 
     /// Returns the number of bits set in a masked `NodeID`.
     #[inline]
     pub fn prefix_len(&self) -> u8 {
-        unimplemented!()
+        Self::leading_ones(self.as_ref()).expect("this should never fail")
     }
 
     ///
@@ -40,11 +43,16 @@ impl NodeID {
     }
 
     #[inline]
-    pub(crate) fn leading_ones(bytes: &[u8]) -> Option<u8> {
-        let bits = BitSlice::<Msb0, u8>::from_slice(bytes);
-        let leading_ones: Option<u8> = bits.iter().take_while(|b| **b).count().try_into().ok();
+    fn leading_ones(bytes: &[u8]) -> Option<u8> {
+        let leading_ones: Option<u8> = bytes
+            .bits::<Msb0>()
+            .iter()
+            .take_while(|b| **b)
+            .count()
+            .try_into()
+            .ok();
 
-        leading_ones.filter(|ones| ones <= &Self::MAX_LEADING_ONES)
+        leading_ones.filter(|count| count <= &Self::MAX_PREFIX_LEN)
     }
 }
 
@@ -55,12 +63,14 @@ impl TryFrom<&BoxPublicKey> for NodeID {
     #[inline]
     fn try_from(pub_key: &BoxPublicKey) -> Result<Self, Self::Error> {
         let digest = Sha512::digest(pub_key.as_bytes());
-        Ok(Self::leading_ones(&digest)
+        let node_id = Self::leading_ones(&digest)
             .and(Some(Self(digest)))
-            .ok_or_else(|| TypeError::InvalidNodeID("too many leading ones".into()))?)
+            .ok_or_else(|| TypeError::InvalidNodeID("too many leading ones".into()))?;
+        Ok(node_id)
     }
 }
 
+///
 pub type NodeIDMask = InnerDigest;
 
 /// The identifier of a node in the root selection algorithm used to construct

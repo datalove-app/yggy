@@ -3,32 +3,27 @@ use crate::error::Error;
 use smallvec::SmallVec;
 use std::{cmp::Ordering, time::Duration};
 
-lazy_static! {
-    ///
-    pub static ref UPDATE_INTERVAL: Duration = ROOT_TIMEOUT / 2;
-    ///
-    pub static ref THROTTLE_INTERVAL: Duration = *UPDATE_INTERVAL / 2;
-}
-
 ///
 pub const ROOT_TIMEOUT: Duration = Duration::from_secs(60);
+///
+pub const UPDATE_INTERVAL: Duration = Duration::from_secs(ROOT_TIMEOUT.as_secs() >> 1);
+///
+pub const THROTTLE_INTERVAL: Duration = Duration::from_secs(UPDATE_INTERVAL.as_secs() >> 1);
 /// Number of switch updates before switching to a faster parent.
 pub const PARENT_UPDATE_THRESHOLD: u8 = 240;
 ///
 pub const MIN_TOTAL_QUEUE_SIZE: u64 = 4 * 1024 * 1024;
-///
-pub const DEFAULT_COORDS_SIZE: usize = 8;
-///
-pub const DEFAULT_COORDS_BYTES_SIZE: usize = 64;
 
 /// Represents a path from the root to a node.
 /// This path is generally part of a spanning tree, except possibly the last hop
 /// (it can loop when sending coords to your parent, but they will see this and
 /// know not to use a looping path).
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Coords(SmallVec<[SwitchPort; DEFAULT_COORDS_SIZE]>);
+pub struct Coords(SmallVec<[SwitchPort; Self::DEFAULT_COORDS_SIZE]>);
 
 impl Coords {
+    const DEFAULT_COORDS_SIZE: usize = 8;
+
     #[inline]
     pub fn distance(&self, other: &Self) -> i64 {
         // TODO: other might need to be bytes from the wire protocol
@@ -47,9 +42,11 @@ impl std::convert::TryFrom<&WireCoords> for Coords {
 ///
 /// [`Coords`]: struct.Coords
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct WireCoords(SmallVec<[u8; DEFAULT_COORDS_BYTES_SIZE]>);
+pub struct WireCoords(SmallVec<[u8; Self::DEFAULT_COORDS_BYTES_SIZE]>);
 
 impl WireCoords {
+    const DEFAULT_COORDS_BYTES_SIZE: usize = 32;
+
     #[inline]
     pub fn distance(&self, other: &Self) -> i64 {
         unimplemented!()

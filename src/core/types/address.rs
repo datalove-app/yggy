@@ -1,6 +1,6 @@
-use super::{NodeID, TreeID};
+use super::{NodeID, NodeIDMask, TreeID};
 use crate::error::{Error, TypeError};
-use bitvec::{order::Msb0, slice::BitSlice};
+use bitvec::{order::Msb0, slice::AsBits};
 use derive_more::{AsRef, From};
 use ipnet::{Ipv6Net, Ipv6Subnets};
 use serde::{Deserialize, Serialize};
@@ -13,10 +13,13 @@ use std::{
 
 lazy_static! {
     ///
+    #[doc(hidden)]
     pub static ref NETWORK_MASK: Ipv6Net = "200::/7".parse().unwrap();
     ///
+    #[doc(hidden)]
     pub static ref ADDRESS_NETMASK: Ipv6Net = "200::/8".parse().unwrap();
     ///
+    #[doc(hidden)]
     pub static ref SUBNET_NETMASK: Ipv6Net = "300::/8".parse().unwrap();
 }
 
@@ -62,13 +65,20 @@ pub struct Address(Ipv6Net);
 impl Address {
     const BYTE_LENGTH: usize = 16;
 
-    /// The first `NodeID` with all the bits known from the `Address` set to
+    pub fn as_slice(&self) -> [u8; Self::BYTE_LENGTH] {
+        self.0.addr().octets()
+    }
+
+    /// Returns two [`NodeID`]s.
+    /// The first [`NodeID`] with all the bits known from the `Address` set to
     /// their correct values.
     /// The second `NodeID` is a bitmask with 1 bit set for each bit that was
     /// known from the `Address`.
     /// This is used to look up `NodeID`s in the DHT and determine if they match
     /// an `Address`.
-    pub fn node_id_and_mask(&self) -> (NodeID, NodeID) {
+    ///
+    /// [`NodeID`]: ../crypto/struct.NodeID.html
+    pub fn node_id_and_mask(&self) -> (NodeID, NodeIDMask) {
         unimplemented!()
     }
 }
@@ -90,33 +100,31 @@ impl TryFrom<Ipv6Net> for Address {
     }
 }
 
-///
-/// Begins with the `ADDRESS_PREFIX`, with the last bit of 0 indicating an address.
+/// Begins with `ADDRESS_PREFIX`, with the last bit set to 0, indicating an address.
 /// The next 8 bits are set to the number of leading 1 bits in the [`NodeID`].
 /// The remainder is the [`NodeID`], excluding the leading 1 bits and the first
-/// leading 0 bit.
+/// leading 0 bit, truncated to the appropriate length.
 ///
 /// [`NodeID`]: ../crypto/struct.NodeID.html
 impl From<&NodeID> for Address {
     fn from(node_id: &NodeID) -> Self {
         let node_bytes: &[u8] = node_id.as_ref();
-        let leading_ones = NodeID::leading_ones(node_bytes).expect("this should never fail");
+        let prefix_len = node_id.prefix_len();
 
-        let mut addr: [u8; Self::BYTE_LENGTH] = [0; Self::BYTE_LENGTH];
+        let mut addr = [0u8; Self::BYTE_LENGTH];
         // write address prefix
         *&mut addr[0] = ADDRESS_PREFIX;
         // write number of leading ones as u8
-        *&mut addr[1] = leading_ones;
+        *&mut addr[1] = prefix_len;
         // write rest as NodeID with leading 1 bits and first leading 0 bit removed
-        let (_, rest_id): (&BitSlice<Msb0, u8>, &BitSlice<Msb0, u8>) =
-            BitSlice::<Msb0, u8>::from_slice(node_bytes).split_at(leading_ones as usize + 1);
+        // then truncated to maximum 128 bits
+        let node_id_rest = &node_bytes
+            .bits::<Msb0>()
+            .split_at(prefix_len as usize + 1)
+            .1
+            .as_slice()[0..(Self::BYTE_LENGTH - 2)];
+        (&mut addr[2..]).copy_from_slice(node_id_rest);
 
-        // truncate to max 128 bits
-        {
-            let rest_id = &rest_id.as_slice()[0..(Self::BYTE_LENGTH - 2)];
-            let (_, rest) = addr.split_at_mut(2);
-            rest.copy_from_slice(&rest_id);
-        }
         Self(Ipv6Addr::from(addr).into())
     }
 }
@@ -124,26 +132,49 @@ impl From<&NodeID> for Address {
 ///
 #[derive(AsRef, Copy, Clone, Debug, Eq, PartialEq)]
 #[as_ref(forward)]
-pub struct Subnet([u8; 8]);
+pub struct Subnet([u8; Subnet::BYTE_LENGTH]);
 
 impl Subnet {
+    const BYTE_LENGTH: usize = 8;
+
     /// The first `NodeID` with all the bits known from the `Subnet` set to
     /// their correct values.
     /// The second `NodeID` is a bitmask with 1 bit set for each bit that was
     /// known from the `Subnet`.
     /// This is used to look up `NodeID`s in the DHT and determine if they match
     /// an `Subnet`.
-    pub fn node_id_and_mask(&self) -> (NodeID, NodeID) {
+    pub fn node_id_and_mask(&self) -> (NodeID, NodeIDMask) {
         unimplemented!()
     }
 }
 
+/// Begins with `SUBNET_PREFIX`, with the last bit set to 1, indicating a subnet.
+/// The rest of the bits are set to the same as an [`Address`], truncated to
+/// the appropriate length.
 ///
-/// This subnet begins with the address prefix, with the last bit set to 1 to indicate a prefix.
-/// The following 8 bits are set to the number of leading 1 bits in the NodeID.
-/// The NodeID, excluding the leading 1 bits and the first leading 0 bit, is truncated to the appropriate length and makes up the remainder of the subnet.
+/// [`Address`]: ./struct.Address.html
 impl From<&NodeID> for Subnet {
     fn from(node_id: &NodeID) -> Self {
-        unimplemented!()
+        let addr_bytes = Address::from(node_id).as_slice();
+
+        let mut subnet = [0u8; Self::BYTE_LENGTH];
+        // set subnet prefix
+        *&mut subnet[0] = SUBNET_PREFIX;
+        // copy rest from addr
+        let rest_addr = &addr_bytes[1..Self::BYTE_LENGTH];
+        (&mut subnet[1..]).copy_from_slice(&rest_addr);
+
+        Self(subnet)
+    }
+}
+
+impl TryFrom<Ipv6Net> for Subnet {
+    type Error = Error;
+    fn try_from(raw: Ipv6Net) -> Result<Self, Self::Error> {
+        if *SUBNET_NETMASK.contains(&raw) {
+            Ok(raw)
+        } else {
+            Err(Error::InvalidAddress(raw))
+        }
     }
 }
