@@ -24,9 +24,9 @@
 //!     >>>
 
 // mod admin;
-mod link;
-mod multicast;
-mod tun;
+pub mod link;
+pub mod multicast;
+pub mod tun;
 
 pub use link::Link;
 pub use multicast::Multicast;

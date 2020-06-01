@@ -1,6 +1,6 @@
-use crate::core::{
-    types::{NodeID, PeerInfo, SigningPublicKey, SwitchLocator, SwitchPort},
-    Core,
+use crate::{
+    core_interfaces::Core,
+    core_types::{NodeID, PeerInfo, SigningPublicKey, SwitchLocator, SwitchPort},
 };
 use std::{collections::HashMap, time::Duration};
 

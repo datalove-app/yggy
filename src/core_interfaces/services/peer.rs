@@ -1,4 +1,4 @@
-use crate::core::{types::*, Core};
+use crate::{core_interfaces::Core, core_types::*};
 use xactor::{Actor, Addr, Handler, Message};
 
 /// Represents peer

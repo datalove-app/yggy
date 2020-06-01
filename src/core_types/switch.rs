@@ -19,11 +19,12 @@ pub const MIN_TOTAL_QUEUE_SIZE: u64 = 4 * 1024 * 1024;
 /// (it can loop when sending coords to your parent, but they will see this and
 /// know not to use a looping path).
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Coords(SmallVec<[SwitchPort; Self::DEFAULT_COORDS_SIZE]>);
+pub struct Coords(SmallVec<[SwitchPort; Self::DEFAULT_SIZE]>);
 
 impl Coords {
-    const DEFAULT_COORDS_SIZE: usize = 8;
+    const DEFAULT_SIZE: usize = 8;
 
+    ///
     #[inline]
     pub fn distance(&self, other: &Self) -> i64 {
         // TODO: other might need to be bytes from the wire protocol
@@ -42,11 +43,12 @@ impl std::convert::TryFrom<&WireCoords> for Coords {
 ///
 /// [`Coords`]: struct.Coords
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct WireCoords(SmallVec<[u8; Self::DEFAULT_COORDS_BYTES_SIZE]>);
+pub struct WireCoords(SmallVec<[u8; Self::DEFAULT_BYTES_SIZE]>);
 
 impl WireCoords {
-    const DEFAULT_COORDS_BYTES_SIZE: usize = 32;
+    const DEFAULT_BYTES_SIZE: usize = 32;
 
+    ///
     #[inline]
     pub fn distance(&self, other: &Self) -> i64 {
         unimplemented!()

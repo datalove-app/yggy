@@ -1,15 +1,15 @@
 use super::Session;
 use crate::{
-    core::types::{NodeID, SearchInfo},
+    core_types::{NodeID, SearchInfo},
     error::Error,
 };
-use xactor::LocalService;
+use xactor::Actor;
 
 ///
 /// ?? Handle<StartSearch>
 pub trait SearchManager
 where
-    Self: LocalService,
+    Self: Actor,
 {
     /// Information about an ongoing search.
     ///

@@ -5,8 +5,7 @@ mod conn;
 mod dialer;
 mod listener;
 mod ports;
-pub mod services;
-pub mod types;
+mod services;
 
 // #[doc(inline)]
 // pub use admin::Admin;
@@ -17,9 +16,11 @@ pub use dialer::Dialer;
 #[doc(inline)]
 pub use listener::Listener;
 #[doc(inline)]
-pub use ports::{Link, Multicast, Tun};
+pub use ports::*;
+#[doc(inline)]
+pub use services::*;
 
-use self::types::{BoxKeypair, SigningKeypair};
+use crate::core_types::{BoxKeypair, SigningKeypair};
 use crate::error::Error;
 use async_std::prelude::Future;
 use async_trait::async_trait;
@@ -72,19 +73,19 @@ where
 {
     type Config;
 
-    ///
-    async fn from_config<F>(load_config: F) -> Result<Self, Error>
-    where
-        F: Future<Output = Self::Config>;
+    // ///
+    // async fn from_config<F>(load_config: F) -> Result<Self, Error>
+    // where
+    //     F: Future<Output = Self::Config>;
 
-    /// Augments/replaces
-    /// TODO
-    async fn with_signing_keys<F>(self, load_kp: F) -> Result<Self, Error>
-    where
-        F: Future<Output = SigningKeypair>;
-    async fn with_box_keys<F>(self, load_kp: F) -> Result<Self, Error>
-    where
-        F: Future<Output = BoxKeypair>;
+    // /// Augments/replaces
+    // /// TODO
+    // async fn with_signing_keys<F>(self, load_kp: F) -> Result<Self, Error>
+    // where
+    //     F: Future<Output = SigningKeypair>;
+    // async fn with_box_keys<F>(self, load_kp: F) -> Result<Self, Error>
+    // where
+    //     F: Future<Output = BoxKeypair>;
 }
 
 // #[async_trait]

@@ -1,14 +1,4 @@
-//!
-
-mod search;
-mod session;
-
-#[doc(inline)]
-pub use search::SearchManager;
-#[doc(inline)]
-pub use session::{Session, SessionManager};
-
-use crate::core::{types::wire, Core};
+use crate::{core_interfaces::Core, core_types::wire};
 use xactor::{Actor, StreamHandler};
 
 ///
@@ -22,4 +12,7 @@ where
     // type IncomingTraffic:
 
     fn reconfigure(&mut self);
+}
+
+pub mod messages {
 }

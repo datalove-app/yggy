@@ -12,7 +12,7 @@ pub enum Error {
     Type(#[from] TypeError),
 
     #[error("connection error: {0}")]
-    Conn(ConnError),
+    Conn(#[from] ConnError),
 
     #[error("wire read error: {0}")]
     WireRead(std::io::Error),

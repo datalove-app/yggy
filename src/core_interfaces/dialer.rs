@@ -1,8 +1,8 @@
-use super::{
-    types::{Address, NetworkID},
-    Conn, Core,
+use super::{Conn, Core};
+use crate::{
+    core_types::{Address, NetworkID},
+    error::Error,
 };
-use crate::error::Error;
 use async_trait::async_trait;
 use xactor::Actor;
 

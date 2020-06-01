@@ -1,4 +1,4 @@
-use crate::core::{types::ROOT_TIMEOUT, Core};
+use crate::{core_interfaces::Core, core_types::ROOT_TIMEOUT};
 use std::time::Duration;
 use xactor::{Actor, Handler, Message};
 

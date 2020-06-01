@@ -9,7 +9,8 @@ extern crate lazy_static;
 extern crate log;
 
 mod config;
-pub mod core;
+pub mod core_interfaces;
+pub mod core_types;
 pub mod error;
 pub mod multicast;
 pub mod notes;

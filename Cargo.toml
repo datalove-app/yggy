@@ -31,7 +31,7 @@ path = "bin/yggysim/main.rs"
 anyhow = "1.0"
 async-std = "1.6"
 async-trait = "0.1"
-bitvec = "0.17.4"
+bitvec = { version = "0.17.4", default-features = false }
 boringtun = "0.3"
 derive_more = "0.99"
 digest = "0.8.1"
@@ -50,8 +50,8 @@ xactor = "0.6"
 [features]
 default = ["std", "u64_backend"]
 # re-exports of various dependency features
-std = ["ed25519-dalek/std", "sha2/std"]
-alloc = ["ed25519-dalek/alloc"]
+std = ["bitvec/std", "ed25519-dalek/std", "sha2/std"]
+alloc = ["bitvec/alloc", "ed25519-dalek/alloc"]
 nightly = ["ed25519-dalek/nightly"]
 asm = ["ed25519-dalek/asm", "sha2/asm"]
 yolocrypto = ["ed25519-dalek/yolocrypto"]

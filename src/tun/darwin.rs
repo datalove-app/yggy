@@ -1,4 +1,4 @@
-use crate::core::Tun;
+use crate::core_interfaces::Tun;
 
 const SIOAIFADDR_IN6: u32           = 2155899162;
 const IN6_IFF_NODAD: u8             = 0x0020;

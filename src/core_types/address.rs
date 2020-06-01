@@ -132,7 +132,7 @@ impl From<&NodeID> for Address {
 ///
 #[derive(AsRef, Copy, Clone, Debug, Eq, PartialEq)]
 #[as_ref(forward)]
-pub struct Subnet([u8; Subnet::BYTE_LENGTH]);
+pub struct Subnet(Ipv6Net);
 
 impl Subnet {
     const BYTE_LENGTH: usize = 8;
@@ -157,24 +157,24 @@ impl From<&NodeID> for Subnet {
     fn from(node_id: &NodeID) -> Self {
         let addr_bytes = Address::from(node_id).as_slice();
 
-        let mut subnet = [0u8; Self::BYTE_LENGTH];
-        // set subnet prefix
+        let mut subnet = [0u8; Address::BYTE_LENGTH];
+        // set subnet prefix byte
         *&mut subnet[0] = SUBNET_PREFIX;
-        // copy rest from addr
+        // copy rest of bytes from addr
         let rest_addr = &addr_bytes[1..Self::BYTE_LENGTH];
-        (&mut subnet[1..]).copy_from_slice(&rest_addr);
+        (&mut subnet[1..Self::BYTE_LENGTH]).copy_from_slice(&rest_addr);
 
-        Self(subnet)
+        Self(Ipv6Addr::from(subnet).into())
     }
 }
 
 impl TryFrom<Ipv6Net> for Subnet {
     type Error = Error;
     fn try_from(raw: Ipv6Net) -> Result<Self, Self::Error> {
-        if *SUBNET_NETMASK.contains(&raw) {
-            Ok(raw)
+        if (*SUBNET_NETMASK).contains(&raw) {
+            Ok(Self(raw))
         } else {
-            Err(Error::InvalidAddress(raw))
+            Err(TypeError::OutOfBoundsAddress(raw))?
         }
     }
 }
