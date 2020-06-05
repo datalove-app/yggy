@@ -1,4 +1,4 @@
-use async_std::io::{BufRead, Write};
+use futures::io::{AsyncRead, AsyncWrite};
 
 /// Represents an active connection session between the local node and a remote
 /// node.
@@ -8,7 +8,7 @@ use async_std::io::{BufRead, Write};
 /// ?? is a Port
 pub trait Conn
 where
-    Self: BufRead + Write,
+    Self: AsyncRead + AsyncWrite,
 {
     const READ_BUFFER_SIZE: u16 = 1024;
 

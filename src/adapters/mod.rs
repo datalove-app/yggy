@@ -4,6 +4,9 @@
 //! - represent ...
 //! - represent ...
 
+mod multicast;
+mod tun;
+
 //  Driver/Driving (primary, use-case, UI-facing) adapters:
 //      ** translates driver input to core types + service calls
 //      owns/is given/generic over a port impl/interface

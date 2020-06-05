@@ -4,15 +4,13 @@ use crate::{
     error::Error,
 };
 use async_trait::async_trait;
-use xactor::Actor;
+use std::convert::TryInto;
 
-///
+/// Represents a connection dialer.
 ///
 /// ? Handle<...>
-pub trait Dialer<C: Core>
-where
-    Self: Actor,
-{
+#[async_trait::async_trait]
+pub trait Dialer<C: Core> {
     //
     //  TODO follow flow
     //      search `router` (`searches` map) for nodeid
@@ -21,5 +19,9 @@ where
     //          else,
     //              router.searches.newIterSearch, startSearch
     //              finish initing conn.session
-    // async fn dial(&self, network_id: NetworkID, address: Address) -> Result<Self::Conn, Error>;
+    async fn dial<A: TryInto<Address>>(
+        &mut self,
+        address: A,
+        network: NetworkID,
+    ) -> Result<C::Conn, Error>;
 }

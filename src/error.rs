@@ -42,5 +42,6 @@ pub enum TypeError {
 
 /// Errors that occur ...
 /// TODO
+/// impl Into<io::Error>
 #[derive(Debug, Error)]
 pub enum ConnError {}

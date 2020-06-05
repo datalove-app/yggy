@@ -8,13 +8,12 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
+mod adapters;
 mod config;
 pub mod core_interfaces;
 pub mod core_types;
 pub mod error;
-pub mod multicast;
 pub mod notes;
-pub mod tun;
 
 #[doc(inline)]
 pub use config::Config;

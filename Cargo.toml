@@ -8,13 +8,13 @@ readme = "README.md"
 repository = "https://github.com/datalove-app/yggy"
 keywords = ["cryptography", "networking", "p2p"]
 categories = ["cryptography"]
-license = "LGPL-3.0" # TODO
+license = "LGPL-3.0" # FIXME
 
 [lib]
 name = "yggy"
 path = "src/lib.rs"
 
-# TODO? restrict binary building to linux/mac/windows
+# TODO? restrict binary building to linux/mac/windows?
 [[bin]]
 name = "yggyd"
 path = "bin/yggyd/main.rs"
@@ -28,24 +28,28 @@ name = "yggysim"
 path = "bin/yggysim/main.rs"
 
 [dependencies]
+# main
 anyhow = "1.0"
-async-std = "1.6"
 async-trait = "0.1"
-bitvec = { version = "0.17.4", default-features = false }
 boringtun = "0.3"
-derive_more = "0.99"
 digest = "0.8.1"
 ed25519-dalek = { version = "0.9", features = ["serde"] }
+futures = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+# tokio = "0.2"
+tun = { version = "0.5", features = ["async"] }
+xactor = "0.6"
+# helper, util
+bitvec = { version = "0.17.4", default-features = false }
+derive_more = "0.99"
 ipnet = { version = "2.3.0", features = ["serde"] }
 itertools = "0.9.0"
 lazy_static = "1.4"
 log = "0.4.8"
 rand = "0.6"
-serde = { version = "1.0", features = ["derive"] }
 sha2 = { version = "0.8.1", default-features = false }
 smallvec = { version = "1.4", features = ["write"] }
-thiserror = "1.0"
-xactor = "0.6"
 
 [features]
 default = ["std", "u64_backend"]

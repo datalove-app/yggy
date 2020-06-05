@@ -3,6 +3,7 @@ use crate::{
     core_types::*,
     error::Error,
 };
+use futures::io::{AsyncRead, AsyncWrite};
 use std::time::Duration;
 use xactor::{Actor, Handler, Message, StreamHandler};
 
@@ -13,8 +14,6 @@ pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(120);
 // ///
 // pub const HEADER_LENGTH: usize = 40;
 
-// ? look at https://github.com/actix/actix/blob/master/examples/chat/src/main.rs
-
 /// Represents a running TUN interface.
 ///
 /// ## What is TUN, what is Wireguard, and why do we use them?
@@ -24,13 +23,14 @@ pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(120);
 /// on startup:
 ///     init handler loop
 ///         for each yg.Conn in Listener.await
-///             wrap each in TunConn (driving adapter)
+///             _wrap each in TunConn (driving adapter)
 ///             close existing ones (by asking Tun.has_conn)
 ///                 save it
 ///             ? yconn.subscribe(TunnConn._read).or_timeout()
 ///                 in reality, yg.Conn drains an inner buffer
-///                 calls
-///             packets go to a session (crypto-boxed!)
+///                     gives it to TunConn._read
+///                 calls tunWriter.writeFrom
+///                     calls iface.write
 ///
 ///     start a tunReader (actor)
 ///         waits for packet delivered by TUN device (iface)
@@ -54,10 +54,8 @@ where
 
     ///
     type Conn: TunConn<C>;
-
-    fn name(&self) -> &str;
-
-    fn mtu(&self) -> &MTU;
+    ///
+    type Device: TunDevice;
 }
 
 ///
@@ -83,4 +81,12 @@ pub mod messages {
     pub struct IncomingConnection;
 
     // pub struct
+}
+
+///
+/// Underlying TUN interface.
+pub trait TunDevice: AsyncRead + AsyncWrite {
+    fn name(&self) -> &str;
+
+    fn mtu(&self) -> MTU;
 }

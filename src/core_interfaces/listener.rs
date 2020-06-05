@@ -1,13 +1,21 @@
 use super::{Conn, Core};
-use xactor::Actor;
+use crate::error::Error;
+use futures::Stream;
+use xactor::Addr;
 
-/// Produces a stream of `Conn`s.
+/// Represents a connection listener Produces a stream of `Conn`s.
 ///
 /// Provided by core
 ///
 /// ? Handle<...>
-pub trait Listener<C: Core>
+#[async_trait::async_trait]
+pub trait Listener<C: Core>: Sized
 where
-    Self: Actor,
+    Self: Stream<Item = Result<C::Conn, Error>>,
 {
+    async fn accept(&mut self) -> Result<C::Conn, Error>;
+
+    async fn bind() -> Result<Self, Error> {
+        unimplemented!()
+    }
 }

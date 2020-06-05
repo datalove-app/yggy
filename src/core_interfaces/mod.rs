@@ -22,8 +22,8 @@ pub use services::*;
 
 use crate::core_types::{BoxKeypair, SigningKeypair};
 use crate::error::Error;
-use async_std::prelude::Future;
 use async_trait::async_trait;
+use futures::Future;
 use std::sync::{Arc, Mutex};
 use xactor::Actor;
 
@@ -44,7 +44,7 @@ where
 ///     ...
 ///     - init a logger
 ///     - start node.core - starts DHT, router, switch, other core components
-///         inits core (structs; peers, router, switchtable)
+///         inits core (structs: peers, router, switchtable)
 ///         inits link
 ///         inits switchtable
 ///         inits router

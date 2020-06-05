@@ -93,7 +93,17 @@ impl From<&SigningPublicKey> for TreeID {
 }
 
 ///
-pub type Handle = [u8; 8];
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Handle([u8; 8]);
+
+impl Handle {
+    ///
+    /// TODO generate random handles
+    #[inline]
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
 
 /*
  * Keys

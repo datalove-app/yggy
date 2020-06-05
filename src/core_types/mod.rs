@@ -68,9 +68,14 @@ impl Default for InterfaceName {
 }
 
 ///
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(try_from = "u16")]
 pub struct MTU(u16);
+
+impl MTU {
+    /// Minimum allowable MTU.
+    const MIN: u16 = 1280;
+}
 
 // TODO handle platform-specific
 // #[cfg(any(target_os = "macos", target_os = "ios"))] and
@@ -88,7 +93,7 @@ impl TryFrom<u16> for MTU {
     type Error = Error;
 
     fn try_from(raw: u16) -> Result<Self, Self::Error> {
-        if raw < 1280 {
+        if raw < Self::MIN || raw > u16::MAX {
             Err(TypeError::InvalidMTU(raw))?
         } else {
             Ok(Self(raw))
