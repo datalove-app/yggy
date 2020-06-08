@@ -1516,9 +1516,7 @@ dependencies = [
 
 [[package]]
 name = "xactor"
-version = "0.6.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7adaaa4db37eda9a022583a3dbc0448df6a6c86c98c9d7bb0b5b737a5e2e9b85"
+version = "0.6.4"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1531,9 +1529,7 @@ dependencies = [
 
 [[package]]
 name = "xactor-derive"
-version = "0.6.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1100bf592950077bdeb7d229942d5aae7bf74f403f35674aab2447813ba7bab"
+version = "0.2.0"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -75,6 +75,9 @@ pub struct MTU(u16);
 impl MTU {
     /// Minimum allowable MTU.
     const MIN: u16 = 1280;
+    /// Maximum allowable MTU.
+    /// TODO platform-specific
+    const MAX: u16 = 65535;
 }
 
 // TODO handle platform-specific
@@ -86,14 +89,11 @@ impl Default for MTU {
     }
 }
 
-// TODO handle platform-specific maximum
-// #[cfg(any(target_os = "macos", target_os = "ios"))] and
-// #[cfg(target_os = "linux")]
 impl TryFrom<u16> for MTU {
     type Error = Error;
 
     fn try_from(raw: u16) -> Result<Self, Self::Error> {
-        if raw < Self::MIN || raw > u16::MAX {
+        if raw < Self::MIN || raw > Self::MAX {
             Err(TypeError::InvalidMTU(raw))?
         } else {
             Ok(Self(raw))

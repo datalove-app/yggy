@@ -4,8 +4,11 @@ use crate::{
     error::Error,
 };
 use futures::io::{AsyncRead, AsyncWrite};
-use std::time::Duration;
-use xactor::{Actor, Handler, Message, StreamHandler};
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
+use xactor::{Actor, Addr, Handler, Message, StreamHandler};
 
 ///
 pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(120);
@@ -34,21 +37,26 @@ pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(120);
 ///
 ///     start a tunReader (actor)
 ///         waits for packet delivered by TUN device (iface)
-///         Tun::_handle_packet (sends packet to TunConn)
+///         tunAdapter._handle_packet (sends packet to TunConn)
 ///             finds cached TunConn from Tun
 ///                 or calls ygg.Dialer.Dial to create a ygg.Conn
 ///                 then wraps it as TunConn
-///             calls TunConn.writefrom
+///             calls TunConn.writefrom (._write)
+///                 creates FlowKeyMessage
+///                 ygg.Conn.WriteFrom
+///                     then if packet too big:
+///                         tunWriter.writeFrom(ICMP packet)
+///
 ///     start the ckr
 ///
 /// ???? is a Port
 /// ? Handle<IncomingConnection>
 ///     ? spawns TunConn `for yg.Conn in Listener.await`
 ///     ? stores `Addr<TunConn>` by remote address and subnet
+#[async_trait::async_trait]
 pub trait Tun<C: Core>
 where
     Self: Actor,
-    Self: Handler<messages::IncomingConnection>,
 {
     const IPV6_HEADER_LEN: u8 = 40;
 
@@ -83,8 +91,7 @@ pub mod messages {
     // pub struct
 }
 
-///
-/// Underlying TUN interface.
+/// Represents the underlying, platform-specific TUN interface.
 pub trait TunDevice: AsyncRead + AsyncWrite {
     fn name(&self) -> &str;
 

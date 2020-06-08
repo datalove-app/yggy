@@ -1,6 +1,6 @@
 ///
 /// ? Handle<...>
-pub trait SessionManager // where
+pub trait SessionManager: Sized // where
 //     Self: SystemService,
 {
     /// Information about an ongoing Session.
@@ -15,7 +15,7 @@ pub trait SessionManager // where
 
 ///
 /// ? can be polled until completion, producing a Session
-pub trait Session // where
+pub trait Session: Sized // where
 //     Self: Actor,
 {
 }

@@ -6,7 +6,7 @@ use futures::io::{AsyncRead, AsyncWrite};
 /// It posesses a read buffer that
 ///
 /// ?? is a Port
-pub trait Conn
+pub trait Conn: Send
 where
     Self: AsyncRead + AsyncWrite,
 {

@@ -33,25 +33,25 @@ where
     Self: Actor,
     Self: Handler<Notification>,
 {
-    ///
-    type Reader: LinkReader;
-    ///
-    type Writer: LinkWriter;
+    // ///
+    // type Reader: LinkReader;
+    // ///
+    // type Writer: LinkWriter;
 }
 
-///
-pub trait LinkReader
-where
-    Self: Actor,
-{
-}
+// ///
+// pub trait LinkReader
+// where
+//     Self: Actor,
+// {
+// }
 
-///
-pub trait LinkWriter
-where
-    Self: Actor,
-{
-}
+// ///
+// pub trait LinkWriter
+// where
+//     Self: Actor,
+// {
+// }
 
 ///
 #[xactor::message(result = "()")]

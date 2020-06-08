@@ -4,6 +4,7 @@
 mod conn;
 mod dialer;
 mod listener;
+mod node;
 mod ports;
 mod services;
 
@@ -15,6 +16,8 @@ pub use conn::Conn;
 pub use dialer::Dialer;
 #[doc(inline)]
 pub use listener::Listener;
+#[doc(inline)]
+pub use node::Node;
 #[doc(inline)]
 pub use ports::*;
 #[doc(inline)]
@@ -33,59 +36,10 @@ pub trait Core
 where
     Self: Actor,
 {
+    type Config;
     type Conn: Conn;
     type Dialer: Dialer<Self>;
     type Listener: Listener<Self>;
-}
-
-///
-/// TODO: follow startup from yggdrasil-go
-///     - init random or from stdin or file config
-///     ...
-///     - init a logger
-///     - start node.core - starts DHT, router, switch, other core components
-///         inits core (structs: peers, router, switchtable)
-///         inits link
-///         inits switchtable
-///         inits router
-///         starts peer loop, to call each peer
-///             link.call tcp or socks
-///     - register session firewall
-///     - init AdminSocket, setup admin handlers
-///     - init Multicast, then connect admin handlers
-///     - init tuntap interface
-///         init Listener and Dialer (n.core.Conn{Listen,Dialer})
-///         init TunAdapter with l,d, then start
-///         setup admin handlers
-///     - log info, catch interrupts for quit/reload config
-///     -
-///
-/// ?? Handle<...>
-#[async_trait]
-pub trait Node<C, /* A: Admin */ L, M, T>
-where
-    C: Core,
-    // A: Admin,
-    L: Link<C>,
-    M: Multicast<C>,
-    T: Tun<C>,
-    Self: Sized,
-{
-    type Config;
-
-    // ///
-    // async fn from_config<F>(load_config: F) -> Result<Self, Error>
-    // where
-    //     F: Future<Output = Self::Config>;
-
-    // /// Augments/replaces
-    // /// TODO
-    // async fn with_signing_keys<F>(self, load_kp: F) -> Result<Self, Error>
-    // where
-    //     F: Future<Output = SigningKeypair>;
-    // async fn with_box_keys<F>(self, load_kp: F) -> Result<Self, Error>
-    // where
-    //     F: Future<Output = BoxKeypair>;
 }
 
 // #[async_trait]

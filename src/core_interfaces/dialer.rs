@@ -10,7 +10,7 @@ use std::convert::TryInto;
 ///
 /// ? Handle<...>
 #[async_trait::async_trait]
-pub trait Dialer<C: Core> {
+pub trait Dialer<C: Core>: Send {
     //
     //  TODO follow flow
     //      search `router` (`searches` map) for nodeid

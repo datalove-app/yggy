@@ -39,7 +39,7 @@ serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
 # tokio = "0.2"
 tun = { version = "0.5", features = ["async"] }
-xactor = "0.6"
+xactor = { path = "../xactor" }
 # helper, util
 bitvec = { version = "0.17.4", default-features = false }
 derive_more = "0.99"
