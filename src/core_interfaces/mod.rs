@@ -31,7 +31,7 @@ use std::sync::{Arc, Mutex};
 use xactor::Actor;
 
 ///
-/// TODO
+/// TODO <P: PeerManager, R: Router, Se: SearchManager, Ss: SessionManager>
 pub trait Core
 where
     Self: Actor,

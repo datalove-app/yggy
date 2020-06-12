@@ -1,3 +1,4 @@
+use crate::core_interfaces::Session;
 use futures::io::{AsyncRead, AsyncWrite};
 
 /// Represents an active connection session between the local node and a remote
@@ -6,6 +7,7 @@ use futures::io::{AsyncRead, AsyncWrite};
 /// It posesses a read buffer that
 ///
 /// ?? is a Port
+/// todo <S: Session>
 pub trait Conn: Send
 where
     Self: AsyncRead + AsyncWrite,

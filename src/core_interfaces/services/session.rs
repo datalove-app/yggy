@@ -1,3 +1,5 @@
+use xactor::Actor;
+
 ///
 /// ? Handle<...>
 pub trait SessionManager: Sized // where
@@ -15,7 +17,8 @@ pub trait SessionManager: Sized // where
 
 ///
 /// ? can be polled until completion, producing a Session
-pub trait Session: Sized // where
-//     Self: Actor,
+pub trait Session: Sized
+where
+    Self: Actor,
 {
 }

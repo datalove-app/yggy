@@ -24,9 +24,7 @@ use xactor::{Actor, Addr, Context, Handler};
 
 ///
 #[derive(Debug)]
-enum State {
-    
-}
+enum State {}
 
 ///
 #[derive(Debug)]
@@ -36,6 +34,7 @@ pub struct TunAdapter<C: Core> {
     ///
     core: Addr<C>,
     ///
+    /// once?
     listener: Arc<C::Listener>,
     ///
     dialer: C::Dialer,
@@ -48,7 +47,7 @@ pub struct TunAdapter<C: Core> {
     // ///
     // reader:
     // ///
-    // iface: <Self as Tun<C>>::Device,
+    iface: <Self as Tun<C>>::Device,
 }
 
 impl<C: Core> TunAdapter<C> {
@@ -62,7 +61,7 @@ impl<C: Core> TunAdapter<C> {
             conn_by_subnet: HashMap::default(),
             // writer
             // reader
-            // iface: TunDevice
+            iface: TunDevice::default(),
         }
     }
 }
@@ -89,8 +88,13 @@ impl<C: Core> Actor for TunAdapter<C> {
 ///
 ///
 pub struct TunConn<C: Core> {
+    ///
     adapter: Addr<TunAdapter<C>>,
+
+    /// The yggdrasil connection.
     conn: C::Conn,
+
+    /// Handles the underlying Wireguard crypto for the tunnel.
     wg: Tunn,
 }
 

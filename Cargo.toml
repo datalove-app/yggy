@@ -62,3 +62,14 @@ yolocrypto = ["ed25519-dalek/yolocrypto"]
 u64_backend = ["ed25519-dalek/u64_backend"]
 u32_backend = ["ed25519-dalek/u32_backend"]
 avx2_backend = ["ed25519-dalek/avx2_backend"]
+
+# [target.'cfg(not(target_arch="arm"))'.dependencies]
+# ring = "0.16"
+
+# [target.'cfg(not(any(target_os="windows", target_os="ios", target_os="android")))'.dependencies]
+# chrono = "0.4"
+# daemonize = "0.4.1"
+# clap = { version = "2.33", default-features=false, features = ["suggestions"] }
+
+# [target.'cfg(target_os="android")'.dependencies]
+# jni = "0.10"

@@ -15,9 +15,9 @@ pub const KEEP_ALIVE_TIMEOUT: Duration = Duration::from_secs(2);
 ///
 pub const STALL_TIMEOUT: Duration = Duration::from_secs(6);
 
-///
+/// Represents a direct connection to a peer (UDP, AWDL, etc), over some `LinkInterface`.
 /// TODO
-/// Seems to handle traffic from addresses listed in `ListenAddresses`, restricted `AllowedEncryptionPublicKeys`.
+/// Seems to handle traffic from addresses listed in `ListenAddresses`, restricted by `AllowedEncryptionPublicKeys`.
 pub trait Link<C: Core>
 where
     Self: Actor,
@@ -37,6 +37,9 @@ where
     // type Reader: LinkReader;
     // ///
     // type Writer: LinkWriter;
+
+    // ///
+    // async fn split()
 }
 
 // ///

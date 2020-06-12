@@ -67,7 +67,7 @@ where
 }
 
 ///
-/// is an actor that represents a connection (session?) with a remote peer
+/// is an actor that adapts an yg.Conn to an TUN interface connection w/ a remote peer
 ///     polling polls internal yg.Conn
 ///         pulling from a readBuffer (created upon dialing)
 ///

@@ -10,6 +10,7 @@ where
 {
 }
 
+/// Represents a 
 pub trait Peer<C: Core, P: PeerManager<C, Self>>
 where
     Self: Actor,
