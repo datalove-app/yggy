@@ -11,7 +11,7 @@ use xactor::Addr;
 ///
 /// ? Handle<...>
 #[async_trait::async_trait]
-pub trait Listener<C: Core>: Send + Sized
+pub trait Listener<C: Core>: Send + Sync + Sized
 where
     Self: Stream<Item = Result<C::Conn, Error>>,
 {

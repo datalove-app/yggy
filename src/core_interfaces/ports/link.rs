@@ -1,4 +1,7 @@
-use crate::{core_interfaces::Core, core_types::ROOT_TIMEOUT};
+use crate::{
+    core_interfaces::{Core, Peer, PeerManager},
+    core_types::{PeerURI, ROOT_TIMEOUT},
+};
 use std::time::Duration;
 use xactor::{Actor, Handler, Message};
 
@@ -15,23 +18,25 @@ pub const KEEP_ALIVE_TIMEOUT: Duration = Duration::from_secs(2);
 ///
 pub const STALL_TIMEOUT: Duration = Duration::from_secs(6);
 
-/// Represents a direct connection to a peer (UDP, AWDL, etc), over some `LinkInterface`.
-/// TODO
-/// Seems to handle traffic from addresses listed in `ListenAddresses`, restricted by `AllowedEncryptionPublicKeys`.
-pub trait Link<C: Core>
+/// Represents direct connections to peers, over some `LinkInterface` (TCP, UDP, AWDL, etc).
+/// TODO tor?
+/// Seems to handle traffic from addresses in the `Listen` configuration option,
+/// restricted by the `AllowedEncryptionPublicKeys` option.
+pub trait LinkManager<C: Core, P: PeerManager<C>>
 where
     Self: Actor,
+    Self: Handler<messages::Listen>,
 {
-    type Interface: LinkInterface<C, Self>;
+    type Link: Link<C, P::Peer>;
 
     fn reconfigure(&mut self);
 }
 
 ///
-pub trait LinkInterface<C: Core, L: Link<C>>
+pub trait Link<C: Core, P: Peer<C>>
 where
     Self: Actor,
-    Self: Handler<Notification>,
+    Self: Handler<messages::Notification>,
 {
     // ///
     // type Reader: LinkReader;
@@ -40,6 +45,14 @@ where
 
     // ///
     // async fn split()
+}
+
+#[async_trait::async_trait]
+pub trait LinkInterface {
+    // type Listener;
+
+    // async fn listen()
+    // fn split()
 }
 
 // ///
@@ -56,15 +69,29 @@ where
 // {
 // }
 
-///
-#[xactor::message(result = "()")]
-#[derive(Clone, Copy, Debug)]
-pub enum Notification {
-    Sending,
-    BlockedSend,
-    Sent { size: usize, is_link_traffic: bool },
-    Stalled,
-    Reading,
-    Read(usize),
-    KeepAlive,
+pub mod messages {
+    use super::*;
+
+    ///
+    #[xactor::message(result = "()")]
+    #[derive(Clone, Copy, Debug)]
+    pub enum Notification {
+        Sending,
+        BlockedSend,
+        Sent { size: usize, is_link_traffic: bool },
+        Stalled,
+        Reading,
+        Read(usize),
+        KeepAlive,
+    }
+
+    #[derive(Debug)]
+    pub struct Listen {
+        addr: PeerURI,
+    }
+
+    #[async_trait::async_trait]
+    impl xactor::Message for Listen {
+        type Result = ();
+    }
 }

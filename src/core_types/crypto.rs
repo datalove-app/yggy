@@ -188,6 +188,7 @@ impl BoxPublicKey {
 }
 
 impl Default for BoxPublicKey {
+    #[inline]
     fn default() -> Self {
         Self::from([0; 32].as_ref())
     }

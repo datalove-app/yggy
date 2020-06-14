@@ -38,6 +38,10 @@ pub enum TypeError {
 
     #[error("unknown peer URI `{0}`: must be `tcp://...` or `socks://.../...`")]
     UnknownPeerURI(String),
+
+    #[cfg(feature = "tor")]
+    #[error("invalid TOR URI `{0}`: {1}")]
+    InvalidTORPeerURI(String, &'static str),
 }
 
 /// Errors that occur ...

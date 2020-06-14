@@ -1,8 +1,11 @@
 use crate::{
     core_interfaces::Core,
-    core_types::{NodeID, PeerInfo, SigningPublicKey, SwitchLocator, SwitchPort},
+    core_types::{NodeID, SigningPublicKey, SwitchLocator, SwitchPort},
 };
-use std::{collections::HashMap, time::Duration};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
+};
 
 ///
 ///
@@ -68,4 +71,16 @@ impl LookupTable {
 
         unimplemented!()
     }
+}
+
+///
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PeerInfo {
+    key: SigningPublicKey,
+    locator: SwitchLocator,
+    port: SwitchPort,
+    degree: u64,
+    last_seen: Instant,
+    // msg: SwitchMessage,
+    is_blocked: bool,
 }

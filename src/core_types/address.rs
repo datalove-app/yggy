@@ -65,7 +65,7 @@ pub struct Address(Ipv6Net);
 impl Address {
     const BYTE_LENGTH: usize = 16;
 
-    pub fn as_slice(&self) -> [u8; Self::BYTE_LENGTH] {
+    pub fn to_bytes(&self) -> [u8; Self::BYTE_LENGTH] {
         self.0.addr().octets()
     }
 
@@ -155,7 +155,7 @@ impl Subnet {
 /// [`Address`]: ./struct.Address.html
 impl From<&NodeID> for Subnet {
     fn from(node_id: &NodeID) -> Self {
-        let addr_bytes = Address::from(node_id).as_slice();
+        let addr_bytes = Address::from(node_id).to_bytes();
 
         let mut subnet = [0u8; Address::BYTE_LENGTH];
         // set subnet prefix byte

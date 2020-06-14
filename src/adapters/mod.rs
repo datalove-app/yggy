@@ -9,7 +9,7 @@ mod tun;
 
 //  Driver/Driving (primary, use-case, UI-facing) adapters:
 //      ** translates driver input to core types + service calls
-//      owns/is given/generic over a port impl/interface
+//      owns/is given/is generic over a port impl/interface
 //          can also
 //      are given/has access to a "port impl" (to call core services)
 //          can be constructed by core services (w/ a "port impl")

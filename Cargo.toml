@@ -35,10 +35,11 @@ boringtun = "0.3"
 digest = "0.8.1"
 ed25519-dalek = { version = "0.9", features = ["serde"] }
 futures = "0.3"
+libtor = { version = "43.5.1", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
-# tokio = "0.2"
-tun = { version = "0.5", features = ["async"] }
+tokio = "0.2"
+tokio-socks = "0.2.2"
 xactor = { path = "../xactor" }
 # helper, util
 bitvec = { version = "0.17.4", default-features = false }
@@ -53,15 +54,18 @@ smallvec = { version = "1.4", features = ["write"] }
 
 [features]
 default = ["std", "u64_backend"]
-# re-exports of various dependency features
+# library features
+bootstrap = []  # auto-peers to various platform-/device-/peer-specific bootstrap peers
+# re-exported features also used by library
 std = ["bitvec/std", "ed25519-dalek/std", "sha2/std"]
 alloc = ["bitvec/alloc", "ed25519-dalek/alloc"]
 nightly = ["ed25519-dalek/nightly"]
+# re-exported features of various dependencies
 asm = ["ed25519-dalek/asm", "sha2/asm"]
-yolocrypto = ["ed25519-dalek/yolocrypto"]
-u64_backend = ["ed25519-dalek/u64_backend"]
-u32_backend = ["ed25519-dalek/u32_backend"]
 avx2_backend = ["ed25519-dalek/avx2_backend"]
+u32_backend = ["ed25519-dalek/u32_backend"]
+u64_backend = ["ed25519-dalek/u64_backend"]
+yolocrypto = ["ed25519-dalek/yolocrypto"]
 
 # [target.'cfg(not(target_arch="arm"))'.dependencies]
 # ring = "0.16"

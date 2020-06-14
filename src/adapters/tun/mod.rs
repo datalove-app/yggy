@@ -1,15 +1,15 @@
 #[cfg(any(target_os = "macos", target_os = "ios"))]
-#[path = "darwin.rs"]
+#[path = "darwin/mod.rs"]
 mod device;
 
 #[cfg(target_os = "linux")]
-#[path = "linux.rs"]
+#[path = "linux/mod.rs"]
 mod device;
 
-use self::device::Device as TunDevice;
+// use self::device::Device as TunDevice;
 use crate::{
     core_interfaces::{
-        tun::{messages, Tun, TunConn as ITunConn},
+        tun::{messages, Tun},
         Core,
     },
     core_types::{Address, Subnet},
@@ -24,13 +24,14 @@ use xactor::{Actor, Addr, Context, Handler};
 
 ///
 #[derive(Debug)]
-enum State {}
+enum State {
+    Nil,
+}
 
 ///
 #[derive(Debug)]
 pub struct TunAdapter<C: Core> {
-    state: State,
-
+    // state: State,
     ///
     core: Addr<C>,
     ///
@@ -38,38 +39,39 @@ pub struct TunAdapter<C: Core> {
     listener: Arc<C::Listener>,
     ///
     dialer: C::Dialer,
-    ///
-    conn_by_addr: HashMap<Address, Addr<<Self as Tun<C>>::Conn>>,
-    ///
-    conn_by_subnet: HashMap<Subnet, Addr<<Self as Tun<C>>::Conn>>,
+    // ///
+    // conn_by_addr: HashMap<Address, Addr<<Self as Tun<C>>::Conn>>,
+    // ///
+    // conn_by_subnet: HashMap<Subnet, Addr<<Self as Tun<C>>::Conn>>,
     // ///
     // writer:
     // ///
     // reader:
     // ///
-    iface: <Self as Tun<C>>::Device,
+    // iface: <Self as Tun<C>>::Device,
 }
 
 impl<C: Core> TunAdapter<C> {
     #[inline]
     pub fn new(core: Addr<C>, dialer: C::Dialer, listener: Arc<C::Listener>) -> Self {
         Self {
+            // state: State::Nil,
             core,
             listener,
             dialer,
-            conn_by_addr: HashMap::default(),
-            conn_by_subnet: HashMap::default(),
+            // conn_by_addr: HashMap::default(),
+            // conn_by_subnet: HashMap::default(),
             // writer
             // reader
-            iface: TunDevice::default(),
+            // iface: TunDevice::default(),
         }
     }
 }
 
 #[async_trait::async_trait]
 impl<C: Core> Tun<C> for TunAdapter<C> {
-    type Conn = TunConn<C>;
-    type Device = TunDevice;
+    // type Conn = TunConn<C>;
+    // type Device = TunDevice;
 }
 
 #[async_trait::async_trait]
@@ -84,29 +86,29 @@ impl<C: Core> Actor for TunAdapter<C> {
 //     }
 // }
 
-///
-///
-///
-pub struct TunConn<C: Core> {
-    ///
-    adapter: Addr<TunAdapter<C>>,
+// ///
+// ///
+// ///
+// pub struct TunConn<C: Core> {
+//     ///
+//     adapter: Addr<TunAdapter<C>>,
 
-    /// The yggdrasil connection.
-    conn: C::Conn,
+//     /// The yggdrasil connection.
+//     conn: C::Conn,
 
-    /// Handles the underlying Wireguard crypto for the tunnel.
-    wg: Tunn,
-}
+//     /// Handles the underlying Wireguard crypto for the tunnel.
+//     wg: Tunn,
+// }
 
-impl<C: Core> fmt::Debug for TunConn<C> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        unimplemented!()
-    }
-}
+// impl<C: Core> fmt::Debug for TunConn<C> {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         unimplemented!()
+//     }
+// }
 
-impl<C: Core> ITunConn<C> for TunConn<C> {}
+// impl<C: Core> ITunConn<C> for TunConn<C> {}
 
-#[async_trait::async_trait]
-impl<C: Core> Actor for TunConn<C> {
-    async fn started(&mut self, ctx: &Context<Self>) {}
-}
+// #[async_trait::async_trait]
+// impl<C: Core> Actor for TunConn<C> {
+//     async fn started(&mut self, ctx: &Context<Self>) {}
+// }

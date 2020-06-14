@@ -60,28 +60,28 @@ where
 {
     const IPV6_HEADER_LEN: u8 = 40;
 
-    ///
-    type Conn: TunConn<C>;
-    ///
-    type Device: TunDevice;
+    // ///
+    // type Conn: TunConn<C>;
+    // ///
+    // type Device: TunDevice;
 }
 
-///
-/// is an actor that adapts an yg.Conn to an TUN interface connection w/ a remote peer
-///     polling polls internal yg.Conn
-///         pulling from a readBuffer (created upon dialing)
-///
-/// created:
-///     - upon dialing
-///
-/// ???? is a Port
-///      ? Handle<...>
-pub trait TunConn<C: Core>
-where
-    Self: Actor,
-{
-    // type Reader: Conn::
-}
+// ///
+// /// is an actor that adapts an yg.Conn to an TUN interface connection w/ a remote peer
+// ///     polling polls internal yg.Conn
+// ///         pulling from a readBuffer (created upon dialing)
+// ///
+// /// created:
+// ///     - upon dialing
+// ///
+// /// ???? is a Port
+// ///      ? Handle<...>
+// pub trait TunConn<C: Core>
+// where
+//     Self: Actor,
+// {
+//     // type Reader: Conn::
+// }
 
 pub mod messages {
     #[xactor::message(result = "()")]
@@ -91,9 +91,9 @@ pub mod messages {
     // pub struct
 }
 
-/// Represents the underlying, platform-specific TUN interface.
-pub trait TunDevice: AsyncRead + AsyncWrite {
-    fn name(&self) -> &str;
+// /// Represents the underlying, platform-specific TUN interface.
+// pub trait TunDevice: AsyncRead + AsyncWrite {
+//     fn name(&self) -> &str;
 
-    fn mtu(&self) -> MTU;
-}
+//     fn mtu(&self) -> MTU;
+// }

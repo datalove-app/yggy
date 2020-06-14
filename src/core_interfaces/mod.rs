@@ -31,15 +31,25 @@ use std::sync::{Arc, Mutex};
 use xactor::Actor;
 
 ///
-/// TODO <P: PeerManager, R: Router, Se: SearchManager, Ss: SessionManager>
+/// TODO <D: DHT L: LinkManager, P: PeerManager, R: Router, Se: SearchManager, Ss: SessionManager>
 pub trait Core
 where
     Self: Actor,
 {
+    ///
     type Config;
+
+    ///
     type Conn: Conn;
+
+    ///
     type Dialer: Dialer<Self>;
+
+    ///
     type Listener: Listener<Self>;
+
+    ///
+    type PeerManager: PeerManager<Self>;
 }
 
 // #[async_trait]

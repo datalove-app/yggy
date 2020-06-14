@@ -1,4 +1,4 @@
-use super::{Core, Link, Multicast, Tun};
+use super::{Core, LinkManager, Multicast, Tun};
 use crate::{
     core_types::{BoxKeypair, SigningKeypair},
     error::Error,
@@ -36,7 +36,7 @@ pub trait Node<C, /* A: Admin */ L, M, T>: Sized
 where
     C: Core,
     // A: Admin,
-    L: Link<C>,
+    L: LinkManager<C, C::PeerManager>,
     M: Multicast<C>,
     T: Tun<C>,
 {
