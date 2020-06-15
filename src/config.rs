@@ -15,13 +15,12 @@ pub struct Config {
     #[serde(rename = "Peers")]
     peers: PeerURIs,
 
-    /// List of connection strings for outbound peer connections in URI format,
-    /// arranged by source interface, e.g. `{ "eth0": [ tcp://a.b.c.d:e ] }`.
-    /// Note that SOCKS peerings will NOT be affected by this option and should
-    /// go in the "Peers" section instead.
-    #[serde(rename = "InterfacePeers")]
-    interface_peers: InterfacePeerURIs,
-
+    // /// List of connection strings for outbound peer connections in URI format,
+    // /// arranged by source interface, e.g. `{ "eth0": [ tcp://a.b.c.d:e ] }`.
+    // /// Note that SOCKS peerings will NOT be affected by this option and should
+    // /// go in the "Peers" section instead.
+    // #[serde(rename = "InterfacePeers")]
+    // interface_peers: InterfacePeerURIs,
     /// Listen addresses for incoming connections. You will need to add listeners
     /// in order to accept incoming peerings from non-local nodes. Multicast
     /// peer discovery will work regardless of any listeners set here. Each
@@ -30,16 +29,17 @@ pub struct Config {
     #[serde(rename = "Listen")]
     listen: ListenAddresses,
 
+    // /// Regular expressions for which interfaces multicast peer discovery should be enabled on. If none specified, multicast peer discovery is disabled. The default value is .* which uses all interfaces."`
+    // MulticastInterfaces         []string
+    // /// List of peer encryption public keys to allow incoming TCP peering\nconnections from. If left empty/undefined then all connections will\nbe allowed by default. This does not affect outgoing peerings, nor\ndoes it affect link-local peers discovered via multicast."`
+    // AllowedEncryptionPublicKeys []string
     /// Listen address for admin connections. Default is to listen for local
     /// connections either on TCP/9001 or a UNIX socket depending on your
     /// platform. Use this value for `yggyctl -endpoint=X`. To disable the admin
     /// socket, use the value "none" instead.
     #[serde(rename = "AdminListen", default = "PeerURI::default_admin")]
     admin_listen: Option<PeerURI>,
-    // /// Regular expressions for which interfaces multicast peer discovery\nshould be enabled on. If none specified, multicast peer discovery is\ndisabled. The default value is .* which uses all interfaces."`
-    // MulticastInterfaces         []string
-    // /// List of peer encryption public keys to allow incoming TCP peering\nconnections from. If left empty/undefined then all connections will\nbe allowed by default. This does not affect outgoing peerings, nor\ndoes it affect link-local peers discovered via multicast."`
-    // AllowedEncryptionPublicKeys []string
+
     // /// Your public encryption key. Your peers may ask you for this to put\ninto their AllowedEncryptionPublicKeys configuration."`
     // EncryptionPublicKey         string
     // /// Your private encryption key. DO NOT share this with anyone!"`
@@ -48,19 +48,17 @@ pub struct Config {
     // SigningPublicKey            string
     // /// Your private signing key. DO NOT share this with anyone!"`
     // SigningPrivateKey           string
-    /// The port number to be used for the link-local TCP listeners for the
-    /// configured MulticastInterfaces. This option does not affect listeners
-    /// specified in the Listen option. Unless you plan to firewall link-local
-    /// traffic, it is best to leave this as the default value of 0. This option
-    /// cannot currently be changed by reloading config during runtime.
-    #[serde(rename = "LinkLocalTCPPort", default)]
-    link_local_tcp_port: u16,
-
-    /// Local network interface name for TUN adapter, or "auto" to select an
-    /// interface automatically, or "none" to run without TUN.
-    #[serde(rename = "IfName", default)]
-    interface_name: InterfaceName,
-
+    // /// The port number to be used for the link-local TCP listeners for the
+    // /// configured MulticastInterfaces. This option does not affect listeners
+    // /// specified in the Listen option. Unless you plan to firewall link-local
+    // /// traffic, it is best to leave this as the default value of 0. This option
+    // /// cannot currently be changed by reloading config during runtime.
+    // // #[serde(rename = "LinkLocalTCPPort", default)]
+    // // link_local_tcp_port: u16,
+    // /// Local network interface name for TUN adapter, or "auto" to select an
+    // /// interface automatically, or "none" to run without TUN.
+    // #[serde(rename = "IfName", default)]
+    // interface_name: InterfaceName,
     /// Maximum Transmission Unit (MTU) size for your local TUN
     /// interface.
     /// Default is the largest supported size for your platform. The lowest
@@ -76,14 +74,14 @@ pub struct Config {
     /// Rules are prioritised as follows: blacklist, whitelist, always allow
     /// outgoing, direct, remote.
     #[serde(rename = "SessionFirewall")]
-    firewall: SessionFirewallConfig,
+    firewall: SessionFirewallOptions,
 
     /// Allow tunneling non-Yggdrasil traffic over Yggdrasil. This effectively
     /// allows you to use Yggdrasil to route or bridge to other networks,
     /// similar to a VPN tunnel. Tunnelling works between any two nodes and does
     /// not require them to be directly peered.
     #[serde(rename = "TunnelRouting")]
-    tunnel_routing: TunnelRoutingConfig,
+    tunnel_routing: TunnelRoutingOptions,
 
     /// Advanced options for tuning the switch. Normally you will not need nto
     /// edit these options.
@@ -103,7 +101,7 @@ pub struct Config {
 
 /// Controls the session firewall configuration.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SessionFirewallConfig {
+pub struct SessionFirewallOptions {
     /// Enable or disable the session firewall. If disabled, network traffic
     /// from any node will be allowed. If enabled, the below rules apply.
     #[serde(rename = "Enable")]
@@ -140,7 +138,7 @@ pub struct SessionFirewallConfig {
 /// Contains the crypto-key routing tables for tunneling regular IPv4 or IPv6
 /// subnets across the Yggdrasil network.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct TunnelRoutingConfig {
+pub struct TunnelRoutingOptions {
     /// Enable or disable tunnel routing.
     #[serde(rename = "Enable")]
     enable: bool,
@@ -151,8 +149,8 @@ pub struct TunnelRoutingConfig {
     ipv4_remote_subnets: Ipv4Subnets,
 
     /// IPv6 subnets belonging to this node's end of the tunnels. Only traffic
-    /// from these ranges (or the Yggdrasil node's IPv6 address/subnet) will be
-    /// tunnelled.
+    /// from these ranges (and the Yggdrasil node's IPv6 address/subnet) will
+    /// be tunnelled.
     #[serde(rename = "Ipv4LocalSubnets")]
     ipv4_local_subnets: Ipv4Subnets,
 

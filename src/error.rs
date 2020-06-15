@@ -5,8 +5,8 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     /// TODO:
-    #[error("TODO")]
-    Init,
+    #[error("initialization error: {0}")]
+    Init(String),
 
     #[error("type error: {0}")]
     Type(#[from] TypeError),

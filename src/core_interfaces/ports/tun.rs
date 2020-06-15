@@ -1,6 +1,6 @@
 use crate::{
     core_interfaces::{Conn, Core},
-    core_types::*,
+    core_types::MTU,
     error::Error,
 };
 use futures::io::{AsyncRead, AsyncWrite};
@@ -62,8 +62,8 @@ where
 
     // ///
     // type Conn: TunConn<C>;
-    // ///
-    // type Device: TunDevice;
+    ///
+    type Socket: TunSocket;
 }
 
 // ///
@@ -91,9 +91,17 @@ pub mod messages {
     // pub struct
 }
 
-// /// Represents the underlying, platform-specific TUN interface.
-// pub trait TunDevice: AsyncRead + AsyncWrite {
-//     fn name(&self) -> &str;
+/// Represents the underlying, platform-specific TUN socket interface.
+pub trait TunSocket: Sized {
+    type Reader: AsyncRead;
+    type Writer: AsyncWrite;
 
-//     fn mtu(&self) -> MTU;
-// }
+    // TODO: set interface name
+    fn open(mtu: MTU) -> Result<Self, Error>;
+
+    fn name(&self) -> &str;
+
+    // fn mtu(&self) -> MTU;
+
+    fn split(self) -> Result<(Self::Reader, Self::Writer), Error>;
+}

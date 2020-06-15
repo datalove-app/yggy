@@ -1,77 +1,79 @@
 #[cfg(any(target_os = "macos", target_os = "ios"))]
-#[path = "darwin/mod.rs"]
-mod device;
+#[path = "darwin.rs"]
+mod socket;
 
 #[cfg(target_os = "linux")]
-#[path = "linux/mod.rs"]
-mod device;
+#[path = "linux.rs"]
+mod socket;
 
-// use self::device::Device as TunDevice;
+use self::socket::{Socket as TUNSocket, TunReader, TunWriter};
 use crate::{
     core_interfaces::{
-        tun::{messages, Tun},
+        tun::{messages, Tun, TunSocket},
         Core,
     },
-    core_types::{Address, Subnet},
+    core_types::{Address, Subnet, MTU},
+    error::Error,
 };
 use boringtun::noise::{Tunn, TunnResult};
+use futures::io::{self, AsyncRead, AsyncWrite};
 use std::fmt;
 use std::{
     collections::HashMap,
+    pin::Pin,
     sync::{Arc, Mutex},
 };
 use xactor::{Actor, Addr, Context, Handler};
 
 ///
 #[derive(Debug)]
-enum State {
-    Nil,
-}
-
-///
-#[derive(Debug)]
 pub struct TunAdapter<C: Core> {
+    // ///
     // state: State,
     ///
     core: Addr<C>,
-    ///
-    /// once?
-    listener: Arc<C::Listener>,
-    ///
-    dialer: C::Dialer,
+    // ///
+    // /// once?
+    // listener: Arc<C::Listener>,
+    // ///
+    // dialer: C::Dialer,
     // ///
     // conn_by_addr: HashMap<Address, Addr<<Self as Tun<C>>::Conn>>,
     // ///
     // conn_by_subnet: HashMap<Subnet, Addr<<Self as Tun<C>>::Conn>>,
-    // ///
-    // writer:
+    ///
+    writer: Addr<<TUNSocket as TunSocket>::Writer>,
     // ///
     // reader:
-    // ///
-    // iface: <Self as Tun<C>>::Device,
 }
 
 impl<C: Core> TunAdapter<C> {
     #[inline]
-    pub fn new(core: Addr<C>, dialer: C::Dialer, listener: Arc<C::Listener>) -> Self {
-        Self {
-            // state: State::Nil,
+    pub async fn new(
+        core: Addr<C>,
+        // dialer: C::Dialer,
+        // listener: Arc<C::Listener>,
+    ) -> Result<Self, Error> {
+        let (reader, writer) = TUNSocket::open(MTU::default())?.split()?;
+        let writer = writer.start().await;
+
+        Ok(Self {
             core,
-            listener,
-            dialer,
+            // listener,
+            // dialer,
             // conn_by_addr: HashMap::default(),
             // conn_by_subnet: HashMap::default(),
-            // writer
+            writer,
             // reader
-            // iface: TunDevice::default(),
-        }
+            // iface: TUNSocket::open(),
+        })
     }
 }
 
 #[async_trait::async_trait]
 impl<C: Core> Tun<C> for TunAdapter<C> {
     // type Conn = TunConn<C>;
-    // type Device = TunDevice;
+    type Socket = TUNSocket;
 }
 
 #[async_trait::async_trait]
