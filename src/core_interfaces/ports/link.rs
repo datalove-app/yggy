@@ -2,6 +2,7 @@ use crate::{
     core_interfaces::{Core, Peer, PeerManager},
     core_types::{PeerURI, ROOT_TIMEOUT},
 };
+use futures::prelude::*;
 use std::time::Duration;
 use xactor::{Actor, Handler, Message};
 
@@ -49,7 +50,10 @@ where
 
 #[async_trait::async_trait]
 pub trait LinkInterface {
-    // type Listener;
+    ///
+    type Reader: AsyncRead;
+    ///
+    type Writer: AsyncWrite;
 
     // async fn listen()
     // fn split()

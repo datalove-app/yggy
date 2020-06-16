@@ -1,9 +1,6 @@
 use super::TunSocket;
 use crate::{core_types::MTU, error::Error};
-use futures::{
-    io::{self, AsyncRead, AsyncReadExt, AsyncWrite},
-    task,
-};
+use futures::{io, prelude::*, task};
 use smol::Async;
 use std::{
     fs::File,
@@ -36,10 +33,10 @@ impl TunSocket for Socket {
     fn open(mtu: MTU) -> Result<Self, Error> {
         let (raw_file, name) = OpenOptions::new()
             .open()
-            .map_err(|e| Error::Init(format!("{}", e)))?;
+            .map_err(|e| Error::Init(e.into()))?;
         let file = Async::new(raw_file)
             .map(Some)
-            .map_err(|e| Error::Init(format!("{}", e)))?;
+            .map_err(|e| Error::Init(e.into()))?;
 
         Ok(Self { name, mtu, file })
     }
@@ -57,7 +54,7 @@ impl TunSocket for Socket {
             .file
             .take()
             .map(|file| file.split())
-            .ok_or_else(|| Error::Init("already initialized TUN socket".into()))?;
+            .ok_or_else(|| Error::Init(anyhow::Error::msg("already initialized TUN socket")))?;
 
         let socket_info = Arc::new(Mutex::from(self));
         Ok((
@@ -79,13 +76,22 @@ pub struct TunReader {
     reader: io::ReadHalf<Async<File>>,
 }
 
+// #[async_trait::async_trait]
+// impl Actor for TunReader {
+//     async fn started(&mut self, ctx: &ActorContext<Self>) {}
+// }
+
 impl AsyncRead for TunReader {
+    ///
+    /// ? see: iface.go:tunReader._read
     fn poll_read(
-        self: Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut task::Context,
         buf: &mut [u8],
     ) -> task::Poll<Result<usize, io::Error>> {
-        unimplemented!()
+        let reader = &mut self.reader;
+        futures::pin_mut!(reader);
+        reader.poll_read(cx, buf)
     }
 }
 
@@ -102,24 +108,30 @@ impl Actor for TunWriter {
 
 impl AsyncWrite for TunWriter {
     fn poll_write(
-        self: Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut task::Context,
         buf: &[u8],
     ) -> task::Poll<Result<usize, io::Error>> {
-        unimplemented!()
+        let writer = &mut self.writer;
+        futures::pin_mut!(writer);
+        writer.poll_write(cx, buf)
     }
 
     fn poll_flush(
-        self: Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut task::Context,
     ) -> task::Poll<Result<(), io::Error>> {
-        unimplemented!()
+        let writer = &mut self.writer;
+        futures::pin_mut!(writer);
+        writer.poll_flush(cx)
     }
 
     fn poll_close(
-        self: Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut task::Context,
     ) -> task::Poll<Result<(), io::Error>> {
-        unimplemented!()
+        let writer = &mut self.writer;
+        futures::pin_mut!(writer);
+        writer.poll_close(cx)
     }
 }

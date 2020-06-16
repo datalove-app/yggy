@@ -16,14 +16,14 @@ use crate::{
     error::Error,
 };
 use boringtun::noise::{Tunn, TunnResult};
-use futures::io::{self, AsyncRead, AsyncWrite};
-use std::fmt;
+use futures::{io, prelude::*, task};
 use std::{
     collections::HashMap,
+    fmt,
     pin::Pin,
     sync::{Arc, Mutex},
 };
-use xactor::{Actor, Addr, Context, Handler};
+use xactor::{Actor, Addr, Context, Handler, StreamHandler};
 
 ///
 #[derive(Debug)]
@@ -41,10 +41,10 @@ pub struct TunAdapter<C: Core> {
     // conn_by_addr: HashMap<Address, Addr<<Self as Tun<C>>::Conn>>,
     // ///
     // conn_by_subnet: HashMap<Subnet, Addr<<Self as Tun<C>>::Conn>>,
+    // ///
+    // reader: Addr<<TUNSocket as TunSocket>::Reader>,
     ///
     writer: Addr<<TUNSocket as TunSocket>::Writer>,
-    // ///
-    // reader:
 }
 
 impl<C: Core> TunAdapter<C> {
@@ -63,9 +63,8 @@ impl<C: Core> TunAdapter<C> {
             // dialer,
             // conn_by_addr: HashMap::default(),
             // conn_by_subnet: HashMap::default(),
+            // reader,
             writer,
-            // reader
-            // iface: TUNSocket::open(),
         })
     }
 }
@@ -82,11 +81,18 @@ impl<C: Core> Actor for TunAdapter<C> {
 }
 
 // #[async_trait::async_trait]
-// impl Handler<messages::IncomingConnection> for TunAdapter {
+// impl<C: Core> Handler<messages::IncomingConnection> for TunAdapter<C> {
 //     async fn handle(&mut self, ctx: &Context<Self>, msg: messages::IncomingConnection) {
 //         unimplemented!()
 //     }
 // }
+
+#[async_trait::async_trait]
+impl<C: Core> StreamHandler<messages::Packet> for TunAdapter<C> {
+    async fn handle(&mut self, ctx: &Context<Self>, msg: messages::Packet) {
+        unimplemented!()
+    }
+}
 
 // ///
 // ///
@@ -114,3 +120,13 @@ impl<C: Core> Actor for TunAdapter<C> {
 // impl<C: Core> Actor for TunConn<C> {
 //     async fn started(&mut self, ctx: &Context<Self>) {}
 // }
+
+impl Stream for TunReader {
+    type Item = messages::Packet;
+
+    ///
+    /// TODO:
+    fn poll_next(self: Pin<&mut Self>, cx: &mut task::Context) -> task::Poll<Option<Self::Item>> {
+        unimplemented!()
+    }
+}

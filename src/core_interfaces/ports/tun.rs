@@ -57,6 +57,8 @@ pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(120);
 pub trait Tun<C: Core>
 where
     Self: Actor,
+    // Self: Handler<messages::IncomingConnection>,
+    Self: StreamHandler<messages::Packet>,
 {
     const IPV6_HEADER_LEN: u8 = 40;
 
@@ -88,13 +90,15 @@ pub mod messages {
     #[derive(Debug)]
     pub struct IncomingConnection;
 
-    // pub struct
+    // #[xactor::message(result = "()")]
+    #[derive(Debug)]
+    pub struct Packet;
 }
 
 /// Represents the underlying, platform-specific TUN socket interface.
 pub trait TunSocket: Sized {
     type Reader: AsyncRead;
-    type Writer: AsyncWrite;
+    type Writer: Actor + AsyncWrite;
 
     // TODO: set interface name
     fn open(mtu: MTU) -> Result<Self, Error>;

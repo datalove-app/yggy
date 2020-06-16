@@ -6,7 +6,7 @@ use thiserror::Error;
 pub enum Error {
     /// TODO:
     #[error("initialization error: {0}")]
-    Init(String),
+    Init(#[from] anyhow::Error),
 
     #[error("type error: {0}")]
     Type(#[from] TypeError),
