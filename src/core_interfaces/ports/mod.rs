@@ -26,18 +26,15 @@
 // mod admin;
 pub mod link;
 pub mod multicast;
-pub mod peer;
 #[path = "tun.rs"]
 pub mod tun;
 
 #[doc(inline)]
-pub use self::tun::Tun;
+pub use self::tun::TunAdapter;
 #[doc(inline)]
 pub use link::{Link, LinkManager};
 #[doc(inline)]
 pub use multicast::Multicast;
-#[doc(inline)]
-pub use peer::{Peer, PeerManager};
 
 //  Input (incoming) ports are interfaces that are:
 //      - generic OVER core services, and will call core service methods

@@ -1,4 +1,7 @@
-use crate::{core_interfaces::Core, core_types::wire};
+use crate::{
+    core_interfaces::{Core, PeerInterface},
+    core_types::wire,
+};
 use xactor::{Actor, StreamHandler};
 
 ///
@@ -9,10 +12,9 @@ where
     Self: StreamHandler<wire::Traffic>,
     Self: StreamHandler<wire::ProtocolTraffic>,
 {
-    // type IncomingTraffic:
+    // type Interface: PeerInterface;
 
     fn reconfigure(&mut self);
 }
 
-pub mod messages {
-}
+pub mod messages {}

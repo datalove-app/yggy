@@ -1,23 +1,18 @@
+use crate::core_interfaces::{Conn, Core};
 use xactor::Actor;
 
 ///
 /// ? Handle<...>
-pub trait SessionManager: Sized // where
-//     Self: SystemService,
+pub trait SessionManager<C: Core>: Sized
+where
+    Self: Actor,
 {
-    /// Information about an ongoing Session.
-    ///
-    type Session: Session;
-
-    // ///
-    // type Listener: Listener;
-
     fn reconfigure(&mut self);
 }
 
 ///
 /// ? can be polled until completion, producing a Session
-pub trait Session: Sized
+pub trait Session<C: Core, S: SessionManager<C>>: Sized
 where
     Self: Actor,
 {

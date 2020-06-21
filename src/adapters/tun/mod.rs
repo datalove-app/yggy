@@ -1,16 +1,16 @@
-#[cfg(any(target_os = "macos", target_os = "ios"))]
-#[path = "darwin.rs"]
-mod socket;
+#[cfg(any(target_os = "macos"))]
+#[path = "macos.rs"]
+mod interface;
 
 #[cfg(target_os = "linux")]
 #[path = "linux.rs"]
-mod socket;
+mod interface;
 
-use self::socket::{Socket as TUNSocket, TunReader, TunWriter};
+use self::interface::{Socket as TunSocket, TunReader, TunWriter};
 use crate::{
     core_interfaces::{
-        tun::{messages, Tun, TunSocket},
-        Core,
+        tun::{self, TunInterface},
+        Conn, Core,
     },
     core_types::{Address, Subnet, MTU},
     error::Error,
@@ -24,6 +24,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 use xactor::{Actor, Addr, Context, Handler, StreamHandler};
+
+type ITunWriter = <TunSocket as TunInterface>::Writer;
 
 ///
 #[derive(Debug)]
@@ -42,9 +44,9 @@ pub struct TunAdapter<C: Core> {
     // ///
     // conn_by_subnet: HashMap<Subnet, Addr<<Self as Tun<C>>::Conn>>,
     // ///
-    // reader: Addr<<TUNSocket as TunSocket>::Reader>,
+    // reader: Addr<<TunSocket as TunInterface>::Reader>,
     ///
-    writer: Addr<<TUNSocket as TunSocket>::Writer>,
+    writer: Addr<ITunWriter>,
 }
 
 impl<C: Core> TunAdapter<C> {
@@ -54,7 +56,8 @@ impl<C: Core> TunAdapter<C> {
         // dialer: C::Dialer,
         // listener: Arc<C::Listener>,
     ) -> Result<Self, Error> {
-        let (reader, writer) = TUNSocket::open(MTU::default())?.split()?;
+        let (reader, writer) = TunSocket::open()?.split()?;
+        // TODO start for each thread?
         let writer = writer.start().await;
 
         Ok(Self {
@@ -70,59 +73,49 @@ impl<C: Core> TunAdapter<C> {
 }
 
 #[async_trait::async_trait]
-impl<C: Core> Tun<C> for TunAdapter<C> {
-    // type Conn = TunConn<C>;
-    type Socket = TUNSocket;
-}
+impl<C: Core> tun::TunAdapter<C> for TunAdapter<C> {}
 
 #[async_trait::async_trait]
 impl<C: Core> Actor for TunAdapter<C> {
     async fn started(&mut self, ctx: &Context<Self>) {}
 }
 
-// #[async_trait::async_trait]
-// impl<C: Core> Handler<messages::IncomingConnection> for TunAdapter<C> {
-//     async fn handle(&mut self, ctx: &Context<Self>, msg: messages::IncomingConnection) {
-//         unimplemented!()
-//     }
-// }
-
 #[async_trait::async_trait]
-impl<C: Core> StreamHandler<messages::Packet> for TunAdapter<C> {
-    async fn handle(&mut self, ctx: &Context<Self>, msg: messages::Packet) {
+impl<C: Core> Handler<tun::messages::IncomingConnection> for TunAdapter<C> {
+    async fn handle(&mut self, ctx: &Context<Self>, msg: tun::messages::IncomingConnection) {
         unimplemented!()
     }
 }
 
-// ///
-// ///
-// ///
-// pub struct TunConn<C: Core> {
-//     ///
-//     adapter: Addr<TunAdapter<C>>,
+#[async_trait::async_trait]
+impl<C: Core> StreamHandler<tun::messages::Packet> for TunAdapter<C> {
+    async fn handle(&mut self, ctx: &Context<Self>, msg: tun::messages::Packet) {
+        unimplemented!()
+    }
+}
 
-//     /// The yggdrasil connection.
-//     conn: C::Conn,
+///
+///
+#[derive(Debug)]
+pub struct TunConn<C: Core> {
+    ///
+    adapter: Addr<TunAdapter<C>>,
 
-//     /// Handles the underlying Wireguard crypto for the tunnel.
-//     wg: Tunn,
-// }
+    /// The yggdrasil connection.
+    conn: C::Conn,
+    // /// Handles the underlying Wireguard crypto for the tunnel.
+    // wg: Tunn,
+}
 
-// impl<C: Core> fmt::Debug for TunConn<C> {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         unimplemented!()
-//     }
-// }
+impl<C: Core> tun::TunConn<C, TunAdapter<C>> for TunConn<C> {}
 
-// impl<C: Core> ITunConn<C> for TunConn<C> {}
-
-// #[async_trait::async_trait]
-// impl<C: Core> Actor for TunConn<C> {
-//     async fn started(&mut self, ctx: &Context<Self>) {}
-// }
+#[async_trait::async_trait]
+impl<C: Core> Actor for TunConn<C> {
+    async fn started(&mut self, ctx: &Context<Self>) {}
+}
 
 impl Stream for TunReader {
-    type Item = messages::Packet;
+    type Item = tun::messages::Packet;
 
     ///
     /// TODO:

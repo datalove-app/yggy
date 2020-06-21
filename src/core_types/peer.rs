@@ -10,21 +10,17 @@ use std::{
 };
 
 ///
-/// TODO
-type SourceInterface = String;
-
-///
-/// TODO feature-flag public/bootstrap nodes
+/// TODO feature-flag default public/bootstrap nodes
 #[derive(Clone, Debug, Deserialize, Default, Eq, PartialEq, Serialize)]
 #[serde(transparent)]
 pub struct PeerURIs(Vec<PeerURI>);
 
 ///
-pub type InterfacePeerURIs = HashMap<SourceInterface, PeerURIs>;
+pub type PeerURIsByInterface = HashMap<String, PeerURIs>;
 
 ///
-/// TODO ensure untagged
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+/// TODO ensure serde untagged
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 #[serde(try_from = "&str")]
 pub enum PeerURI {
     ///

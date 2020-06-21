@@ -17,6 +17,7 @@ pub use switch::*;
 pub use wire::{Header as WireHeader, Wire};
 
 use crate::error::{Error, TypeError};
+use derive_more::AsRef;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -68,7 +69,7 @@ impl Default for InterfaceName {
 }
 
 ///
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[derive(AsRef, Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(try_from = "u16")]
 pub struct MTU(u16);
 
@@ -93,7 +94,7 @@ impl TryFrom<u16> for MTU {
     type Error = Error;
 
     fn try_from(raw: u16) -> Result<Self, Self::Error> {
-        if raw < Self::MIN.0 || raw > Self::MAX.0 {
+        if raw.lt(Self::MIN.as_ref()) || raw.gt(Self::MAX.as_ref()) {
             Err(TypeError::InvalidMTU(raw))?
         } else {
             Ok(Self(raw))

@@ -54,36 +54,45 @@ pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(120);
 ///     ? spawns TunConn `for yg.Conn in Listener.await`
 ///     ? stores `Addr<TunConn>` by remote address and subnet
 #[async_trait::async_trait]
-pub trait Tun<C: Core>
+pub trait TunAdapter<C: Core>
 where
     Self: Actor,
-    // Self: Handler<messages::IncomingConnection>,
+    Self: Handler<messages::IncomingConnection>,
     Self: StreamHandler<messages::Packet>,
 {
-    const IPV6_HEADER_LEN: u8 = 40;
-
-    // ///
-    // type Conn: TunConn<C>;
-    ///
-    type Socket: TunSocket;
+    // const IPV6_HEADER_LEN: u8 = 40;
 }
 
-// ///
-// /// is an actor that adapts an yg.Conn to an TUN interface connection w/ a remote peer
-// ///     polling polls internal yg.Conn
-// ///         pulling from a readBuffer (created upon dialing)
-// ///
-// /// created:
-// ///     - upon dialing
-// ///
-// /// ???? is a Port
-// ///      ? Handle<...>
-// pub trait TunConn<C: Core>
-// where
-//     Self: Actor,
-// {
-//     // type Reader: Conn::
-// }
+///
+/// is an actor that adapts an yg.Conn to an TUN interface connection w/ a remote peer
+///     polling polls internal yg.Conn
+///         pulling from a readBuffer (created upon dialing)
+///
+/// created:
+///     - upon dialing
+///
+/// ???? is a Port
+///      ? Handle<...>
+pub trait TunConn<C: Core, T: TunAdapter<C>>
+where
+    Self: Actor,
+{
+}
+
+/// Represents the underlying, platform-specific TUN interface.
+pub trait TunInterface: Sized {
+    type Reader: AsyncRead;
+    type Writer: Actor + AsyncWrite;
+
+    // TODO: set interface name
+    fn open() -> Result<Self, Error>;
+
+    fn name(&self) -> &str;
+
+    // fn mtu(&self) -> MTU;
+
+    fn split(self) -> Result<(Self::Reader, Self::Writer), Error>;
+}
 
 pub mod messages {
     #[xactor::message(result = "()")]
@@ -93,19 +102,4 @@ pub mod messages {
     // #[xactor::message(result = "()")]
     #[derive(Debug)]
     pub struct Packet;
-}
-
-/// Represents the underlying, platform-specific TUN socket interface.
-pub trait TunSocket: Sized {
-    type Reader: AsyncRead;
-    type Writer: Actor + AsyncWrite;
-
-    // TODO: set interface name
-    fn open(mtu: MTU) -> Result<Self, Error>;
-
-    fn name(&self) -> &str;
-
-    // fn mtu(&self) -> MTU;
-
-    fn split(self) -> Result<(Self::Reader, Self::Writer), Error>;
 }

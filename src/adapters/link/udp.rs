@@ -10,12 +10,19 @@ pub struct UDPSocket {
 
 impl UDPSocket {
     pub fn bind(addr: SocketAddr) -> Result<Self, Error> {
-        let raw_socket = Async::<UdpSocket>::bind(addr).map_err(|e| Error::Init(e.into()))?;
-        let socket = Async::new(raw_socket)
+        let socket = Async::<UdpSocket>::bind(addr)
             .map(Some)
-            .map_err(|e| Error::init(e.into()))?;
+            .map_err(|e| Error::Init(e.into()))?;
 
         Ok(Self { addr, socket })
+    }
+
+    pub fn connect(&self, addr: SocketAddr) -> Result<(), Error> {
+        let socket = &self.socket.as_ref().ok_or_else(|| {
+            Error::Init(anyhow::Error::msg("UDPSocket must already be initialized"))
+        })?;
+        socket.get_ref().connect(addr).map_err(Error::Conn)?;
+        Ok(())
     }
 
     // fn split(mut self) -> Result

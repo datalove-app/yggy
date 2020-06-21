@@ -1,4 +1,4 @@
-use super::{Core, LinkManager, Multicast, Tun};
+use super::{Core, LinkManager, Multicast, TunAdapter};
 use crate::{
     core_types::{BoxKeypair, SigningKeypair},
     error::Error,
@@ -36,9 +36,9 @@ pub trait Node<C, /* A: Admin */ L, M, T>: Sized
 where
     C: Core,
     // A: Admin,
-    L: LinkManager<C, C::PeerManager>,
+    L: LinkManager<C>,
     M: Multicast<C>,
-    T: Tun<C>,
+    T: TunAdapter<C>,
 {
     // ///
     // async fn from_config<F>(load_config: F) -> Result<Self, Error>

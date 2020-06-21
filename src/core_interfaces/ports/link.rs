@@ -1,5 +1,5 @@
 use crate::{
-    core_interfaces::{Core, Peer, PeerManager},
+    core_interfaces::{Core, Peer, PeerInterface, PeerManager},
     core_types::{PeerURI, ROOT_TIMEOUT},
 };
 use futures::prelude::*;
@@ -23,40 +23,23 @@ pub const STALL_TIMEOUT: Duration = Duration::from_secs(6);
 /// TODO tor?
 /// Seems to handle traffic from addresses in the `Listen` configuration option,
 /// restricted by the `AllowedEncryptionPublicKeys` option.
-pub trait LinkManager<C: Core, P: PeerManager<C>>
+pub trait LinkManager<C: Core>
 where
     Self: Actor,
     Self: Handler<messages::Listen>,
 {
-    type Link: Link<C, P::Peer>;
-
     fn reconfigure(&mut self);
 }
 
 ///
-pub trait Link<C: Core, P: Peer<C>>
+pub trait Link<C: Core, L: LinkManager<C>>
 where
     Self: Actor,
+    Self: PeerInterface,
     Self: Handler<messages::Notification>,
 {
     // ///
-    // type Reader: LinkReader;
-    // ///
-    // type Writer: LinkWriter;
-
-    // ///
     // async fn split()
-}
-
-#[async_trait::async_trait]
-pub trait LinkInterface {
-    ///
-    type Reader: AsyncRead;
-    ///
-    type Writer: AsyncWrite;
-
-    // async fn listen()
-    // fn split()
 }
 
 // ///

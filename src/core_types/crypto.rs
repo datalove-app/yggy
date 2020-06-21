@@ -5,9 +5,11 @@ use bitvec::{
 };
 use boringtun::crypto::x25519;
 use derive_more::{AsRef, From, FromStr};
-use digest::{generic_array::GenericArray, Digest, FixedOutput};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use sha2::Sha512;
+use sha2::{
+    digest::{generic_array::GenericArray, Digest, FixedOutput},
+    Sha512,
+};
 use std::{
     cmp::Ordering,
     convert::{TryFrom, TryInto},

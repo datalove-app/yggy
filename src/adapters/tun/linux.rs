@@ -1,5 +1,4 @@
-use super::TunSocket;
-use crate::{core_types::MTU, error::Error};
+use crate::{core_interfaces::tun, core_types::MTU, error::Error};
 use futures::{io, prelude::*, task};
 use smol::Async;
 use std::{
@@ -18,27 +17,31 @@ use xactor::{Actor, Addr, Context as ActorContext};
 #[derive(Debug)]
 pub struct Socket {
     name: String,
-    mtu: MTU,
+    // mtu: MTU,
     file: Option<Async<File>>,
     // src_buf: [u8; MAX_UDP_SIZE],
     // dst_buf: [u8; MAX_UDP_SIZE],
 }
 
-impl TunSocket for Socket {
+impl tun::TunInterface for Socket {
     type Reader = TunReader;
     type Writer = TunWriter;
 
-    // TODO: set MTU
-    // TODO: support retries if name is taken?
-    fn open(mtu: MTU) -> Result<Self, Error> {
+    // TODO: get/set MTU?
+    // TODO: support retries if name of socket is already taken?
+    fn open() -> Result<Self, Error> {
         let (raw_file, name) = OpenOptions::new()
+            .nonblock(true)
             .open()
             .map_err(|e| Error::Init(e.into()))?;
-        let file = Async::new(raw_file)
-            .map(Some)
-            .map_err(|e| Error::Init(e.into()))?;
 
-        Ok(Self { name, mtu, file })
+        Ok(Self {
+            name,
+            // mtu: MTU::default(),
+            file: Async::new(raw_file)
+                .map(Some)
+                .map_err(|e| Error::Init(e.into()))?,
+        })
     }
 
     fn name(&self) -> &str {

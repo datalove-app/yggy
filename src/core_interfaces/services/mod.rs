@@ -1,10 +1,13 @@
 //! Core protocol services.
 
+pub mod peer;
 pub mod router;
 pub mod search;
 pub mod session;
 pub mod switch;
 
+#[doc(inline)]
+pub use peer::{Peer, PeerInterface, PeerManager};
 #[doc(inline)]
 pub use router::Router;
 #[doc(inline)]

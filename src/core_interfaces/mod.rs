@@ -23,11 +23,10 @@ pub use ports::*;
 #[doc(inline)]
 pub use services::*;
 
-use crate::core_types::{BoxKeypair, SigningKeypair};
-use crate::error::Error;
-use async_trait::async_trait;
-use futures::Future;
-use std::sync::{Arc, Mutex};
+use crate::{
+    core_types::{BoxKeypair, SigningKeypair},
+    error::Error,
+};
 use xactor::Actor;
 
 ///

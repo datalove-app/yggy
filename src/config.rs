@@ -20,7 +20,7 @@ pub struct Config {
     // /// Note that SOCKS peerings will NOT be affected by this option and should
     // /// go in the "Peers" section instead.
     // #[serde(rename = "InterfacePeers")]
-    // interface_peers: InterfacePeerURIs,
+    // interface_peers: PeerURIsByInterface,
     /// Listen addresses for incoming connections. You will need to add listeners
     /// in order to accept incoming peerings from non-local nodes. Multicast
     /// peer discovery will work regardless of any listeners set here. Each

@@ -10,6 +10,7 @@ extern crate log;
 
 mod adapters;
 mod config;
+pub mod core;
 pub mod core_interfaces;
 pub mod core_types;
 pub mod error;

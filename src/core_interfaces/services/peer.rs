@@ -2,6 +2,8 @@ use crate::{
     core_interfaces::Core,
     core_types::{BoxPublicKey, BoxSharedKey, SigningPublicKey},
 };
+use futures::{io, prelude::*};
+use std::{pin::Pin, task};
 use xactor::{Actor, Addr, Handler, Message};
 
 /// Represents peer
@@ -19,6 +21,18 @@ pub trait Peer<C: Core>
 where
     Self: Actor,
 {
+}
+
+///
+/// TODO
+#[async_trait::async_trait]
+pub trait PeerInterface {
+    ///
+    type Reader: AsyncRead; // ? Stream?
+    ///
+    type Writer: AsyncWrite; // ? Actor? Sink?
+
+    // fn split()
 }
 
 pub mod messages {
