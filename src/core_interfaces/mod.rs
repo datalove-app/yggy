@@ -26,18 +26,18 @@ pub use services::*;
 use crate::{
     core_types::{BoxKeypair, SigningKeypair},
     error::Error,
+    Config,
 };
-use xactor::Actor;
+use xactor::{Actor, Addr, Handler};
 
 ///
 /// TODO <D: DHT L: LinkManager, P: PeerManager, R: Router, Se: SearchManager, Ss: SessionManager>
+#[async_trait::async_trait]
 pub trait Core
 where
     Self: Actor,
+    Self: Handler<messages::GetConfig>,
 {
-    ///
-    type Config;
-
     ///
     type Conn: Conn;
 
@@ -49,6 +49,17 @@ where
 
     ///
     type PeerManager: PeerManager<Self>;
+
+    async fn current_config(core: &mut Addr<Self>) -> Result<Config, Error> {
+        Ok(core.call(messages::GetConfig).await?)
+    }
+}
+
+pub mod messages {
+    use crate::Config;
+
+    #[xactor::message(result = "Config")]
+    pub struct GetConfig;
 }
 
 // #[async_trait]

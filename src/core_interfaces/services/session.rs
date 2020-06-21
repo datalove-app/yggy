@@ -17,3 +17,16 @@ where
     Self: Actor,
 {
 }
+
+pub mod messages {
+    use super::*;
+
+    ///
+    #[derive(Debug)]
+    pub struct NewSession {}
+
+    #[async_trait::async_trait]
+    impl xactor::Message for NewSession {
+        type Result = ();
+    }
+}

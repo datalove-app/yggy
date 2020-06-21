@@ -17,7 +17,7 @@ pub use switch::*;
 pub use wire::{Header as WireHeader, Wire};
 
 use crate::error::{Error, TypeError};
-use derive_more::AsRef;
+use derive_more::{AsRef, IntoIterator};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -28,7 +28,7 @@ use std::{
 
 ///
 /// TODO
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(AsRef, Clone, Debug, Deserialize, Eq, IntoIterator, PartialEq, Serialize)]
 #[serde(transparent)]
 pub struct ListenAddresses(Vec<PeerURI>);
 
@@ -75,10 +75,11 @@ pub struct MTU(u16);
 
 impl MTU {
     /// Minimum allowable MTU.
-    const MIN: Self = Self(1280);
+    pub const MIN: Self = Self(1280);
+
     /// Maximum allowable MTU.
     /// TODO platform-specific
-    const MAX: Self = Self(65535);
+    pub const MAX: Self = Self(65535);
 }
 
 // TODO handle platform-specific

@@ -57,10 +57,12 @@ pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(120);
 pub trait TunAdapter<C: Core>
 where
     Self: Actor,
-    Self: Handler<messages::IncomingConnection>,
+    // Self: Handler<messages::IncomingConnection>,
     Self: StreamHandler<messages::Packet>,
 {
     // const IPV6_HEADER_LEN: u8 = 40;
+
+    type Conn: TunConn<C, Self>;
 }
 
 ///

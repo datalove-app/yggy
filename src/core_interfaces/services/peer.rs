@@ -13,11 +13,11 @@ where
     Self: Handler<messages::NewPeer>,
     Self: Handler<messages::Close>,
 {
-    type Peer: Peer<C>;
+    type Peer: Peer<C, Self>;
 }
 
 /// Represents a
-pub trait Peer<C: Core>
+pub trait Peer<C: Core, P: PeerManager<C>>
 where
     Self: Actor,
 {

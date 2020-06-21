@@ -32,9 +32,9 @@ pub mod tun;
 #[doc(inline)]
 pub use self::tun::TunAdapter;
 #[doc(inline)]
-pub use link::{Link, LinkManager};
+pub use link::LinkAdapter;
 #[doc(inline)]
-pub use multicast::Multicast;
+pub use multicast::MulticastAdapter;
 
 //  Input (incoming) ports are interfaces that are:
 //      - generic OVER core services, and will call core service methods

@@ -3,26 +3,34 @@ mod udp;
 use crate::{
     core_interfaces::{link, peer, Core},
     core_types::{BoxPublicKey, PeerURI, SigningPublicKey},
+    error::Error,
 };
-use futures::{io, prelude::*};
-use std::{collections::HashMap, hash, pin::Pin, task, time::Duration};
+use futures::{io, prelude::*, task};
+use std::{collections::HashMap, hash, pin::Pin, time::Duration};
 use xactor::{Actor, Addr, Context, Handler};
-
-pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(6);
 
 lazy_static! {
     ///
     pub static ref PING_INTERVAL: Duration = (DEFAULT_TIMEOUT * 2) / 3;
 }
 
+///
+pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(6);
+
 type IPeer<C> = <<C as Core>::PeerManager as peer::PeerManager<C>>::Peer;
+type Links<C> = HashMap<LinkInfo, Addr<Link<C>>>;
 
 ///
 #[derive(Debug)]
 pub struct LinkInfo {
-    pub_box_key: BoxPublicKey,
-    pub_sign_key: SigningPublicKey,
+    /// The URI and type of link.
     uri: PeerURI,
+
+    /// The linked node's signing public key.
+    signing_pub_key: SigningPublicKey,
+
+    /// The linked node's encryption public key.
+    box_pub_key: BoxPublicKey,
     // local: String,
     // remote: String,
 }
@@ -36,26 +44,49 @@ impl hash::Hash for LinkInfo {
 
 ///
 #[derive(Debug)]
-pub struct LinkManager<C: Core> {
+pub struct LinkAdapter<C: Core> {
     ///
     core: Addr<C>,
 
     ///
-    links: HashMap<LinkInfo, Addr<Link<C>>>,
+    links: Links<C>,
+}
+
+impl<C: Core> LinkAdapter<C> {
+    #[inline]
+    pub async fn start(core: Addr<C>) -> Result<Addr<Self>, Error> {
+        let mut adapter = Self {
+            core,
+            links: HashMap::default(),
+        };
+
+        Ok(Actor::start(adapter).await?)
+    }
 }
 
 #[async_trait::async_trait]
-impl<C: Core> link::LinkManager<C> for LinkManager<C> {
+impl<C: Core> link::LinkAdapter<C> for LinkAdapter<C> {
     fn reconfigure(&mut self) {
         unimplemented!()
     }
 }
 
 #[async_trait::async_trait]
-impl<C: Core> Actor for LinkManager<C> {}
+impl<C: Core> Actor for LinkAdapter<C> {
+    async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
+        let config = C::current_config(&mut self.core).await?;
+
+        // TODO initialize links
+        for listen_uri in config.listen_addrs.into_iter() {
+            // bind to socket
+        }
+
+        unimplemented!()
+    }
+}
 
 #[async_trait::async_trait]
-impl<C: Core> Handler<link::messages::Listen> for LinkManager<C> {
+impl<C: Core> Handler<link::messages::Listen> for LinkAdapter<C> {
     async fn handle(&mut self, ctx: &Context<Self>, msg: link::messages::Listen) {
         unimplemented!()
     }
@@ -65,19 +96,23 @@ impl<C: Core> Handler<link::messages::Listen> for LinkManager<C> {
 #[derive(Debug)]
 pub struct Link<C: Core> {
     ///
-    link_manager: Addr<LinkManager<C>>,
+    info: LinkInfo,
+
+    ///
+    adapter: Addr<LinkAdapter<C>>,
 
     ///
     peer: Addr<IPeer<C>>,
 
     ///
     reader: LinkReader<C>,
+
     ///
     writer: LinkWriter<C>,
 }
 
 #[async_trait::async_trait]
-impl<C: Core> link::Link<C, LinkManager<C>> for Link<C> {}
+impl<C: Core> link::Link<C, LinkAdapter<C>> for Link<C> {}
 
 #[async_trait::async_trait]
 impl<C: Core> peer::PeerInterface for Link<C> {
@@ -87,7 +122,9 @@ impl<C: Core> peer::PeerInterface for Link<C> {
 
 #[async_trait::async_trait]
 impl<C: Core> Actor for Link<C> {
-    async fn started(&mut self, ctx: &Context<Self>) {}
+    async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
+        unimplemented!()
+    }
 }
 
 #[async_trait::async_trait]

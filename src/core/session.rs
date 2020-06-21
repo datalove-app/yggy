@@ -15,7 +15,9 @@ impl<C: Core> ISessionManager<C> for SessionManager<C> {
 
 #[async_trait::async_trait]
 impl<C: Core> Actor for SessionManager<C> {
-    async fn started(&mut self, ctx: &Context<Self>) {}
+    async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
+        unimplemented!()
+    }
 }
 
 ///
@@ -29,5 +31,7 @@ impl<C: Core> ISession<C, SessionManager<C>> for Session<C> {}
 
 #[async_trait::async_trait]
 impl<C: Core> Actor for Session<C> {
-    async fn started(&mut self, ctx: &Context<Self>) {}
+    async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
+        unimplemented!()
+    }
 }

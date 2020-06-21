@@ -13,41 +13,42 @@ pub struct Config {
     /// These connections will obey the operating system routing table, therefore
     /// you should use this section when you may connect via different interfaces.
     #[serde(rename = "Peers")]
-    peers: PeerURIs,
+    pub(crate) peers: PeerURIs,
 
-    // /// List of connection strings for outbound peer connections in URI format,
-    // /// arranged by source interface, e.g. `{ "eth0": [ tcp://a.b.c.d:e ] }`.
-    // /// Note that SOCKS peerings will NOT be affected by this option and should
-    // /// go in the "Peers" section instead.
-    // #[serde(rename = "InterfacePeers")]
-    // interface_peers: PeerURIsByInterface,
+    /// List of connection strings for outbound peer connections in URI format,
+    /// arranged by source interface, e.g. `{ "eth0": [ tcp://a.b.c.d:e ] }`.
+    /// Note that SOCKS peerings will NOT be affected by this option and should
+    /// go in the "Peers" section instead.
+    #[serde(rename = "InterfacePeers")]
+    pub(crate) peers_by_interface: PeerURIsByInterface,
+
     /// Listen addresses for incoming connections. You will need to add listeners
     /// in order to accept incoming peerings from non-local nodes. Multicast
     /// peer discovery will work regardless of any listeners set here. Each
     /// listener should be specified in URI format as above,
     /// e.g. `tcp://0.0.0.0:0` or `tcp://[::]:0` to listen on all interfaces.
     #[serde(rename = "Listen")]
-    listen: ListenAddresses,
+    pub(crate) listen_addrs: ListenAddresses,
 
     // /// Regular expressions for which interfaces multicast peer discovery should be enabled on. If none specified, multicast peer discovery is disabled. The default value is .* which uses all interfaces."`
     // MulticastInterfaces         []string
     // /// List of peer encryption public keys to allow incoming TCP peering\nconnections from. If left empty/undefined then all connections will\nbe allowed by default. This does not affect outgoing peerings, nor\ndoes it affect link-local peers discovered via multicast."`
-    // AllowedEncryptionPublicKeys []string
+    // AllowedEncryptionPublicKeys: Vec<BoxPublicKey>,
     /// Listen address for admin connections. Default is to listen for local
     /// connections either on TCP/9001 or a UNIX socket depending on your
     /// platform. Use this value for `yggyctl -endpoint=X`. To disable the admin
     /// socket, use the value "none" instead.
     #[serde(rename = "AdminListen", default = "PeerURI::default_admin")]
-    admin_listen: Option<PeerURI>,
+    pub(crate) admin_listen: Option<PeerURI>,
 
     // /// Your public encryption key. Your peers may ask you for this to put\ninto their AllowedEncryptionPublicKeys configuration."`
-    // EncryptionPublicKey         string
+    // EncryptionPublicKey         BoxPublicKey
     // /// Your private encryption key. DO NOT share this with anyone!"`
-    // EncryptionPrivateKey        string
+    // EncryptionPrivateKey        BoxPrivateKey
     // /// Your public signing key. You should not ordinarily need to share\nthis with anyone."`
-    // SigningPublicKey            string
+    // SigningPublicKey            SigningPublicKey
     // /// Your private signing key. DO NOT share this with anyone!"`
-    // SigningPrivateKey           string
+    // SigningPrivateKey           SigningPrivateKey
     // /// The port number to be used for the link-local TCP listeners for the
     // /// configured MulticastInterfaces. This option does not affect listeners
     // /// specified in the Listen option. Unless you plan to firewall link-local
@@ -55,16 +56,17 @@ pub struct Config {
     // /// cannot currently be changed by reloading config during runtime.
     // // #[serde(rename = "LinkLocalTCPPort", default)]
     // // link_local_tcp_port: u16,
-    // /// Local network interface name for TUN adapter, or "auto" to select an
-    // /// interface automatically, or "none" to run without TUN.
-    // #[serde(rename = "IfName", default)]
-    // interface_name: InterfaceName,
+    /// Local network interface name for TUN adapter, or "auto" to select an
+    /// interface automatically, or "none" to run without TUN.
+    #[serde(rename = "IfName", default)]
+    pub(crate) interface_name: InterfaceName,
+
     /// Maximum Transmission Unit (MTU) size for your local TUN
     /// interface.
     /// Default is the largest supported size for your platform. The lowest
     /// possible value is 1280.
     #[serde(rename = "IfMTU")]
-    interface_mtu: MTU,
+    pub(crate) interface_mtu: MTU,
 
     /// Controls who can send/receive network traffic to/from this node. This is
     /// useful if you want to protect this node without resorting to using a
@@ -74,19 +76,19 @@ pub struct Config {
     /// Rules are prioritised as follows: blacklist, whitelist, always allow
     /// outgoing, direct, remote.
     #[serde(rename = "SessionFirewall")]
-    firewall: SessionFirewallOptions,
+    pub(crate) firewall: SessionFirewallOptions,
 
     /// Allow tunneling non-Yggdrasil traffic over Yggdrasil. This effectively
     /// allows you to use Yggdrasil to route or bridge to other networks,
     /// similar to a VPN tunnel. Tunnelling works between any two nodes and does
     /// not require them to be directly peered.
     #[serde(rename = "TunnelRouting")]
-    tunnel_routing: TunnelRoutingOptions,
+    pub(crate) tunnel_routing: TunnelRoutingOptions,
 
     /// Advanced options for tuning the switch. Normally you will not need nto
     /// edit these options.
     #[serde(rename = "SwitchOptions")]
-    switch_opts: SwitchOptions,
+    pub(crate) switch_opts: SwitchOptions,
 
     /// By default, nodeinfo contains some defaults including the platform,
     /// architecture and Yggdrasil version. These can help when surveying the
@@ -94,7 +96,7 @@ pub struct Config {
     /// privacy prevents this, so that only items specified in `"NodeInfo"` are
     /// sent back if specified.
     #[serde(rename = "NodeInfoPrivacy")]
-    node_info_privacy: bool,
+    pub(crate) node_info_privacy: bool,
     // /// Optional node info. This must be a { \"key\": \"value\", ... } map\nor set as null. This is entirely optional but, if set, is visible\nto the whole network on request."`
     // NodeInfo                    map[string]interface{}
 }

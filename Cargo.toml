@@ -41,7 +41,7 @@ serde = { version = "1.0", features = ["derive"] }
 sha2 = { version = "0.9", default-features = false }
 smol = "0.1"
 thiserror = "1.0"
-xactor = "0.7.3"
+xactor = "0.7"
 utuntap = "0.2.4"
 # helper, util
 bitvec = { version = "0.17.4", default-features = false }

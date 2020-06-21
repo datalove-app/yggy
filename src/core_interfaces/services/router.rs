@@ -4,8 +4,7 @@ use crate::{
 };
 use xactor::{Actor, StreamHandler};
 
-///
-///
+/// Handles packets to/from self.
 pub trait Router<C: Core>
 where
     Self: Actor,
@@ -17,4 +16,6 @@ where
     fn reconfigure(&mut self);
 }
 
-pub mod messages {}
+pub mod messages {
+    use super::*;
+}

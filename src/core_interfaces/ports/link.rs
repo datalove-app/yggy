@@ -23,7 +23,7 @@ pub const STALL_TIMEOUT: Duration = Duration::from_secs(6);
 /// TODO tor?
 /// Seems to handle traffic from addresses in the `Listen` configuration option,
 /// restricted by the `AllowedEncryptionPublicKeys` option.
-pub trait LinkManager<C: Core>
+pub trait LinkAdapter<C: Core>
 where
     Self: Actor,
     Self: Handler<messages::Listen>,
@@ -32,7 +32,7 @@ where
 }
 
 ///
-pub trait Link<C: Core, L: LinkManager<C>>
+pub trait Link<C: Core, L: LinkAdapter<C>>
 where
     Self: Actor,
     Self: PeerInterface,

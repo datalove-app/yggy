@@ -29,6 +29,7 @@ impl tun::TunInterface for Socket {
 
     // TODO: get/set MTU?
     // TODO: support retries if name of socket is already taken?
+    // TODO: support custom names?
     fn open() -> Result<Self, Error> {
         let (raw_file, name) = OpenOptions::new()
             .nonblock(true)
@@ -106,7 +107,9 @@ pub struct TunWriter {
 
 #[async_trait::async_trait]
 impl Actor for TunWriter {
-    async fn started(&mut self, ctx: &ActorContext<Self>) {}
+    async fn started(&mut self, ctx: &ActorContext<Self>) -> Result<(), anyhow::Error> {
+        unimplemented!()
+    }
 }
 
 impl AsyncWrite for TunWriter {

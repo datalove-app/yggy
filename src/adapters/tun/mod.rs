@@ -25,6 +25,8 @@ use std::{
 };
 use xactor::{Actor, Addr, Context, Handler, StreamHandler};
 
+type ITunConn<C> = <TunAdapter<C> as tun::TunAdapter<C>>::Conn;
+type ITunReader = <TunSocket as TunInterface>::Reader;
 type ITunWriter = <TunSocket as TunInterface>::Writer;
 
 ///
@@ -34,15 +36,18 @@ pub struct TunAdapter<C: Core> {
     // state: State,
     ///
     core: Addr<C>,
-    // ///
-    // /// once?
-    // listener: Arc<C::Listener>,
+
     // ///
     // dialer: C::Dialer,
     // ///
-    // conn_by_addr: HashMap<Address, Addr<<Self as Tun<C>>::Conn>>,
-    // ///
-    // conn_by_subnet: HashMap<Subnet, Addr<<Self as Tun<C>>::Conn>>,
+    // /// once?
+    // listener: Arc<C::Listener>,
+    ///
+    conn_by_addr: HashMap<Address, Addr<ITunConn<C>>>,
+
+    ///
+    conn_by_subnet: HashMap<Subnet, Addr<ITunConn<C>>>,
+
     // ///
     // reader: Addr<<TunSocket as TunInterface>::Reader>,
     ///
@@ -51,41 +56,49 @@ pub struct TunAdapter<C: Core> {
 
 impl<C: Core> TunAdapter<C> {
     #[inline]
-    pub async fn new(
+    pub async fn start(
         core: Addr<C>,
         // dialer: C::Dialer,
         // listener: Arc<C::Listener>,
-    ) -> Result<Self, Error> {
+    ) -> Result<Addr<Self>, Error> {
         let (reader, writer) = TunSocket::open()?.split()?;
-        // TODO start for each thread?
-        let writer = writer.start().await;
 
-        Ok(Self {
+        // TODO start for each thread?
+        let writer = writer.start().await?;
+
+        let mut adapter = Self {
             core,
-            // listener,
             // dialer,
-            // conn_by_addr: HashMap::default(),
-            // conn_by_subnet: HashMap::default(),
+            // listener,
+            conn_by_addr: HashMap::default(),
+            conn_by_subnet: HashMap::default(),
             // reader,
             writer,
-        })
+        };
+
+        Ok(Actor::start(adapter).await?)
     }
 }
 
 #[async_trait::async_trait]
-impl<C: Core> tun::TunAdapter<C> for TunAdapter<C> {}
+impl<C: Core> tun::TunAdapter<C> for TunAdapter<C> {
+    type Conn = TunConn<C>;
+}
 
 #[async_trait::async_trait]
 impl<C: Core> Actor for TunAdapter<C> {
-    async fn started(&mut self, ctx: &Context<Self>) {}
-}
-
-#[async_trait::async_trait]
-impl<C: Core> Handler<tun::messages::IncomingConnection> for TunAdapter<C> {
-    async fn handle(&mut self, ctx: &Context<Self>, msg: tun::messages::IncomingConnection) {
+    async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
+        // TODO subscribe to reader
         unimplemented!()
     }
 }
+
+// #[async_trait::async_trait]
+// impl<C: Core> Handler<tun::messages::IncomingConnection> for TunAdapter<C> {
+//     async fn handle(&mut self, ctx: &Context<Self>, msg: tun::messages::IncomingConnection) {
+//         unimplemented!()
+//     }
+// }
 
 #[async_trait::async_trait]
 impl<C: Core> StreamHandler<tun::messages::Packet> for TunAdapter<C> {
@@ -111,15 +124,17 @@ impl<C: Core> tun::TunConn<C, TunAdapter<C>> for TunConn<C> {}
 
 #[async_trait::async_trait]
 impl<C: Core> Actor for TunConn<C> {
-    async fn started(&mut self, ctx: &Context<Self>) {}
-}
-
-impl Stream for TunReader {
-    type Item = tun::messages::Packet;
-
-    ///
-    /// TODO:
-    fn poll_next(self: Pin<&mut Self>, cx: &mut task::Context) -> task::Poll<Option<Self::Item>> {
+    async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
         unimplemented!()
     }
 }
+
+// impl Stream for TunReader {
+//     type Item = tun::messages::Packet;
+
+//     ///
+//     /// TODO:
+//     fn poll_next(self: Pin<&mut Self>, cx: &mut task::Context) -> task::Poll<Option<Self::Item>> {
+//         unimplemented!()
+//     }
+// }

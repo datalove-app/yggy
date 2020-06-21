@@ -1,4 +1,4 @@
-use super::{Core, LinkManager, Multicast, TunAdapter};
+use super::{Core, LinkAdapter, MulticastAdapter, TunAdapter};
 use crate::{
     core_types::{BoxKeypair, SigningKeypair},
     error::Error,
@@ -22,7 +22,7 @@ use xactor::Actor;
 ///             link.call tcp or socks
 ///     - register session firewall
 ///     - init AdminSocket, setup admin handlers
-///     - init Multicast, then connect admin handlers
+///     - init MulticastAdapter, then connect admin handlers
 ///     - init tuntap interface
 ///         init Listener and Dialer (n.core.Conn{Listen,Dialer})
 ///         init TunAdapter with l,d, then start
@@ -36,14 +36,14 @@ pub trait Node<C, /* A: Admin */ L, M, T>: Sized
 where
     C: Core,
     // A: Admin,
-    L: LinkManager<C>,
-    M: Multicast<C>,
+    L: LinkAdapter<C>,
+    M: MulticastAdapter<C>,
     T: TunAdapter<C>,
 {
     // ///
     // async fn from_config<F>(load_config: F) -> Result<Self, Error>
     // where
-    //     F: Future<Output = Self::Config>;
+    //     F: Future<Output = C::Config>;
 
     // /// Augments/replaces
     // /// TODO
