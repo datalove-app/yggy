@@ -189,12 +189,19 @@ impl BoxPublicKey {
     }
 }
 
-impl Default for BoxPublicKey {
+impl Clone for BoxPublicKey {
     #[inline]
-    fn default() -> Self {
-        Self::from([0; 32].as_ref())
+    fn clone(&self) -> Self {
+        Self(self.as_bytes().into())
     }
 }
+
+// impl Default for BoxPublicKey {
+//     #[inline]
+//     fn default() -> Self {
+//         Self::from([0; 32].as_ref())
+//     }
+// }
 
 impl Serialize for BoxPublicKey {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

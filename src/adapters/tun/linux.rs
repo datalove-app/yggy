@@ -1,14 +1,14 @@
 use crate::{core_interfaces::tun, core_types::MTU, error::Error};
+use anyhow::anyhow;
 use futures::{io, prelude::*, task};
 use smol::Async;
 use std::{
     fs::File,
     pin::Pin,
     sync::{Arc, Mutex},
-    task::{Context, Poll},
 };
 use utuntap::tun::OpenOptions;
-use xactor::{Actor, Addr, Context as ActorContext};
+use xactor::{Actor, Addr, Context};
 
 // const MAX_UDP_SIZE: usize = (1 << 16) - 1;
 
@@ -58,7 +58,7 @@ impl tun::TunInterface for Socket {
             .file
             .take()
             .map(|file| file.split())
-            .ok_or_else(|| Error::Init(anyhow::Error::msg("already initialized TUN socket")))?;
+            .ok_or_else(|| Error::Init(anyhow!("already initialized TUN socket")))?;
 
         let socket_info = Arc::new(Mutex::from(self));
         Ok((
@@ -80,10 +80,10 @@ pub struct TunReader {
     reader: io::ReadHalf<Async<File>>,
 }
 
-// #[async_trait::async_trait]
-// impl Actor for TunReader {
-//     async fn started(&mut self, ctx: &ActorContext<Self>) {}
-// }
+#[async_trait::async_trait]
+impl Actor for TunReader {
+    // async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {}
+}
 
 impl AsyncRead for TunReader {
     ///
@@ -107,9 +107,7 @@ pub struct TunWriter {
 
 #[async_trait::async_trait]
 impl Actor for TunWriter {
-    async fn started(&mut self, ctx: &ActorContext<Self>) -> Result<(), anyhow::Error> {
-        unimplemented!()
-    }
+    // async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {}
 }
 
 impl AsyncWrite for TunWriter {

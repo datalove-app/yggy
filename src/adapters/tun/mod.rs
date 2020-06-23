@@ -48,8 +48,9 @@ pub struct TunAdapter<C: Core> {
     ///
     conn_by_subnet: HashMap<Subnet, Addr<ITunConn<C>>>,
 
-    // ///
-    // reader: Addr<<TunSocket as TunInterface>::Reader>,
+    ///
+    reader: ITunReader,
+
     ///
     writer: Addr<ITunWriter>,
 }
@@ -72,7 +73,7 @@ impl<C: Core> TunAdapter<C> {
             // listener,
             conn_by_addr: HashMap::default(),
             conn_by_subnet: HashMap::default(),
-            // reader,
+            reader,
             writer,
         };
 

@@ -38,7 +38,7 @@ pub struct Config {
     /// connections either on TCP/9001 or a UNIX socket depending on your
     /// platform. Use this value for `yggyctl -endpoint=X`. To disable the admin
     /// socket, use the value "none" instead.
-    #[serde(rename = "AdminListen", default = "PeerURI::default_admin")]
+    #[serde(rename = "AdminListen")]
     pub(crate) admin_listen: Option<PeerURI>,
 
     // /// Your public encryption key. Your peers may ask you for this to put\ninto their AllowedEncryptionPublicKeys configuration."`

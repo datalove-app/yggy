@@ -1,29 +1,90 @@
+use super::interface::{LinkReader, LinkWriter};
 use crate::error::Error;
+use futures::{io, prelude::*, task};
 use smol::Async;
-use std::net::{SocketAddr, UdpSocket};
+use std::{
+    net::{SocketAddr, UdpSocket},
+    pin::Pin,
+};
 
 #[derive(Debug)]
 pub struct UDPSocket {
     addr: SocketAddr,
-    socket: Option<Async<UdpSocket>>,
+    socket: Async<UdpSocket>,
 }
 
 impl UDPSocket {
+    #[inline]
     pub fn bind(addr: SocketAddr) -> Result<Self, Error> {
-        let socket = Async::<UdpSocket>::bind(addr)
-            .map(Some)
-            .map_err(|e| Error::Init(e.into()))?;
-
+        let socket = Async::<UdpSocket>::bind(addr).map_err(|e| Error::Init(e.into()))?;
         Ok(Self { addr, socket })
     }
 
-    pub fn connect(&self, addr: SocketAddr) -> Result<(), Error> {
-        let socket = &self.socket.as_ref().ok_or_else(|| {
-            Error::Init(anyhow::Error::msg("UDPSocket must already be initialized"))
-        })?;
-        socket.get_ref().connect(addr).map_err(Error::Conn)?;
-        Ok(())
+    #[inline]
+    pub fn connect(&self, addr: &SocketAddr) -> Result<(), Error> {
+        self.socket.get_ref().connect(addr).map_err(Error::Conn)
     }
 
-    // fn split(mut self) -> Result
+    #[inline]
+    pub fn local_addr(&self) -> &SocketAddr {
+        &self.addr
+    }
+
+    #[inline]
+    pub fn remote_addr(&self) -> Result<SocketAddr, Error> {
+        self.socket.get_ref().peer_addr().map_err(Error::Conn)
+    }
+
+    #[inline]
+    pub fn split(self) -> (LinkReader, LinkWriter) {
+        let (r, w) = io::AsyncReadExt::split(self);
+        (LinkReader::UDP(r), LinkWriter::UDP(w))
+    }
+}
+
+impl AsyncRead for UDPSocket {
+    fn poll_read(
+        mut self: Pin<&mut Self>,
+        cx: &mut task::Context,
+        buf: &mut [u8],
+    ) -> task::Poll<Result<usize, io::Error>> {
+        // let reader = &mut self.reader;
+        // futures::pin_mut!(reader);
+        // reader.poll_read(cx, buf)
+
+        unimplemented!()
+    }
+}
+
+impl AsyncWrite for UDPSocket {
+    fn poll_write(
+        mut self: Pin<&mut Self>,
+        cx: &mut task::Context,
+        buf: &[u8],
+    ) -> task::Poll<Result<usize, io::Error>> {
+        // let writer = &mut self.writer;
+        // futures::pin_mut!(writer);
+        // writer.poll_write(cx, buf)
+        unimplemented!()
+    }
+
+    fn poll_flush(
+        mut self: Pin<&mut Self>,
+        cx: &mut task::Context,
+    ) -> task::Poll<Result<(), io::Error>> {
+        // let writer = &mut self.writer;
+        // futures::pin_mut!(writer);
+        // writer.poll_flush(cx)
+        unimplemented!()
+    }
+
+    fn poll_close(
+        mut self: Pin<&mut Self>,
+        cx: &mut task::Context,
+    ) -> task::Poll<Result<(), io::Error>> {
+        // let writer = &mut self.writer;
+        // futures::pin_mut!(writer);
+        // writer.poll_close(cx)
+        unimplemented!()
+    }
 }
