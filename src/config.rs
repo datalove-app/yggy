@@ -17,23 +17,25 @@ pub struct Config {
 
     /// List of connection strings for outbound peer connections in URI format,
     /// arranged by source interface, e.g. `{ "eth0": [ tcp://a.b.c.d:e ] }`.
-    /// Note that SOCKS peerings will NOT be affected by this option and should
-    /// go in the "Peers" section instead.
+    /// Note: SOCKS peerings will NOT be affected by this option and should go
+    /// in the "Peers" section instead.
     #[serde(rename = "InterfacePeers")]
     pub(crate) peers_by_interface: PeerURIsByInterface,
 
     /// Listen addresses for incoming connections. You will need to add listeners
-    /// in order to accept incoming peerings from non-local nodes. Multicast
-    /// peer discovery will work regardless of any listeners set here. Each
-    /// listener should be specified in URI format as above,
-    /// e.g. `tcp://0.0.0.0:0` or `tcp://[::]:0` to listen on all interfaces.
+    /// in order to accept incoming peerings from non-local nodes.
+    /// Multicast peer discovery will work regardless of any listeners set here.
+    /// Each listener should be specified in URI format as above, e.g.
+    /// `tcp://0.0.0.0:0` or `tcp://[::]:0` to listen on all interfaces.
     #[serde(rename = "Listen")]
     pub(crate) listen_addrs: ListenAddresses,
 
     // /// Regular expressions for which interfaces multicast peer discovery should be enabled on. If none specified, multicast peer discovery is disabled. The default value is .* which uses all interfaces."`
     // MulticastInterfaces         []string
-    // /// List of peer encryption public keys to allow incoming TCP peering\nconnections from. If left empty/undefined then all connections will\nbe allowed by default. This does not affect outgoing peerings, nor\ndoes it affect link-local peers discovered via multicast."`
-    // AllowedEncryptionPublicKeys: Vec<BoxPublicKey>,
+    /// List of peer encryption public keys to allow incoming TCP peering\nconnections from. If left empty/undefined then all connections will\nbe allowed by default. This does not affect outgoing peerings, nor\ndoes it affect link-local peers discovered via multicast."`
+    #[serde(rename = "AllowedEncryptionPublicKeys")]
+    pub(crate) allowed_peer_keys: AllowedEncryptionPublicKeys,
+
     /// Listen address for admin connections. Default is to listen for local
     /// connections either on TCP/9001 or a UNIX socket depending on your
     /// platform. Use this value for `yggyctl -endpoint=X`. To disable the admin
@@ -65,8 +67,8 @@ pub struct Config {
     /// interface.
     /// Default is the largest supported size for your platform. The lowest
     /// possible value is 1280.
-    #[serde(rename = "IfMTU")]
-    pub(crate) interface_mtu: MTU,
+    #[serde(rename = "IfMTU", default)]
+    pub(crate) interface_max_mtu: MTU,
 
     /// Controls who can send/receive network traffic to/from this node. This is
     /// useful if you want to protect this node without resorting to using a

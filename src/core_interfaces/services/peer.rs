@@ -13,6 +13,7 @@ where
     Self: Handler<messages::NewPeer>,
     Self: Handler<messages::Close>,
 {
+    ///
     type Peer: Peer<C, Self>;
 }
 

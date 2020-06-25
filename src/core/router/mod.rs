@@ -1,3 +1,6 @@
+mod search;
+mod session;
+
 use crate::{
     core_interfaces::{peer, router, Core},
     core_types::wire,
@@ -18,8 +21,12 @@ pub struct Router<C: Core> {
     ///
     self_peer: Addr<IPeer<C>>,
 
+    // ///
+    // reader
     ///
     writer: RouterWriter<C>,
+    // dht
+    // searches
 }
 
 impl<C: Core> Router<C> {
@@ -31,6 +38,8 @@ impl<C: Core> Router<C> {
 
 impl<C: Core> router::Router<C> for Router<C> {
     // type Interface = RouterInterface<C>;
+    type SearchManager = search::SearchManager;
+    type SessionManager = session::SessionManager<C>;
 
     fn reconfigure(&mut self) {
         unimplemented!()

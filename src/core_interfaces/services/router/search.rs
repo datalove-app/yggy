@@ -1,4 +1,4 @@
-use super::Session;
+// use super::Session;
 use crate::{
     core_types::{NodeID, SearchInfo},
     error::Error,
@@ -7,12 +7,14 @@ use xactor::Actor;
 
 ///
 /// ?? Handle<StartSearch>
-pub trait SearchManager
-where
-    Self: Actor,
+pub trait SearchManager // where
+//     Self: Actor,
 {
-    /// Information about an ongoing search.
-    ///
+    // ///
+    // type Router: <C as Core>::Router;
+
+    // /// Information about an ongoing search.
+    // ///
     // type Search: Search<S>;
 
     fn reconfigure(&mut self);

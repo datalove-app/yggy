@@ -1,6 +1,7 @@
 use super::{Conn, Core};
 use crate::error::Error;
 use futures::Stream;
+use std::fmt::Debug;
 use xactor::Addr;
 
 /// Represents a connection listener.
@@ -11,8 +12,9 @@ use xactor::Addr;
 ///
 /// ? Handle<...>
 #[async_trait::async_trait]
-pub trait Listener<C: Core>: Send + Sync + Sized
+pub trait Listener<C: Core>: Debug + Sized
 where
+    Self: Send + Sync,
     Self: Stream<Item = Result<C::Conn, Error>>,
 {
     async fn accept(&mut self) -> Result<C::Conn, Error>;

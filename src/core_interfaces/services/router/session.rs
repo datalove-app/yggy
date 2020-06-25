@@ -3,10 +3,12 @@ use xactor::Actor;
 
 ///
 /// ? Handle<...>
-pub trait SessionManager<C: Core>: Sized
-where
-    Self: Actor,
+pub trait SessionManager<C: Core>: Sized // where
+//     Self: Actor,
 {
+    ///
+    type Session: Session<C, Self>;
+
     fn reconfigure(&mut self);
 }
 

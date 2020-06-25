@@ -1,5 +1,5 @@
 use crate::{
-    core_interfaces::{Core, Peer, PeerInterface, PeerManager},
+    core_interfaces::{peer, Core},
     core_types::{PeerURI, ROOT_TIMEOUT},
 };
 use futures::prelude::*;
@@ -35,7 +35,7 @@ where
 pub trait Link<C: Core, L: LinkAdapter<C>>
 where
     Self: Actor,
-    Self: PeerInterface,
+    // Self: PeerInterface,
     Self: Handler<messages::Notification>,
 {
     // ///

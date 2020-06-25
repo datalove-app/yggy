@@ -20,11 +20,15 @@ use crate::error::{Error, TypeError};
 use derive_more::{AsRef, IntoIterator};
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     convert::TryFrom,
     net::{IpAddr, Ipv4Addr, SocketAddr},
     str::FromStr,
 };
+
+///
+/// TODO
+pub type AllowedEncryptionPublicKeys = HashSet<BoxPublicKey>;
 
 ///
 /// TODO
@@ -33,6 +37,7 @@ use std::{
 pub struct ListenAddresses(Vec<PeerURI>);
 
 impl Default for ListenAddresses {
+    #[inline]
     fn default() -> Self {
         Self(vec![PeerURI::default_listen()])
     }
@@ -63,6 +68,7 @@ pub enum InterfaceName {
 }
 
 impl Default for InterfaceName {
+    #[inline]
     fn default() -> Self {
         Self::Auto
     }
@@ -75,10 +81,11 @@ pub struct MTU(u16);
 
 impl MTU {
     /// Minimum allowable MTU.
+    /// ? platform-specific
     pub const MIN: Self = Self(1280);
 
     /// Maximum allowable MTU.
-    /// TODO platform-specific
+    /// ? platform-specific
     pub const MAX: Self = Self(65535);
 }
 
@@ -86,14 +93,16 @@ impl MTU {
 // #[cfg(any(target_os = "macos", target_os = "ios"))] and
 // #[cfg(target_os = "linux")]
 impl Default for MTU {
+    #[inline]
     fn default() -> Self {
-        Self::MIN
+        Self::MAX
     }
 }
 
 impl TryFrom<u16> for MTU {
     type Error = Error;
 
+    #[inline]
     fn try_from(raw: u16) -> Result<Self, Self::Error> {
         if raw.lt(Self::MIN.as_ref()) || raw.gt(Self::MAX.as_ref()) {
             Err(TypeError::InvalidMTU(raw))?

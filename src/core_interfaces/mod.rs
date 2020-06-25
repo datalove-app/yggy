@@ -28,12 +28,12 @@ use crate::{
     error::Error,
     Config,
 };
+use std::fmt::Debug;
 use xactor::{Actor, Addr, Handler};
 
 ///
-/// TODO <D: DHT L: LinkManager, P: PeerManager, R: Router, Se: SearchManager, Ss: SessionManager>
 #[async_trait::async_trait]
-pub trait Core
+pub trait Core: Debug
 where
     Self: Actor,
     Self: Handler<messages::GetConfig>,
@@ -48,11 +48,24 @@ where
     type Listener: Listener<Self>;
 
     ///
+    type Router: Router<Self>;
+
+    ///
     type PeerManager: PeerManager<Self>;
 
+    ///
     async fn current_config(core: &mut Addr<Self>) -> Result<Config, Error> {
         Ok(core.call(messages::GetConfig).await?)
     }
+
+    ///
+    async fn listener(core: &mut Addr<Self>) -> Result<Addr<Self::Listener>, Error>;
+
+    ///
+    async fn router(core: &mut Addr<Self>) -> Result<Addr<Self::Router>, Error>;
+
+    ///
+    async fn peer_manager(core: &mut Addr<Self>) -> Result<Addr<Self::PeerManager>, Error>;
 }
 
 pub mod messages {
@@ -60,6 +73,9 @@ pub mod messages {
 
     #[xactor::message(result = "Config")]
     pub struct GetConfig;
+
+    #[xactor::message(result = "Config")]
+    pub struct Reconfigure;
 }
 
 // #[async_trait]
