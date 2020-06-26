@@ -1,23 +1,9 @@
 use crate::{
     core_interfaces::{peer, Core},
-    core_types::{PeerURI, ROOT_TIMEOUT},
+    core_types::PeerURI,
 };
 use futures::prelude::*;
-use std::time::Duration;
 use xactor::{Actor, Handler, Message};
-
-lazy_static! {
-    /// Time to wait before closing the link.
-    pub static ref CLOSE_TIMEOUT: Duration = ROOT_TIMEOUT * 2;
-}
-
-/// Time to wait before deciding a send is blocked.
-pub const SEND_TIMEOUT: Duration = Duration::from_secs(1);
-/// Time to wait before sending a keep-alive message if we have no real traffic
-/// to send.
-pub const KEEP_ALIVE_TIMEOUT: Duration = Duration::from_secs(2);
-///
-pub const STALL_TIMEOUT: Duration = Duration::from_secs(6);
 
 /// Represents direct connections to peers, over some `LinkInterface` (TCP, UDP, AWDL, etc).
 /// TODO tor?

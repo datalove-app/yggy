@@ -10,3 +10,9 @@ pub use peer::PeerManager;
 pub use router::Router;
 #[doc(inline)]
 pub use switch::Switch;
+
+use crate::core_interfaces::Core as ICore;
+
+///
+#[derive(Debug)]
+pub struct Core;

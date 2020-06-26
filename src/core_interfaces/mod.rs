@@ -59,6 +59,9 @@ where
     }
 
     ///
+    async fn dialer(core: &mut Addr<Self>) -> Result<Addr<Self::Listener>, Error>;
+
+    ///
     async fn listener(core: &mut Addr<Self>) -> Result<Addr<Self::Listener>, Error>;
 
     ///

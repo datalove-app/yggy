@@ -85,13 +85,12 @@ impl MTU {
     pub const MIN: Self = Self(1280);
 
     /// Maximum allowable MTU.
-    /// ? platform-specific
+    // TODO handle platform-specific
+    // #[cfg(any(target_os = "macos", target_os = "ios"))] and
+    // #[cfg(target_os = "linux")]
     pub const MAX: Self = Self(65535);
 }
 
-// TODO handle platform-specific
-// #[cfg(any(target_os = "macos", target_os = "ios"))] and
-// #[cfg(target_os = "linux")]
 impl Default for MTU {
     #[inline]
     fn default() -> Self {

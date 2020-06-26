@@ -22,12 +22,16 @@ use std::{
     fmt,
     pin::Pin,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 use xactor::{Actor, Addr, Context, Handler, StreamHandler};
 
 type ITunConn<C> = <TunAdapter<C> as tun::TunAdapter<C>>::Conn;
 type ITunReader = <TunSocket as TunInterface>::Reader;
 type ITunWriter = <TunSocket as TunInterface>::Writer;
+
+///
+const CONNECTION_TIMEOUT: Duration = Duration::from_secs(120);
 
 ///
 #[derive(Debug)]
@@ -90,6 +94,8 @@ impl<C: Core> tun::TunAdapter<C> for TunAdapter<C> {
 impl<C: Core> Actor for TunAdapter<C> {
     async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
         // TODO subscribe to reader
+        // ctx.add_stream((&mut self).reader);
+
         unimplemented!()
     }
 }

@@ -265,6 +265,7 @@ impl<'de> Deserialize<'de> for BoxPublicKey {
 ///
 #[derive(Debug, From)]
 #[from(forward)]
+// #[serde(transparent)] TODO: try_from FromStr
 pub struct BoxSecretKey(x25519::X25519SecretKey);
 
 impl BoxSecretKey {

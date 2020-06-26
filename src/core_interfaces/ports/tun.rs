@@ -4,14 +4,9 @@ use crate::{
     error::Error,
 };
 use futures::io::{AsyncRead, AsyncWrite};
-use std::{
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::sync::{Arc, Mutex};
 use xactor::{Actor, Addr, Handler, Message, StreamHandler};
 
-///
-pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(120);
 // ///
 // pub const OFFSET_BYTES: usize = 4;
 // ///

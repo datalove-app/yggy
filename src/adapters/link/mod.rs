@@ -13,11 +13,24 @@ use xactor::{Actor, Addr, Context, Handler};
 
 lazy_static! {
     ///
-    pub static ref PING_INTERVAL: Duration = (DEFAULT_TIMEOUT * 2) / 3;
+    static ref PING_INTERVAL: Duration = (DEFAULT_TIMEOUT * 2) / 3;
+
+    // /// Time to wait before closing the link.
+    // static ref CLOSE_TIMEOUT: Duration = ROOT_TIMEOUT * 2;
 }
 
 ///
-pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(6);
+const DEFAULT_TIMEOUT: Duration = Duration::from_secs(6);
+
+/// Time to wait before deciding a send is blocked.
+const SEND_TIMEOUT: Duration = Duration::from_secs(1);
+
+/// Time to wait before sending a keep-alive message if we have no real traffic
+/// to send.
+const KEEP_ALIVE_TIMEOUT: Duration = Duration::from_secs(2);
+
+///
+const STALL_TIMEOUT: Duration = Duration::from_secs(6);
 
 type IPeer<C> = <<C as Core>::PeerManager as peer::PeerManager<C>>::Peer;
 type Links<C> = HashMap<LinkInfo, Addr<Link<C>>>;
@@ -80,12 +93,12 @@ impl<C: Core> Actor for LinkAdapter<C> {
         let config = C::current_config(&mut self.core).await?;
 
         // initialize links
-        for listen_uri in config.listen_addrs.into_iter() {
+        for uri in config.listen_addrs.into_iter() {
             let adapter = ctx.address();
             let link_info = LinkInfo {
-                listen_uri: listen_uri.clone(),
+                listen_uri: uri.clone(),
             };
-            let link_addr = listen_uri.start_link(adapter).await?;
+            let link_addr = uri.start_link(adapter).await?;
             (&mut self.links).insert(link_info, link_addr);
         }
 

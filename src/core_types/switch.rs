@@ -3,17 +3,6 @@ use crate::error::Error;
 use smallvec::SmallVec;
 use std::{cmp::Ordering, time::Duration};
 
-///
-pub const ROOT_TIMEOUT: Duration = Duration::from_secs(60);
-///
-pub const UPDATE_INTERVAL: Duration = Duration::from_secs(ROOT_TIMEOUT.as_secs() >> 1);
-///
-pub const THROTTLE_INTERVAL: Duration = Duration::from_secs(UPDATE_INTERVAL.as_secs() >> 1);
-/// Number of switch updates before switching to a faster parent.
-pub const PARENT_UPDATE_THRESHOLD: u8 = 240;
-///
-pub const MIN_TOTAL_QUEUE_SIZE: u64 = 4 * 1024 * 1024;
-
 /// Represents a path from the root to a node.
 /// This path is generally part of a spanning tree, except possibly the last hop
 /// (it can loop when sending coords to your parent, but they will see this and
