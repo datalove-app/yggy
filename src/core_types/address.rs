@@ -81,17 +81,6 @@ impl Default for Address {
     }
 }
 
-impl TryFrom<Ipv6Addr> for Address {
-    type Error = Error;
-    fn try_from(raw: Ipv6Addr) -> Result<Self, Self::Error> {
-        if ADDRESS_NETMASK == raw.segments()[0] {
-            Ok(Self(raw))
-        } else {
-            Err(TypeError::OutOfBoundsAddress(raw))?
-        }
-    }
-}
-
 /// Begins with `ADDRESS_PREFIX`, with the last bit set to 0, indicating an address.
 /// The next 8 bits are set to the number of leading 1 bits in the [`NodeID`].
 /// The remainder is the [`NodeID`], excluding the leading 1 bits and the first
@@ -118,6 +107,17 @@ impl From<&NodeID> for Address {
         (&mut addr[2..]).copy_from_slice(node_id_rest);
 
         Self(addr.into())
+    }
+}
+
+impl TryFrom<Ipv6Addr> for Address {
+    type Error = Error;
+    fn try_from(raw: Ipv6Addr) -> Result<Self, Self::Error> {
+        if ADDRESS_NETMASK == raw.segments()[0] {
+            Ok(Self(raw))
+        } else {
+            Err(TypeError::OutOfBoundsAddress(raw))?
+        }
     }
 }
 

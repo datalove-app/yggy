@@ -5,6 +5,8 @@ use bitvec::{
 };
 use boringtun::crypto::x25519;
 use derive_more::{AsRef, From, FromStr};
+use rand::{thread_rng, CryptoRng, RngCore, SeedableRng};
+use rand_chacha::ChaChaRng;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::{
     digest::{generic_array::GenericArray, Digest, FixedOutput},
@@ -13,7 +15,12 @@ use sha2::{
 use std::{
     cmp::Ordering,
     convert::{TryFrom, TryInto},
+    sync::Mutex,
 };
+
+lazy_static! {
+    static ref RNG: Mutex<ChaChaRng> = ChaChaRng::from_rng(thread_rng()).unwrap().into();
+}
 
 type InnerDigest = GenericArray<u8, <Sha512 as Digest>::OutputSize>;
 
@@ -100,16 +107,21 @@ impl From<&SigningPublicKey> for TreeID {
     }
 }
 
+/// A cryptographically-random handle, used to identify the [`Session`] to
+/// which an incoming packet belongs.
 ///
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+/// [`Session`]: ../core_interfaces/services/router/session/trait.Session.html
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Handle([u8; 8]);
 
 impl Handle {
-    ///
-    /// TODO generate random handles
+    /// Generates cryptographically-random session handles.
     #[inline]
     pub fn new() -> Self {
-        Self::default()
+        let mut rng = RNG.lock().unwrap();
+        let mut handle = [0u8; 8];
+        (&mut rng).fill_bytes(&mut handle);
+        Self(handle)
     }
 }
 

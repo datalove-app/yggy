@@ -1,16 +1,16 @@
 use super::Router;
 use crate::{
-    core::switch::LookupTable,
     core_interfaces::{router::session, switch, Core},
     core_types::{
-        Address, AllowedEncryptionPublicKeys, BoxPublicKey, BoxSharedKey, Coords, Handle, Subnet,
-        MTU,
+        Address, AllowedEncryptionPublicKeys, BoxPublicKey, BoxSharedKey, Coords, Handle, NodeID,
+        Subnet, MTU,
     },
     error::Error,
 };
 use boringtun::noise::{Tunn, TunnResult};
 use std::{
     collections::HashMap,
+    convert::TryFrom,
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -78,37 +78,32 @@ impl<C: Core> session::SessionManager<C> for SessionManager<C> {
         self: Arc<Self>,
         their_key: &BoxPublicKey,
     ) -> Result<Addr<Self::Session>, Error> {
-        let session = Session::start(self.core.clone(), self.clone()).await?;
+        let session = Session::start(self.core.clone(), self.clone(), their_key).await?;
 
         Ok(session)
     }
 }
 
-enum SessionState {
-    Init(Instant),
-    Active {
-        was_mtu_fixed: bool,
-        opened: Instant,
-        last_packet: Instant,
-        last_mtu_change: Instant,
-        first_ping_since_last_packet: Instant,
-    },
-}
-
 ///
 pub struct Session<C: Core> {
+    // external state
     core: Addr<C>,
     // conn: Addr<<C as Core>::Conn>,
     session_manager: Arc<SessionManager<C>>,
     lookup_table: Arc<ILookupTable<C>>,
-    state: SessionState,
 
     // /// Represents the underlying point-to-point WireGuard connection.
     // tunn: Tunn,
+    is_initialized: bool,
+    was_mtu_fixed: bool,
+    opened: Instant,
+    last_packet: Instant,
+    last_mtu_change: Instant,
+    first_ping_since_last_packet: Instant,
 
     // peer properties
-    // their_addr: Address,
-    // their_subnet: Subnet,
+    their_addr: Address,
+    their_subnet: Subnet,
     // their_handle: Handle,
     // their_coords: Coords,
     their_mtu: MTU,
@@ -120,21 +115,30 @@ impl<C: Core> Session<C> {
     pub async fn start(
         mut core: Addr<C>,
         session_manager: Arc<SessionManager<C>>,
+        their_key: &BoxPublicKey,
     ) -> Result<Addr<Self>, Error> {
         let config = C::current_config(&mut core).await?;
         let mut switch = C::switch(&mut core).await?;
 
-        let lookup_table = <ISwitch<C> as switch::Switch<C>>::get_lookup_table(&mut switch).await;
         let self_mtu = session_manager.max_allowed_mtu;
+        let their_nodeid = NodeID::try_from(their_key)?;
+        let now = Instant::now();
 
         let session = Self {
             core,
             session_manager,
-            lookup_table,
-            state: SessionState::Init(Instant::now()),
+            lookup_table: <ISwitch<C> as switch::Switch<C>>::get_lookup_table(&mut switch).await,
             // tunn: Tunn::new()
-            // their_addr: Address,
-            // their_subnet: Subnet,
+            is_initialized: false,
+            was_mtu_fixed: false,
+            opened: now,
+            last_packet: now,
+            last_mtu_change: now,
+            first_ping_since_last_packet: now,
+
+            // peer properties
+            their_addr: Address::from(&their_nodeid),
+            their_subnet: Subnet::from(&their_nodeid),
             // their_handle: Handle,
             // their_coords: Coords,
             their_mtu: MTU::MIN,
