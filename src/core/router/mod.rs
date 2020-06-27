@@ -26,7 +26,8 @@ pub struct Router<C: Core> {
     ///
     writer: RouterWriter<C>,
     // dht
-    // searches
+    search_manager: search::SearchManager<C>,
+    session_manager: session::SessionManager<C>,
 }
 
 impl<C: Core> Router<C> {

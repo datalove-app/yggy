@@ -48,10 +48,13 @@ where
     type Listener: Listener<Self>;
 
     ///
+    type PeerManager: PeerManager<Self>;
+
+    ///
     type Router: Router<Self>;
 
     ///
-    type PeerManager: PeerManager<Self>;
+    type Switch: Switch<Self>;
 
     ///
     async fn current_config(core: &mut Addr<Self>) -> Result<Config, Error> {
@@ -65,10 +68,13 @@ where
     async fn listener(core: &mut Addr<Self>) -> Result<Addr<Self::Listener>, Error>;
 
     ///
+    async fn peer_manager(core: &mut Addr<Self>) -> Result<Addr<Self::PeerManager>, Error>;
+
+    ///
     async fn router(core: &mut Addr<Self>) -> Result<Addr<Self::Router>, Error>;
 
     ///
-    async fn peer_manager(core: &mut Addr<Self>) -> Result<Addr<Self::PeerManager>, Error>;
+    async fn switch(core: &mut Addr<Self>) -> Result<Addr<Self::Switch>, Error>;
 }
 
 pub mod messages {

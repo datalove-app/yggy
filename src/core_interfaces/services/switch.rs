@@ -4,83 +4,51 @@ use crate::{
 };
 use std::{
     collections::HashMap,
+    fmt,
+    sync::Arc,
     time::{Duration, Instant},
 };
+use xactor::{Actor, Addr, Handler};
 
 ///
 ///
-pub trait Switch<C: Core> {}
-
-///
-/// TODO
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SwitchData {
-    locator: SwitchLocator,
-    seq: u64,
-    peers: HashMap<SwitchPort, PeerInfo>,
-    // msg: SwitchMessage
-}
-
-// ///
-// #[derive(Debug)]
-// pub struct LookupTable {
-//     our_locator: SwitchLocator,
-//     elems:
-// }
-
-// #[derive(Debug)]
-// pub struct LookupTableElement
-
-pub struct LookupTable {
-    map: HashMap<SwitchPort, (NodeID)>,
-}
-
-impl LookupTable {
+#[async_trait::async_trait]
+pub trait Switch<C: Core>
+where
+    Self: Actor,
+    Self: Handler<messages::GetLookupTable<C, Self>>,
+{
     ///
-    ///
-    /// TODO: look at python impl below for "pre-computing" the table
-    /// # Pre-computes a lookup table for destination coords
-    /// # Insert parent first so you prefer them as a next-hop
-    /// self.table.clear()
-    /// parent = self.info.nodeID
-    /// if len(self.info.coords) >= 2: parent = self.info.coords[-2]
-    /// for peer in self.peers.itervalues():
-    /// current = self.table
-    /// for coord in peer.coords:
-    ///     if coord not in current: current[coord] = (peer.nodeID, dict())
-    ///     old = current[coord]
-    ///     next = old[1]
-    ///     oldPeer = self.peers[old[0]]
-    ///     oldDist = len(oldPeer.coords)
-    ///     oldDeg = oldPeer.degree
-    ///     newDist = len(peer.coords)
-    ///     newDeg = peer.degree
-    ///     # Prefer parent
-    ///     # Else prefer short distance from root
-    ///     # If equal distance, prefer high degree
-    ///     if peer.nodeID == parent: current[coord] = (peer.nodeID, next)
-    ///     elif newDist < oldDist: current[coord] = (peer.nodeID, next)
-    ///     elif newDist == oldDist and newDeg > oldDeg: current[coord] = (peer.nodeID, next)
-    ///     current = next
-    /// return None
-    fn init(info: &PeerInfo) -> Self {
-        // let mut parent: NodeID = info.key.into();
-        // if info.locator.coords().len() >= 2 {
-        //     parent = info.coords.get(-2);
-        // };
+    type LookupTable: LookupTable;
 
-        unimplemented!()
+    async fn get_lookup_table(addr: &mut Addr<Self>) -> Arc<Self::LookupTable> {
+        addr.call(messages::GetLookupTable::<C, Self>::new())
+            .await
+            .unwrap()
     }
 }
 
-///
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PeerInfo {
-    key: SigningPublicKey,
-    locator: SwitchLocator,
-    port: SwitchPort,
-    degree: u64,
-    last_seen: Instant,
-    // msg: SwitchMessage,
-    is_blocked: bool,
+/// Marker trait for the `Switch`'s inner lookup table.
+pub trait LookupTable: 'static + fmt::Debug + Send + Sync {}
+
+pub mod messages {
+    use super::*;
+
+    pub struct GetLookupTable<C: Core, S: Switch<C>> {
+        core: std::marker::PhantomData<C>,
+        switch: std::marker::PhantomData<S>,
+    }
+
+    impl<C: Core, S: Switch<C>> GetLookupTable<C, S> {
+        pub fn new() -> Self {
+            Self {
+                core: std::marker::PhantomData,
+                switch: std::marker::PhantomData,
+            }
+        }
+    }
+
+    impl<C: Core, S: Switch<C>> xactor::Message for GetLookupTable<C, S> {
+        type Result = Arc<<S as Switch<C>>::LookupTable>;
+    }
 }

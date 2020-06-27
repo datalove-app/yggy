@@ -15,6 +15,8 @@ use std::{
     convert::{TryFrom, TryInto},
 };
 
+type InnerDigest = GenericArray<u8, <Sha512 as Digest>::OutputSize>;
+
 /*
  * IDs
  */
@@ -29,7 +31,10 @@ use std::{
 pub struct NodeID(InnerDigest);
 
 impl NodeID {
+    ///
     const BYTE_LENGTH: usize = 64;
+
+    ///
     const MAX_PREFIX_LEN: u8 = 127;
 
     /// Returns the number of bits set in a masked `NodeID`.
@@ -46,7 +51,7 @@ impl NodeID {
 
     #[inline]
     fn leading_ones(bytes: &[u8]) -> Option<u8> {
-        let leading_ones: Option<u8> = bytes
+        let count: Option<u8> = bytes
             .bits::<Msb0>()
             .iter()
             .take_while(|b| **b)
@@ -54,7 +59,7 @@ impl NodeID {
             .try_into()
             .ok();
 
-        leading_ones.filter(|count| count <= &Self::MAX_PREFIX_LEN)
+        count.filter(|count| count <= &Self::MAX_PREFIX_LEN)
     }
 }
 
@@ -84,6 +89,7 @@ pub type NodeIDMask = InnerDigest;
 pub struct TreeID(InnerDigest);
 
 impl TreeID {
+    ///
     const BYTE_LENGTH: usize = 64;
 }
 
@@ -95,7 +101,7 @@ impl From<&SigningPublicKey> for TreeID {
 }
 
 ///
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct Handle([u8; 8]);
 
 impl Handle {
@@ -279,5 +285,3 @@ impl BoxSecretKey {
 #[derive(Debug, From)]
 #[from(forward)]
 pub struct BoxSharedKey(x25519::X25519EphemeralKey);
-
-type InnerDigest = GenericArray<u8, <Sha512 as Digest>::OutputSize>;

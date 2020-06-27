@@ -1,8 +1,5 @@
 // use super::Session;
-use crate::{
-    core_types::{NodeID, SearchInfo},
-    error::Error,
-};
+use crate::{core_types::NodeID, error::Error};
 use xactor::Actor;
 
 ///
@@ -19,14 +16,14 @@ pub trait SearchManager // where
 
     fn reconfigure(&mut self);
 
-    fn new_search(&self, dest: NodeID, mask: NodeID) -> Result<&SearchInfo, Error>;
+    // fn new_search(&self, dest: NodeID, mask: NodeID) -> Result<&SearchInfo, Error>;
 }
 
-///
-/// ?? can be polled until completion, producing a Session
-pub trait Search
-// where
-// Self: ActorFuture<Actor = Self, Output = Addr<S>> + Actor,
-// S: Session,
-{
-}
+// ///
+// /// ?? can be polled until completion, producing a Session
+// pub trait Search
+// // where
+// // Self: ActorFuture<Actor = Self, Output = Addr<S>> + Actor,
+// // S: Session,
+// {
+// }

@@ -22,12 +22,12 @@ lazy_static! {
 ///
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(6);
 
-/// Time to wait before deciding a send is blocked.
-const SEND_TIMEOUT: Duration = Duration::from_secs(1);
-
 /// Time to wait before sending a keep-alive message if we have no real traffic
 /// to send.
 const KEEP_ALIVE_TIMEOUT: Duration = Duration::from_secs(2);
+
+/// Time to wait before deciding a send is blocked.
+const SEND_TIMEOUT: Duration = Duration::from_secs(1);
 
 ///
 const STALL_TIMEOUT: Duration = Duration::from_secs(6);

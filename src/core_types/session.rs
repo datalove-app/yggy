@@ -1,4 +1,5 @@
-use super::{BoxPublicKey, Handle, WireCoords, MTU};
+use super::{BoxPublicKey, Coords, Handle, MTU};
+use std::time::Instant;
 
 ///
 #[derive(Debug)]
@@ -9,12 +10,8 @@ pub struct SessionPingPong {
     sender_session_key: BoxPublicKey,
     /// Random number used to identify the session.
     handle: Handle,
-    ///
-    coords: WireCoords,
-    ///
-    timestamp: i64,
-    ///
+    coords: Coords,
+    timestamp: Instant,
     is_pong: bool,
-    ///
     mtu: MTU,
 }

@@ -1,7 +1,10 @@
 use super::SigningPublicKey;
 use crate::error::Error;
 use smallvec::SmallVec;
-use std::{cmp::Ordering, time::Duration};
+use std::{
+    cmp::Ordering,
+    time::{Duration, Instant},
+};
 
 /// Represents a path from the root to a node.
 /// This path is generally part of a spanning tree, except possibly the last hop
@@ -11,6 +14,7 @@ use std::{cmp::Ordering, time::Duration};
 pub struct Coords(SmallVec<[SwitchPort; Self::DEFAULT_SIZE]>);
 
 impl Coords {
+    ///
     const DEFAULT_SIZE: usize = 8;
 
     ///
@@ -73,32 +77,9 @@ impl From<&Coords> for WireCoords {
 //     }
 // }
 
-///
+/// ? Interface number of a given peer (in the switch?)
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct SwitchPort(u64);
-
-/// Contains the root node's signing key, timestamp, and signed per-hop info
-/// about a path from the root node to some other node in the network.
-/// This is exchanged with peers to construct the spanning tree.
-/// A subset of this information, excluding signatures, is used to construct
-/// [`SwitchLocator`]s.
-///
-/// [`SwitchLocator`]: struct.SwitchLocator
-#[derive(Clone, Copy, Debug)]
-pub struct SwitchMessage {
-    root: SigningPublicKey,
-    timestamp: i64,
-    // hops: TODO:
-}
-
-/// Represents the signed information about the path leading from the root to
-/// the `next` node, via the `port` specified here.
-#[derive(Clone, Copy, Debug)]
-pub struct SwitchMessageHop {
-    port: SwitchPort,
-    next: SigningPublicKey,
-    // signature: TODO:
-}
 
 /// Represents the topology and network state-dependent info about a node, sans
 /// the signatures that accompany it. Nodes will pick the best root they see,
@@ -106,7 +87,7 @@ pub struct SwitchMessageHop {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SwitchLocator {
     root: SigningPublicKey,
-    timestamp: i64,
+    timestamp: Instant,
     coords: Coords,
 }
 
@@ -122,7 +103,7 @@ impl SwitchLocator {
     }
 
     #[inline]
-    pub fn wirecoords(&self) -> WireCoords {
+    pub fn wire_coords(&self) -> WireCoords {
         unimplemented!()
     }
 
@@ -150,4 +131,27 @@ impl Ord for SwitchLocator {
     fn cmp(&self, other: &Self) -> Ordering {
         unimplemented!()
     }
+}
+
+/// Contains the root node's signing key, timestamp, and signed per-hop info
+/// about a path from the root node to some other node in the network.
+/// This is exchanged with peers to construct the spanning tree.
+/// A subset of this information, excluding signatures, is used to construct
+/// [`SwitchLocator`]s.
+///
+/// [`SwitchLocator`]: struct.SwitchLocator
+#[derive(Clone, Copy, Debug)]
+pub struct SwitchMessage {
+    root: SigningPublicKey,
+    timestamp: Instant,
+    // hops: TODO:
+}
+
+/// Represents the signed information about the path leading from the root to
+/// the `next` node, via the `port` specified here.
+#[derive(Clone, Copy, Debug)]
+pub struct SwitchMessageHop {
+    port: SwitchPort,
+    next: SigningPublicKey,
+    // signature: TODO:
 }
