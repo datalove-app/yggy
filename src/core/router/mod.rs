@@ -2,21 +2,25 @@ mod search;
 mod session;
 
 use crate::{
-    core_interfaces::{peer, router, Core},
+    core_interfaces::{peer, router, switch, Core},
     core_types::wire,
     error::Error,
 };
 use futures::{io, prelude::*, task};
-use std::pin::Pin;
+use std::{pin::Pin, sync::Arc};
 use xactor::{Actor, Addr, Context, Handler, StreamHandler};
 
 type IPeer<C> = <<C as Core>::PeerManager as peer::PeerManager<C>>::Peer;
+type ISwitch<C> = <C as Core>::Switch;
+type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
 
 ///
 #[derive(Debug)]
 pub struct Router<C: Core> {
-    ///
     core: Addr<C>,
+    // dht
+    search_manager: search::SearchManager<C>,
+    session_manager: session::SessionManager<C>,
 
     ///
     self_peer: Addr<IPeer<C>>,
@@ -25,9 +29,8 @@ pub struct Router<C: Core> {
     // reader
     ///
     writer: RouterWriter<C>,
-    // dht
-    search_manager: search::SearchManager<C>,
-    session_manager: session::SessionManager<C>,
+
+    lookup_table: Arc<ILookupTable<C>>,
 }
 
 impl<C: Core> Router<C> {

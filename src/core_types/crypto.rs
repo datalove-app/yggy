@@ -4,7 +4,7 @@ use bitvec::{
     slice::{AsBits, BitSlice},
 };
 use boringtun::crypto::x25519;
-use derive_more::{AsRef, From, FromStr};
+use derive_more::{AsRef, From, FromStr, Into};
 use rand::{thread_rng, CryptoRng, RngCore, SeedableRng};
 use rand_chacha::ChaChaRng;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -196,7 +196,7 @@ pub struct BoxKeypair {
 pub type BoxNonce = [u8; 24];
 
 ///
-#[derive(Debug, From, FromStr, Eq, Hash, PartialEq)]
+#[derive(AsRef, Debug, From, FromStr, Eq, Hash, PartialEq)]
 #[from(forward)]
 pub struct BoxPublicKey(x25519::X25519PublicKey);
 
@@ -281,19 +281,73 @@ impl<'de> Deserialize<'de> for BoxPublicKey {
 }
 
 ///
-#[derive(Debug, From)]
-#[from(forward)]
-// #[serde(transparent)] TODO: try_from FromStr
+#[derive(AsRef, Debug, From, FromStr, Into)]
 pub struct BoxSecretKey(x25519::X25519SecretKey);
 
 impl BoxSecretKey {
     #[inline]
-    fn as_bytes(&self) -> &[u8] {
+    pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
+    }
+
+    #[inline]
+    pub fn public_key(&self) -> BoxPublicKey {
+        BoxPublicKey::from(self.0.public_key())
+    }
+
+    #[inline]
+    pub fn shared_key(&self, peer_public: &BoxPublicKey) -> Result<BoxSharedKey, Error> {
+        self.0
+            .shared_key(peer_public.as_ref())
+            .map(Into::into)
+            .map_err(|e| TypeError::FailedSharedKeyGeneration(e).into())
+    }
+}
+
+impl Serialize for BoxSecretKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(self.as_bytes())
+    }
+}
+
+/// Tries to deserialize from hex or base64 string.
+impl<'de> Deserialize<'de> for BoxSecretKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::{Error, Visitor as DeVisitor};
+        use std::str::FromStr;
+
+        struct BoxSecretKeyVisitor;
+        impl<'de> DeVisitor<'de> for BoxSecretKeyVisitor {
+            type Value = BoxSecretKey;
+
+            fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("an X25519 secret encryption key")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                BoxSecretKey::from_str(v).map_err(Error::custom)
+            }
+
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                self.visit_str(&v)
+            }
+        }
+
+        deserializer.deserialize_any(BoxSecretKeyVisitor)
     }
 }
 
 ///
-#[derive(Debug, From)]
-#[from(forward)]
-pub struct BoxSharedKey(x25519::X25519EphemeralKey);
+pub type BoxSharedKey = [u8; 32];

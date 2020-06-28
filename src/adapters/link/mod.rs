@@ -116,11 +116,10 @@ impl<C: Core> Handler<link::messages::Listen> for LinkAdapter<C> {
 ///
 #[derive(Debug)]
 pub struct Link<C: Core> {
-    ///
-    info: LinkInfo,
+    adapter: Addr<LinkAdapter<C>>,
 
     ///
-    adapter: Addr<LinkAdapter<C>>,
+    info: LinkInfo,
 
     // ///
     // peer: Addr<IPeer<C>>,
@@ -132,10 +131,10 @@ pub struct Link<C: Core> {
 }
 
 impl<C: Core> Link<C> {
-    #[inline]
-    pub fn info(&self) -> &LinkInfo {
-        &self.info
-    }
+    // #[inline]
+    // pub fn info(&self) -> &LinkInfo {
+    //     &self.info
+    // }
 }
 
 #[async_trait::async_trait]

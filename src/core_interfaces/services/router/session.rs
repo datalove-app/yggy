@@ -9,9 +9,7 @@ use xactor::{Actor, Addr};
 ///
 /// ? Handle<...>
 #[async_trait::async_trait]
-pub trait SessionManager<C: Core>: Sized // where
-//     Self: Actor,
-{
+pub trait SessionManager<C: Core>: Sized {
     ///
     type Session: Session<C, Self>;
 

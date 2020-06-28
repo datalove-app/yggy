@@ -13,7 +13,7 @@ where
     Self: StreamHandler<wire::ProtocolTraffic>,
 {
     // type Interface: PeerInterface;
-    type SearchManager: search::SearchManager;
+    type SearchManager: search::SearchManager<C>;
     type SessionManager: session::SessionManager<C>;
 
     fn reconfigure(&mut self);

@@ -6,6 +6,7 @@ use crate::{
 };
 use std::{
     collections::HashMap,
+    sync::Arc,
     time::{Duration, Instant},
 };
 use xactor::{Actor, Addr};
@@ -22,14 +23,15 @@ const STEP_TIMEOUT: Duration = Duration::from_secs(1);
 ///
 #[derive(Debug)]
 pub struct SearchManager<C: Core> {
-    ///
     router: Addr<<C as Core>::Router>,
 
     /// Ongoing searches.
-    searches: HashMap<NodeID, SearchInfo>,
+    searches: HashMap<NodeID, <Self as search::SearchManager<C>>::Search>,
 }
 
-impl<C: Core> search::SearchManager for SearchManager<C> {
+impl<C: Core> search::SearchManager<C> for SearchManager<C> {
+    type Search = SearchInfo<C>;
+
     fn reconfigure(&mut self) {
         unimplemented!()
     }
@@ -40,16 +42,17 @@ impl<C: Core> search::SearchManager for SearchManager<C> {
 }
 
 ///
-#[derive(Copy, Clone, Debug)]
-pub struct SearchInfo {
-    // ///
-    // search_manager: Arc<S>,
+#[derive(Clone, Debug)]
+pub struct SearchInfo<C: Core> {
+    search_manager: Arc<SearchManager<C>>,
     dest: NodeID,
     mask: NodeID,
     time: Instant,
     // visited:
-    /// The number of requests sent.
-    sent: u64,
-    /// The number of responses received.
-    recv: u64,
+    //     /// The number of requests sent.
+    //     sent: u64,
+    //     /// The number of responses received.
+    //     recv: u64,
 }
+
+impl<C: Core> search::Search<C, SearchManager<C>> for SearchInfo<C> {}

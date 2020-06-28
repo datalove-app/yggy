@@ -78,7 +78,10 @@ impl<C: Core> session::SessionManager<C> for SessionManager<C> {
         self: Arc<Self>,
         their_key: &BoxPublicKey,
     ) -> Result<Addr<Self::Session>, Error> {
+        // let lookup_table = <ISwitch<C> as switch::Switch<C>>::get_look
         let session = Session::start(self.core.clone(), self.clone(), their_key).await?;
+
+        // TODO
 
         Ok(session)
     }
@@ -90,10 +93,11 @@ pub struct Session<C: Core> {
     core: Addr<C>,
     // conn: Addr<<C as Core>::Conn>,
     session_manager: Arc<SessionManager<C>>,
-    lookup_table: Arc<ILookupTable<C>>,
+    // lookup_table: Arc<ILookupTable<C>>,
 
-    // /// Represents the underlying point-to-point WireGuard connection.
-    // tunn: Tunn,
+    // session state
+    /// Represents the underlying point-to-point WireGuard connection.
+    tunn: Box<Tunn>,
     is_initialized: bool,
     was_mtu_fixed: bool,
     opened: Instant,
@@ -102,12 +106,13 @@ pub struct Session<C: Core> {
     first_ping_since_last_packet: Instant,
 
     // peer properties
+    self_handle: Handle,
+    self_mtu: MTU,
     their_addr: Address,
     their_subnet: Subnet,
     // their_handle: Handle,
     // their_coords: Coords,
     their_mtu: MTU,
-    self_mtu: MTU,
 }
 
 impl<C: Core> Session<C> {
@@ -115,6 +120,7 @@ impl<C: Core> Session<C> {
     pub async fn start(
         mut core: Addr<C>,
         session_manager: Arc<SessionManager<C>>,
+        // lookup_table: Arc<ILookupTable<C>>,
         their_key: &BoxPublicKey,
     ) -> Result<Addr<Self>, Error> {
         let config = C::current_config(&mut core).await?;
@@ -127,8 +133,16 @@ impl<C: Core> Session<C> {
         let session = Self {
             core,
             session_manager,
-            lookup_table: <ISwitch<C> as switch::Switch<C>>::get_lookup_table(&mut switch).await,
-            // tunn: Tunn::new()
+            // lookup_table,
+            tunn: Tunn::new(
+                Arc::new(config.encryption_private_key.into()),
+                Arc::new(their_key.as_bytes().into()),
+                None,
+                None,
+                100,
+                None,
+            )
+            .unwrap(),
             is_initialized: false,
             was_mtu_fixed: false,
             opened: now,
@@ -137,12 +151,13 @@ impl<C: Core> Session<C> {
             first_ping_since_last_packet: now,
 
             // peer properties
+            self_handle: Handle::new(),
+            self_mtu,
             their_addr: Address::from(&their_nodeid),
             their_subnet: Subnet::from(&their_nodeid),
-            // their_handle: Handle,
+            // their_handle: Handle::new(),
             // their_coords: Coords,
             their_mtu: MTU::MIN,
-            self_mtu,
         };
 
         unimplemented!()

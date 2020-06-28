@@ -1,3 +1,4 @@
+use boringtun::noise::errors::WireGuardError;
 use derive_more::From;
 use std::net::Ipv6Addr;
 use thiserror::Error;
@@ -39,6 +40,9 @@ pub enum TypeError {
 
     #[error("unknown peer URI `{0}`: must be `tcp://...` or `socks://.../...`")]
     UnknownPeerURI(String),
+
+    #[error("unable to create shared encryption key: `{0:?}`")]
+    FailedSharedKeyGeneration(WireGuardError),
 
     #[cfg(feature = "tor")]
     #[error("invalid TOR URI `{uri:?}`: {msg:?}")]

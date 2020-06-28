@@ -46,23 +46,24 @@ pub struct Config {
     #[serde(rename = "AdminListen")]
     pub admin_listen: Option<PeerURI>,
 
-    // /// Your public encryption key. Your peers may ask you for this to put into
-    // /// their `AllowedEncryptionPublicKeys` configuration.
-    // #[serde(rename = "EncryptionPublicKey")]
-    // pub encryption_public_key: BoxPublicKey,
+    /// Your public encryption key. Your peers may ask you for this to put into
+    /// their `AllowedEncryptionPublicKeys` configuration.
+    #[serde(rename = "EncryptionPublicKey")]
+    pub encryption_public_key: BoxPublicKey,
 
-    // /// Your private encryption key. DO NOT share this with anyone!
-    // #[serde(rename = "EncryptionPrivateKey")]
-    // pub encryption_private_key: BoxSecretKey,
+    /// Your private encryption key. DO NOT share this with anyone!
+    #[serde(rename = "EncryptionPrivateKey")]
+    pub encryption_private_key: BoxSecretKey,
 
-    // /// Your public signing key. You should not ordinarily need to share this
-    // /// with anyone.
-    // #[serde(rename = "SigningPublicKey")]
-    // pub signing_public_key: SigningPublicKey,
+    /// Your public signing key. You should not ordinarily need to share this
+    /// with anyone.
+    #[serde(rename = "SigningPublicKey")]
+    pub signing_public_key: SigningPublicKey,
 
-    // /// Your private signing key. DO NOT share this with anyone!
-    // #[serde(rename = "SigningPrivateKey")]
-    // pub signing_private_key: SigningSecretKey,
+    /// Your private signing key. DO NOT share this with anyone!
+    #[serde(rename = "SigningPrivateKey")]
+    pub signing_private_key: SigningSecretKey,
+
     /// The port number to be used for the link-local TCP listeners for the
     /// configured `MulticastInterfaces`. This option does not affect listeners
     /// specified in the `Listen` option. Unless you plan to firewall link-local
