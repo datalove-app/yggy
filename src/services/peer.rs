@@ -1,9 +1,9 @@
-use crate::{
-    core_interfaces::{peer, Core},
-    core_types,
-    error::Error,
-};
 use xactor::{Actor, Addr, Context, Handler, StreamHandler};
+use yggy_core::{
+    error::Error,
+    interfaces::{peer, Core},
+    types,
+};
 
 ///
 #[derive(Debug)]

@@ -24,8 +24,8 @@ pub use ports::*;
 pub use services::*;
 
 use crate::{
-    core_types::{BoxKeypair, SigningKeypair},
     error::Error,
+    types::{BoxKeypair, SigningKeypair},
     Config,
 };
 use std::fmt::Debug;

@@ -1,36 +1,8 @@
 [package]
-name = "yggy"
+name = "yggy-core"
 version = "0.0.0-alpha.1"
-edition = "2018"
 authors = ["sunny-g <sunny.gonna@gmail.com>"]
-description = "An end-to-end encrypted IPv6 mesh network"
-readme = "README.md"
-repository = "https://github.com/datalove-app/yggy"
-keywords = ["cryptography", "networking", "p2p"]
-categories = ["cryptography"]
-license = "LGPL-3.0" # FIXME
-
-[lib]
-name = "yggy"
-path = "src/lib.rs"
-
-# TODO? restrict binary building to linux/mac/windows?
-[[bin]]
-name = "yggyd"
-path = "daemon/main.rs"
-
-[[bin]]
-name = "yggyctl"
-path = "cmd/main.rs"
-
-[[bin]]
-name = "yggysim"
-path = "simulator/main.rs"
-
-[workspace]
-members = [
-  "core"
-]
+edition = "2018"
 
 [dependencies]
 # main
@@ -50,7 +22,6 @@ smol = "0.1"
 thiserror = "1.0"
 xactor = "0.7"
 utuntap = "0.2.4"
-yggy-core = { path = "./core" }
 # helper, util
 async-log = "2.0.0"
 bitvec = { version = "0.17.4", default-features = false }
@@ -74,14 +45,3 @@ avx2_backend = ["ed25519-dalek/avx2_backend"]
 u32_backend = ["ed25519-dalek/u32_backend"]
 u64_backend = ["ed25519-dalek/u64_backend"]
 yolocrypto = ["ed25519-dalek/yolocrypto"]
-
-# [target.'cfg(not(target_arch="arm"))'.dependencies]
-# ring = "0.16"
-
-# [target.'cfg(not(any(target_os="windows", target_os="ios", target_os="android")))'.dependencies]
-# chrono = "0.4"
-# daemonize = "0.4.1"
-# clap = { version = "2.33", default-features=false, features = ["suggestions"] }
-
-# [target.'cfg(target_os="android")'.dependencies]
-# jni = "0.10"

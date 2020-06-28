@@ -1,6 +1,6 @@
 use crate::{
-    core_interfaces::Core,
-    core_types::{NodeID, SigningPublicKey, SwitchLocator, SwitchPort},
+    interfaces::Core,
+    types::{NodeID, SigningPublicKey, SwitchLocator, SwitchPort},
 };
 use std::{
     collections::HashMap,

@@ -8,16 +8,18 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
-mod adapters;
-mod config;
+pub mod adapters;
+mod conn;
 pub mod core;
-pub mod core_interfaces;
-pub mod core_types;
-pub mod error;
+mod dialer;
+mod listener;
+mod node;
 pub mod notes;
+pub mod services;
+// pub mod whitepaper;
 
 #[doc(inline)]
-pub use config::Config;
+pub use crate::core::Core;
 
 #[cfg(test)]
 mod tests {

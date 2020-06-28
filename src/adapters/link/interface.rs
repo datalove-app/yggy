@@ -1,29 +1,29 @@
 use super::{udp::UDPSocket, Link, LinkAdapter, LinkInfo};
-use crate::{core_interfaces::Core, core_types::PeerURI, error::Error};
 use anyhow::anyhow;
 use futures::{io, prelude::*, task};
 use smol::Async;
 use std::pin::Pin;
 use xactor::{Actor, Addr};
+use yggy_core::{error::Error, interfaces::Core, types::PeerURI};
 
-impl PeerURI {
+impl<C: Core> Link<C> {
     /// Starts a [`Link`] that reads and writes packets on the provided `PeerURI`.
     ///
     /// [`Link`]: ../mod/struct.Link.html
-    pub async fn start_link<C: Core>(
-        self,
+    pub async fn start_link(
+        listen_uri: PeerURI,
         adapter: Addr<LinkAdapter<C>>,
-    ) -> Result<Addr<Link<C>>, Error> {
-        let (reader, writer) = match self {
-            // Self::TCP
-            Self::UDP(addr) => UDPSocket::bind(addr)?.split(),
-            // Self::SOCKS
-            // Self::TOR
+    ) -> Result<Addr<Self>, Error> {
+        let (reader, writer) = match listen_uri {
+            // PeerURI::TCP
+            PeerURI::UDP(addr) => UDPSocket::bind(addr)?.split(),
+            // PeerURI::SOCKS
+            // PeerURI::TOR
             _ => unimplemented!(),
         };
 
         let link = Link {
-            info: LinkInfo { listen_uri: self },
+            info: LinkInfo { listen_uri },
             adapter,
             reader,
             writer,

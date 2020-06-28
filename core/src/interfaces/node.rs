@@ -1,7 +1,7 @@
 use super::{Core, LinkAdapter, MulticastAdapter, TunAdapter};
 use crate::{
-    core_types::{BoxKeypair, SigningKeypair},
     error::Error,
+    types::{BoxKeypair, SigningKeypair},
 };
 use async_trait::async_trait;
 use futures::Future;

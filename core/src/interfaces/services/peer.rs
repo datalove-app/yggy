@@ -1,6 +1,6 @@
 use crate::{
-    core_interfaces::Core,
-    core_types::{BoxPublicKey, BoxSharedKey, SigningPublicKey},
+    interfaces::Core,
+    types::{BoxPublicKey, BoxSharedKey, SigningPublicKey},
 };
 use futures::{io, prelude::*};
 use std::{pin::Pin, task};

@@ -1,7 +1,3 @@
-use crate::{
-    core_interfaces::{switch, Core},
-    core_types::{NodeID, SigningPublicKey, SwitchLocator, SwitchPort},
-};
 use std::{
     collections::HashMap,
     fmt,
@@ -9,6 +5,10 @@ use std::{
     time::{Duration, Instant},
 };
 use xactor::{Actor, Addr, Context, Handler};
+use yggy_core::{
+    interfaces::{switch, Core},
+    types::{NodeID, SigningPublicKey, SwitchLocator, SwitchPort},
+};
 
 ///
 const ROOT_TIMEOUT: Duration = Duration::from_secs(60);

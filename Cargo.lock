@@ -2330,4 +2330,34 @@ dependencies = [
  "thiserror",
  "utuntap",
  "xactor",
+ "yggy-core",
+]
+
+[[package]]
+name = "yggy-core"
+version = "0.0.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "async-log",
+ "async-trait",
+ "bitvec",
+ "boringtun",
+ "bytes",
+ "derive_more",
+ "ed25519-dalek",
+ "futures",
+ "itertools",
+ "lazy_static",
+ "libtor",
+ "log",
+ "packet",
+ "rand 0.6.5",
+ "rand_chacha 0.1.1",
+ "serde",
+ "sha2 0.9.0",
+ "smallvec",
+ "smol",
+ "thiserror",
+ "utuntap",
+ "xactor",
 ]

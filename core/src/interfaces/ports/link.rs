@@ -1,6 +1,6 @@
 use crate::{
-    core_interfaces::{peer, Core},
-    core_types::PeerURI,
+    interfaces::{peer, Core},
+    types::PeerURI,
 };
 use futures::prelude::*;
 use xactor::{Actor, Handler, Message};

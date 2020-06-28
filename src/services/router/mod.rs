@@ -1,14 +1,14 @@
 mod search;
 mod session;
 
-use crate::{
-    core_interfaces::{peer, router, switch, Core},
-    core_types::wire,
-    error::Error,
-};
 use futures::{io, prelude::*, task};
 use std::{pin::Pin, sync::Arc};
 use xactor::{Actor, Addr, Context, Handler, StreamHandler};
+use yggy_core::{
+    error::Error,
+    interfaces::{peer, router, switch, Core},
+    types::wire,
+};
 
 type IPeer<C> = <<C as Core>::PeerManager as peer::PeerManager<C>>::Peer;
 type ISwitch<C> = <C as Core>::Switch;

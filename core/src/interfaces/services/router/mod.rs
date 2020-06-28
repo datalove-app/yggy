@@ -1,7 +1,7 @@
 pub mod search;
 pub mod session;
 
-use crate::{core_interfaces::Core, core_types::wire};
+use crate::{interfaces::Core, types::wire};
 use std::fmt::Debug;
 use xactor::{Actor, StreamHandler};
 

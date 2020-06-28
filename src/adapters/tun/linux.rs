@@ -1,4 +1,3 @@
-use crate::{core_interfaces::tun, core_types::MTU, error::Error};
 use anyhow::anyhow;
 use futures::{io, prelude::*, task};
 use smol::Async;
@@ -9,6 +8,7 @@ use std::{
 };
 use utuntap::tun::OpenOptions;
 use xactor::{Actor, Addr, Context};
+use yggy_core::{error::Error, interfaces::tun, types::MTU};
 
 // const MAX_UDP_SIZE: usize = (1 << 16) - 1;
 

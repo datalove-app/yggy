@@ -1,4 +1,4 @@
-use crate::core_interfaces::Core;
+use crate::interfaces::Core;
 use xactor::Actor;
 
 ///

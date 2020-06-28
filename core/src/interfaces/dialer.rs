@@ -1,7 +1,7 @@
 use super::{Conn, Core};
 use crate::{
-    core_types::{Address, NetworkID},
     error::Error,
+    types::{Address, NetworkID},
 };
 use async_trait::async_trait;
 use std::convert::TryInto;

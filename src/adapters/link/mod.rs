@@ -2,14 +2,14 @@ mod interface;
 mod udp;
 
 use self::interface::{LinkReader, LinkWriter};
-use crate::{
-    core_interfaces::{link, peer, Core},
-    core_types::{BoxPublicKey, PeerURI, SigningPublicKey},
-    error::Error,
-};
 use futures::{io, prelude::*, task};
 use std::{collections::HashMap, hash, pin::Pin, time::Duration};
 use xactor::{Actor, Addr, Context, Handler};
+use yggy_core::{
+    error::Error,
+    interfaces::{link, peer, Core},
+    types::{BoxPublicKey, PeerURI, SigningPublicKey},
+};
 
 lazy_static! {
     ///
@@ -98,7 +98,7 @@ impl<C: Core> Actor for LinkAdapter<C> {
             let link_info = LinkInfo {
                 listen_uri: uri.clone(),
             };
-            let link_addr = uri.start_link(adapter).await?;
+            let link_addr = Link::start_link(uri, adapter).await?;
             (&mut self.links).insert(link_info, link_addr);
         }
 
@@ -140,11 +140,11 @@ impl<C: Core> Link<C> {
 #[async_trait::async_trait]
 impl<C: Core> link::Link<C, LinkAdapter<C>> for Link<C> {}
 
-// #[async_trait::async_trait]
-// impl<C: Core> peer::PeerInterface for Link<C> {
-//     type Reader = LinkReader;
-//     type Writer = LinkWriter;
-// }
+#[async_trait::async_trait]
+impl<C: Core> peer::PeerInterface for Link<C> {
+    type Reader = LinkReader;
+    type Writer = LinkWriter;
+}
 
 #[async_trait::async_trait]
 impl<C: Core> Actor for Link<C> {

@@ -1,12 +1,4 @@
 use super::Router;
-use crate::{
-    core_interfaces::{router::session, switch, Core},
-    core_types::{
-        Address, AllowedEncryptionPublicKeys, BoxNonce, BoxPublicKey, BoxSharedKey, Coords, Handle,
-        NodeID, Subnet, MTU,
-    },
-    error::Error,
-};
 use boringtun::noise::{Tunn, TunnResult};
 use std::{
     collections::HashMap,
@@ -15,6 +7,14 @@ use std::{
     time::{Duration, Instant},
 };
 use xactor::{Actor, Addr, Context, Handler, StreamHandler};
+use yggy_core::{
+    error::Error,
+    interfaces::{router::session, switch, Core},
+    types::{
+        Address, AllowedEncryptionPublicKeys, BoxNonce, BoxPublicKey, BoxSharedKey, Coords, Handle,
+        NodeID, Subnet, MTU,
+    },
+};
 
 type ISwitch<C> = <C as Core>::Switch;
 type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;

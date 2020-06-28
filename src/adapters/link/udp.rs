@@ -1,11 +1,11 @@
 use super::interface::{LinkReader, LinkWriter};
-use crate::error::Error;
 use futures::{io, prelude::*, task};
 use smol::Async;
 use std::{
     net::{SocketAddr, UdpSocket},
     pin::Pin,
 };
+use yggy_core::error::Error;
 
 #[derive(Debug)]
 pub struct UDPSocket {

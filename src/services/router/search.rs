@@ -1,15 +1,15 @@
 use super::Router;
-use crate::{
-    core_interfaces::{router::search, Core},
-    core_types::NodeID,
-    error::Error,
-};
 use std::{
     collections::HashMap,
     sync::Arc,
     time::{Duration, Instant},
 };
 use xactor::{Actor, Addr};
+use yggy_core::{
+    error::Error,
+    interfaces::{router::search, Core},
+    types::NodeID,
+};
 
 ///
 const RESTART_TIMEOUT: Duration = Duration::from_secs(3);

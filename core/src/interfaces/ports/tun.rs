@@ -1,7 +1,7 @@
 use crate::{
-    core_interfaces::{Conn, Core},
-    core_types::MTU,
     error::Error,
+    interfaces::{Conn, Core},
+    types::MTU,
 };
 use futures::io::{AsyncRead, AsyncWrite};
 use std::sync::{Arc, Mutex};

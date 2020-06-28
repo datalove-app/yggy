@@ -1,7 +1,7 @@
 use crate::{
-    core_interfaces::{Conn, Core},
-    core_types::{BoxPublicKey, Handle},
     error::Error,
+    interfaces::{Conn, Core},
+    types::{BoxPublicKey, Handle},
 };
 use std::sync::Arc;
 use xactor::{Actor, Addr};

@@ -7,14 +7,6 @@ mod interface;
 mod interface;
 
 use self::interface::{Socket as TunSocket, TunReader, TunWriter};
-use crate::{
-    core_interfaces::{
-        tun::{self, TunInterface},
-        Conn, Core,
-    },
-    core_types::{Address, Subnet, MTU},
-    error::Error,
-};
 use boringtun::noise::{Tunn, TunnResult};
 use futures::{io, prelude::*, task};
 use std::{
@@ -25,6 +17,14 @@ use std::{
     time::Duration,
 };
 use xactor::{Actor, Addr, Context, Handler, StreamHandler};
+use yggy_core::{
+    error::Error,
+    interfaces::{
+        tun::{self, TunInterface},
+        Conn, Core,
+    },
+    types::{Address, Subnet, MTU},
+};
 
 type ITunConn<C> = <TunAdapter<C> as tun::TunAdapter<C>>::Conn;
 type ITunReader = <TunSocket as TunInterface>::Reader;
