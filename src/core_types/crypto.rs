@@ -193,7 +193,18 @@ pub struct BoxKeypair {
 }
 
 ///
-pub type BoxNonce = [u8; 24];
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct BoxNonce([u8; 24]);
+
+impl BoxNonce {
+    #[inline]
+    pub fn new() -> Self {
+        let mut rng = RNG.lock().unwrap();
+        let mut nonce = [0u8; 24];
+        (&mut rng).fill_bytes(&mut nonce);
+        Self(nonce)
+    }
+}
 
 ///
 #[derive(AsRef, Debug, From, FromStr, Eq, Hash, PartialEq)]

@@ -2,8 +2,8 @@ use super::Router;
 use crate::{
     core_interfaces::{router::session, switch, Core},
     core_types::{
-        Address, AllowedEncryptionPublicKeys, BoxPublicKey, BoxSharedKey, Coords, Handle, NodeID,
-        Subnet, MTU,
+        Address, AllowedEncryptionPublicKeys, BoxNonce, BoxPublicKey, BoxSharedKey, Coords, Handle,
+        NodeID, Subnet, MTU,
     },
     error::Error,
 };
@@ -11,7 +11,7 @@ use boringtun::noise::{Tunn, TunnResult};
 use std::{
     collections::HashMap,
     convert::TryFrom,
-    sync::Arc,
+    sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
 use xactor::{Actor, Addr, Context, Handler, StreamHandler};
@@ -30,7 +30,7 @@ pub struct SessionManager<C: Core> {
     allowed_peer_keys: AllowedEncryptionPublicKeys,
     max_allowed_mtu: MTU,
     sessions: HashMap<Handle, Addr<Session<C>>>,
-    shared_keys: HashMap<BoxPublicKey, BoxSharedKey>,
+    // shared_keys: HashMap<BoxPublicKey, BoxSharedKey>,
     handles: HashMap<BoxPublicKey, Handle>,
     last_cleanup: Instant,
 }
@@ -48,7 +48,7 @@ impl<C: Core> SessionManager<C> {
             allowed_peer_keys: config.allowed_peer_keys,
             max_allowed_mtu: config.interface_max_mtu, // ? default?
             sessions: Default::default(),
-            shared_keys: Default::default(),
+            // shared_keys: Default::default(),
             handles: Default::default(),
             last_cleanup: Instant::now(),
         })
@@ -75,13 +75,16 @@ impl<C: Core> session::SessionManager<C> for SessionManager<C> {
     }
 
     async fn create_session(
-        self: Arc<Self>,
-        their_key: &BoxPublicKey,
+        mut self: Arc<Self>,
+        their_key: BoxPublicKey,
     ) -> Result<Addr<Self::Session>, Error> {
+        let self_handle = Handle::new();
         // let lookup_table = <ISwitch<C> as switch::Switch<C>>::get_look
-        let session = Session::start(self.core.clone(), self.clone(), their_key).await?;
+        let session =
+            Session::start(self.core.clone(), self.clone(), self_handle, &their_key).await?;
 
-        // TODO
+        (&mut self.sessions).insert(self_handle, session.clone());
+        (&mut self.handles).insert(their_key.clone(), self_handle);
 
         Ok(session)
     }
@@ -107,11 +110,13 @@ pub struct Session<C: Core> {
 
     // peer properties
     self_handle: Handle,
+    self_nonce: BoxNonce,
     self_mtu: MTU,
     their_addr: Address,
     their_subnet: Subnet,
     // their_handle: Handle,
     // their_coords: Coords,
+    // their_nonce: BoxNonce,
     their_mtu: MTU,
 }
 
@@ -121,6 +126,7 @@ impl<C: Core> Session<C> {
         mut core: Addr<C>,
         session_manager: Arc<SessionManager<C>>,
         // lookup_table: Arc<ILookupTable<C>>,
+        self_handle: Handle,
         their_key: &BoxPublicKey,
     ) -> Result<Addr<Self>, Error> {
         let config = C::current_config(&mut core).await?;
@@ -151,12 +157,14 @@ impl<C: Core> Session<C> {
             first_ping_since_last_packet: now,
 
             // peer properties
-            self_handle: Handle::new(),
+            self_handle,
+            self_nonce: BoxNonce::new(),
             self_mtu,
             their_addr: Address::from(&their_nodeid),
             their_subnet: Subnet::from(&their_nodeid),
             // their_handle: Handle::new(),
             // their_coords: Coords,
+            // their_nonce: BoxNonce::new(), TODO higher key -> odd, else even
             their_mtu: MTU::MIN,
         };
 

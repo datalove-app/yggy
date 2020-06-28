@@ -21,7 +21,7 @@ pub trait SessionManager<C: Core>: Sized {
 
     async fn create_session(
         self: Arc<Self>,
-        their_key: &BoxPublicKey,
+        their_key: BoxPublicKey,
     ) -> Result<Addr<Self::Session>, Error>;
 }
 
