@@ -7,21 +7,18 @@ mod interface;
 mod interface;
 
 use self::interface::{Socket as TunSocket, TunReader, TunWriter};
-use boringtun::noise::{Tunn, TunnResult};
-use futures::{io, prelude::*, task};
 use std::{
     collections::HashMap,
     fmt,
-    pin::Pin,
     sync::{Arc, Mutex},
     time::Duration,
 };
-use xactor::{Actor, Addr, Context, Handler, StreamHandler};
+use wg::{Tunn, TunnResult};
 use yggy_core::{
-    error::Error,
+    dev::*,
     interfaces::{
         tun::{self, TunInterface},
-        Conn, Core,
+        Conn,
     },
     types::{Address, Subnet, MTU},
 };

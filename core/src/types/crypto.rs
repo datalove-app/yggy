@@ -1,13 +1,11 @@
-use crate::error::{Error, TypeError};
+use crate::dev::*;
 use bitvec::{
     order::Msb0,
     slice::{AsBits, BitSlice},
 };
-use boringtun::crypto::x25519;
 use derive_more::{AsRef, From, FromStr, Into};
 use rand::{thread_rng, CryptoRng, RngCore, SeedableRng};
 use rand_chacha::ChaChaRng;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::{
     digest::{generic_array::GenericArray, Digest, FixedOutput},
     Sha512,
@@ -17,6 +15,7 @@ use std::{
     convert::{TryFrom, TryInto},
     sync::Mutex,
 };
+use wg_crypto::x25519;
 
 lazy_static! {
     static ref RNG: Mutex<ChaChaRng> = ChaChaRng::from_rng(thread_rng()).unwrap().into();

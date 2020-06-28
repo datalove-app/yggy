@@ -1,12 +1,9 @@
-use super::{Core, LinkAdapter, MulticastAdapter, TunAdapter};
+use super::{LinkAdapter, MulticastAdapter, TunAdapter};
 use crate::{
-    error::Error,
+    dev::*,
     types::{BoxKeypair, SigningKeypair},
 };
-use async_trait::async_trait;
-use futures::Future;
 use std::sync::{Arc, Mutex};
-use xactor::Actor;
 
 ///
 /// TODO: follow startup from yggdrasil-go

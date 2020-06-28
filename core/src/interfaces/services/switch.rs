@@ -1,5 +1,5 @@
 use crate::{
-    interfaces::Core,
+    dev::*,
     types::{NodeID, SigningPublicKey, SwitchLocator, SwitchPort},
 };
 use std::{
@@ -8,7 +8,6 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use xactor::{Actor, Addr, Handler};
 
 ///
 ///

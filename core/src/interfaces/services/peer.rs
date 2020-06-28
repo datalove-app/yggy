@@ -1,10 +1,7 @@
 use crate::{
-    interfaces::Core,
+    dev::*,
     types::{BoxPublicKey, BoxSharedKey, SigningPublicKey},
 };
-use futures::{io, prelude::*};
-use std::{pin::Pin, task};
-use xactor::{Actor, Addr, Handler, Message};
 
 /// Represents peer
 pub trait PeerManager<C: Core>

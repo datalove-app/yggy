@@ -4,9 +4,9 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use xactor::{Actor, Addr, Context, Handler};
 use yggy_core::{
-    interfaces::{switch, Core},
+    dev::*,
+    interfaces::switch,
     types::{NodeID, SigningPublicKey, SwitchLocator, SwitchPort},
 };
 

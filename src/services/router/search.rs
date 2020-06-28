@@ -4,12 +4,7 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use xactor::{Actor, Addr};
-use yggy_core::{
-    error::Error,
-    interfaces::{router::search, Core},
-    types::NodeID,
-};
+use yggy_core::{dev::*, interfaces::router::search, types::NodeID};
 
 ///
 const RESTART_TIMEOUT: Duration = Duration::from_secs(3);

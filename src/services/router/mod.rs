@@ -1,12 +1,10 @@
 mod search;
 mod session;
 
-use futures::{io, prelude::*, task};
-use std::{pin::Pin, sync::Arc};
-use xactor::{Actor, Addr, Context, Handler, StreamHandler};
+use std::{sync::Arc};
 use yggy_core::{
-    error::Error,
-    interfaces::{peer, router, switch, Core},
+    dev::*,
+    interfaces::{peer, router, switch},
     types::wire,
 };
 

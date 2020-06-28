@@ -1,10 +1,6 @@
 use super::{udp::UDPSocket, Link, LinkAdapter, LinkInfo};
-use anyhow::anyhow;
-use futures::{io, prelude::*, task};
 use smol::Async;
-use std::pin::Pin;
-use xactor::{Actor, Addr};
-use yggy_core::{error::Error, interfaces::Core, types::PeerURI};
+use yggy_core::{dev::*, types::PeerURI};
 
 impl<C: Core> Link<C> {
     /// Starts a [`Link`] that reads and writes packets on the provided `PeerURI`.

@@ -1,5 +1,5 @@
 use super::SigningPublicKey;
-use crate::error::Error;
+use crate::dev::*;
 use smallvec::SmallVec;
 use std::{
     cmp::Ordering,

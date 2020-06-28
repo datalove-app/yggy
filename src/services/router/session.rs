@@ -1,15 +1,14 @@
 use super::Router;
-use boringtun::noise::{Tunn, TunnResult};
 use std::{
     collections::HashMap,
     convert::TryFrom,
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
-use xactor::{Actor, Addr, Context, Handler, StreamHandler};
+use wg::{Tunn, TunnResult};
 use yggy_core::{
-    error::Error,
-    interfaces::{router::session, switch, Core},
+    dev::*,
+    interfaces::{router::session, switch},
     types::{
         Address, AllowedEncryptionPublicKeys, BoxNonce, BoxPublicKey, BoxSharedKey, Coords, Handle,
         NodeID, Subnet, MTU,

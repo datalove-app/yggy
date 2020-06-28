@@ -2,12 +2,10 @@ mod interface;
 mod udp;
 
 use self::interface::{LinkReader, LinkWriter};
-use futures::{io, prelude::*, task};
-use std::{collections::HashMap, hash, pin::Pin, time::Duration};
-use xactor::{Actor, Addr, Context, Handler};
+use std::{collections::HashMap, hash, time::Duration};
 use yggy_core::{
-    error::Error,
-    interfaces::{link, peer, Core},
+    dev::*,
+    interfaces::{link, peer},
     types::{BoxPublicKey, PeerURI, SigningPublicKey},
 };
 

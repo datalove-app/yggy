@@ -36,44 +36,31 @@ members = [
 # main
 anyhow = "1.0"
 async-trait = "0.1"
-boringtun = "0.3"
 bytes = "0.5.4"
-ed25519-dalek = { version = "0.9", features = ["serde"] }
-futures = { version = "0.3", default-features = false, features = [] }
 libtor = { version = "43.5.1", optional = true }
 packet = "0.1.3"
-rand = "0.6"
-rand_chacha = "0.1"
-serde = { version = "1.0", features = ["derive"] }
-sha2 = { version = "0.9", default-features = false }
 smol = "0.1"
-thiserror = "1.0"
-xactor = "0.7"
 utuntap = "0.2.4"
-yggy-core = { path = "./core" }
+yggy-core = { path = "./core", default-features = false }
 # helper, util
 async-log = "2.0.0"
-bitvec = { version = "0.17.4", default-features = false }
-derive_more = "0.99"
-itertools = "0.9.0"
 lazy_static = "1.4"
 log = "0.4.8"
-smallvec = { version = "1.4", features = ["write"] }
 
 [features]
 default = ["std", "u64_backend"]
 # library features
 tor = ["libtor"]        # starts a TOR client + relay, allowing some/all link traffic to be routed over TOR
 # re-exported features also used by library
-std = ["bitvec/std", "ed25519-dalek/std", "futures/std", "sha2/std"]
-alloc = ["bitvec/alloc", "ed25519-dalek/alloc"]
-nightly = ["ed25519-dalek/nightly"]
+std = ["yggy-core/std"]
+alloc = ["yggy-core/alloc"]
+nightly = ["yggy-core/nightly"]
 # re-exported features of various dependencies
-asm = ["ed25519-dalek/asm", "sha2/asm"]
-avx2_backend = ["ed25519-dalek/avx2_backend"]
-u32_backend = ["ed25519-dalek/u32_backend"]
-u64_backend = ["ed25519-dalek/u64_backend"]
-yolocrypto = ["ed25519-dalek/yolocrypto"]
+asm = ["yggy-core/asm"]
+avx2_backend = ["yggy-core/avx2_backend"]
+u32_backend = ["yggy-core/u32_backend"]
+u64_backend = ["yggy-core/u64_backend"]
+yolocrypto = ["yggy-core/yolocrypto"]
 
 # [target.'cfg(not(target_arch="arm"))'.dependencies]
 # ring = "0.16"

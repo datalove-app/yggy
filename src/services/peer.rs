@@ -1,9 +1,4 @@
-use xactor::{Actor, Addr, Context, Handler, StreamHandler};
-use yggy_core::{
-    error::Error,
-    interfaces::{peer, Core},
-    types,
-};
+use yggy_core::{dev::*, interfaces::peer, types};
 
 ///
 #[derive(Debug)]

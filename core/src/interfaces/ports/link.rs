@@ -1,9 +1,8 @@
 use crate::{
-    interfaces::{peer, Core},
+    dev::*,
+    interfaces::{peer},
     types::PeerURI,
 };
-use futures::prelude::*;
-use xactor::{Actor, Handler, Message};
 
 /// Represents direct connections to peers, over some `LinkInterface` (TCP, UDP, AWDL, etc).
 /// TODO tor?

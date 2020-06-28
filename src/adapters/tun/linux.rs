@@ -1,14 +1,11 @@
 use anyhow::anyhow;
-use futures::{io, prelude::*, task};
 use smol::Async;
 use std::{
     fs::File,
-    pin::Pin,
     sync::{Arc, Mutex},
 };
 use utuntap::tun::OpenOptions;
-use xactor::{Actor, Addr, Context};
-use yggy_core::{error::Error, interfaces::tun, types::MTU};
+use yggy_core::{dev::*, interfaces::tun, types::MTU};
 
 // const MAX_UDP_SIZE: usize = (1 << 16) - 1;
 

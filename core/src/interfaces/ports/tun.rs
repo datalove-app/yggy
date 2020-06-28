@@ -1,11 +1,5 @@
-use crate::{
-    error::Error,
-    interfaces::{Conn, Core},
-    types::MTU,
-};
-use futures::io::{AsyncRead, AsyncWrite};
+use crate::{dev::*, interfaces::Conn, types::MTU};
 use std::sync::{Arc, Mutex};
-use xactor::{Actor, Addr, Handler, Message, StreamHandler};
 
 // ///
 // pub const OFFSET_BYTES: usize = 4;
