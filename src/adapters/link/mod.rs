@@ -36,7 +36,7 @@ type Links<C> = HashMap<LinkInfo, Addr<Link<C>>>;
 ///
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct LinkInfo {
-    /// The URI and type of link.
+    /// The non-yggy URI for communicating with the linked peer.
     listen_uri: PeerURI,
     // /// The linked node's signing public key.
     // signing_pub_key: Once<SigningPublicKey>,
@@ -91,13 +91,10 @@ impl<C: Core> Actor for LinkAdapter<C> {
         let config = C::current_config(&mut self.core).await?;
 
         // initialize links
-        for uri in config.listen_addrs.into_iter() {
-            let adapter = ctx.address();
-            let link_info = LinkInfo {
-                listen_uri: uri.clone(),
-            };
-            let link_addr = Link::start_link(uri, adapter).await?;
-            (&mut self.links).insert(link_info, link_addr);
+        for listen_uri in config.listen_addrs.into_iter() {
+            let info = LinkInfo { listen_uri };
+            let link = Link::start_link(ctx.address(), info.clone()).await?;
+            (&mut self.links).insert(info, link);
         }
 
         unimplemented!()
@@ -138,11 +135,11 @@ impl<C: Core> Link<C> {
 #[async_trait::async_trait]
 impl<C: Core> link::Link<C, LinkAdapter<C>> for Link<C> {}
 
-#[async_trait::async_trait]
-impl<C: Core> peer::PeerInterface for Link<C> {
-    type Reader = LinkReader;
-    type Writer = LinkWriter;
-}
+// #[async_trait::async_trait]
+// impl<C: Core> peer::PeerInterface for Link<C> {
+//     type Reader = LinkReader;
+//     type Writer = LinkWriter;
+// }
 
 #[async_trait::async_trait]
 impl<C: Core> Actor for Link<C> {

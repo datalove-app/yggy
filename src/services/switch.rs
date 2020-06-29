@@ -1,7 +1,6 @@
+use futures_locks::RwLock;
 use std::{
     collections::HashMap,
-    fmt,
-    sync::Arc,
     time::{Duration, Instant},
 };
 use yggy_core::{
@@ -45,7 +44,7 @@ pub struct Switch<C: Core> {
     // ///
     // switch_data: SwitchData,
     ///
-    lookup_table: Arc<<Self as switch::Switch<C>>::LookupTable>,
+    lookup_table: LookupTable,
 }
 
 #[async_trait::async_trait]
@@ -62,8 +61,8 @@ impl<C: Core> Handler<switch::messages::GetLookupTable<C, Self>> for Switch<C> {
         &mut self,
         ctx: &Context<Self>,
         msg: switch::messages::GetLookupTable<C, Self>,
-    ) -> Arc<<Self as switch::Switch<C>>::LookupTable> {
-        unimplemented!()
+    ) -> LookupTable {
+        self.lookup_table.clone()
     }
 }
 
@@ -88,7 +87,11 @@ pub struct SwitchData {
 // pub struct LookupTableElement
 
 /// Subset of information about all peers needed to make routing decisions.
-pub struct LookupTable {
+#[derive(Clone, Debug)]
+pub struct LookupTable(RwLock<InnerLookupTable>);
+
+#[derive(Debug)]
+struct InnerLookupTable {
     /// Our current [`SwitchLocator`].
     ///
     /// [`SwitchLocator`]:
@@ -96,6 +99,8 @@ pub struct LookupTable {
 
     /// All switch peers, just for sanity checks + API/debugging.
     peers: HashMap<SwitchPort, LookupTableElem>,
+    // _start
+    // _msg
 }
 
 impl switch::LookupTable for LookupTable {}
@@ -128,18 +133,12 @@ impl LookupTable {
     ///     elif newDist == oldDist and newDeg > oldDeg: current[coord] = (peer.nodeID, next)
     ///     current = next
     /// return None
-    fn init(info: &PeerInfo) -> Self {
+    fn init(self_info: &PeerInfo) -> Self {
         // let mut parent: NodeID = info.key.into();
         // if info.locator.coords().len() >= 2 {
         //     parent = info.coords.get(-2);
         // };
 
-        unimplemented!()
-    }
-}
-
-impl fmt::Debug for LookupTable {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         unimplemented!()
     }
 }

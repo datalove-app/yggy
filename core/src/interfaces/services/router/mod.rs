@@ -1,9 +1,13 @@
+//!
+
 pub mod search;
 pub mod session;
 
-use crate::{interfaces::Core, types::wire};
+pub use search::{Search, SearchManager};
+pub use session::{Session, SessionManager};
+
+use crate::{dev::*, interfaces::Core, types::wire};
 use std::fmt::Debug;
-use xactor::{Actor, StreamHandler};
 
 /// Handles packets to/from self.
 pub trait Router<C: Core>: Debug
@@ -13,8 +17,8 @@ where
     Self: StreamHandler<wire::ProtocolTraffic>,
 {
     // type Interface: PeerInterface;
-    type SearchManager: search::SearchManager<C>;
-    type SessionManager: session::SessionManager<C>;
+    type SearchManager: SearchManager<C>;
+    type SessionManager: SessionManager<C>;
 
     fn reconfigure(&mut self);
 }

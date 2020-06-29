@@ -17,9 +17,11 @@ pub use error::Error;
 #[doc(inline)]
 pub use interfaces::Core;
 
+/// Re-exports for developer convenience.
 pub mod dev {
     pub use crate::{error::*, interfaces, types, version, Config, Core};
 
+    // dependency re-exports
     pub use async_trait::async_trait;
     pub use boringtun::{crypto as wg_crypto, noise as wg};
     pub use futures::{self, io, prelude::*, task};

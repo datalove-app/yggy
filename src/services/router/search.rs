@@ -1,10 +1,15 @@
-use super::Router;
+//!
+
 use std::{
     collections::HashMap,
     sync::Arc,
     time::{Duration, Instant},
 };
-use yggy_core::{dev::*, interfaces::router::search, types::NodeID};
+use yggy_core::{
+    dev::*,
+    interfaces::router::{search, Router as _},
+    types::NodeID,
+};
 
 ///
 const RESTART_TIMEOUT: Duration = Duration::from_secs(3);
@@ -18,10 +23,10 @@ const STEP_TIMEOUT: Duration = Duration::from_secs(1);
 ///
 #[derive(Debug)]
 pub struct SearchManager<C: Core> {
-    router: Addr<<C as Core>::Router>,
+    router: Addr<C::Router>,
 
     /// Ongoing searches.
-    searches: HashMap<NodeID, <Self as search::SearchManager<C>>::Search>,
+    searches: HashMap<NodeID, SearchInfo<C>>,
 }
 
 impl<C: Core> search::SearchManager<C> for SearchManager<C> {

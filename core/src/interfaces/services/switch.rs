@@ -18,12 +18,12 @@ where
     Self: Handler<messages::GetLookupTable<C, Self>>,
 {
     ///
-    type LookupTable: LookupTable;
+    type LookupTable: LookupTable + Clone;
 
-    async fn get_lookup_table(addr: &mut Addr<Self>) -> Arc<Self::LookupTable> {
+    async fn get_lookup_table(mut addr: Addr<Self>) -> Option<Self::LookupTable> {
         addr.call(messages::GetLookupTable::<C, Self>::new())
             .await
-            .unwrap()
+            .ok()
     }
 }
 
@@ -34,6 +34,7 @@ pub mod messages {
     use super::*;
     use std::marker::PhantomData;
 
+    // #[derive(Debug)]
     pub struct GetLookupTable<C: Core, S: Switch<C>> {
         core: PhantomData<C>,
         switch: PhantomData<S>,
@@ -50,6 +51,6 @@ pub mod messages {
     }
 
     impl<C: Core, S: Switch<C>> xactor::Message for GetLookupTable<C, S> {
-        type Result = Arc<S::LookupTable>;
+        type Result = S::LookupTable;
     }
 }

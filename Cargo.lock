@@ -591,6 +591,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de27142b013a8e869c14957e6d2edeef89e97c289e69d042ee3a49acd8b51789"
 
 [[package]]
+name = "futures-locks"
+version = "0.5.1-pre"
+source = "git+https://github.com/asomers/futures-locks#c380ff6ef44ee77f502b4feec2a83cb2dbae99cb"
+dependencies = [
+ "futures",
+]
+
+[[package]]
 name = "futures-macro"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2311,6 +2319,7 @@ dependencies = [
  "async-log",
  "async-trait",
  "bytes",
+ "futures-locks",
  "lazy_static",
  "libtor",
  "log",
@@ -2334,7 +2343,6 @@ dependencies = [
  "futures",
  "itertools",
  "lazy_static",
- "libtor",
  "log",
  "packet",
  "rand 0.6.5",

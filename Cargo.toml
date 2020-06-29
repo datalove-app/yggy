@@ -37,6 +37,7 @@ members = [
 anyhow = "1.0"
 async-trait = "0.1"
 bytes = "0.5.4"
+futures-locks = { version = "0.5.1-pre", default-features = false }
 libtor = { version = "43.5.1", optional = true }
 packet = "0.1.3"
 smol = "0.1"
@@ -50,7 +51,7 @@ log = "0.4.8"
 [features]
 default = ["std", "u64_backend"]
 # library features
-tor = ["libtor"]        # starts a TOR client + relay, allowing some/all link traffic to be routed over TOR
+tor = ["libtor", "yggy-core/tor"] # starts a TOR client + relay, allowing some/all link traffic to be routed over TOR
 # re-exported features also used by library
 std = ["yggy-core/std"]
 alloc = ["yggy-core/alloc"]
@@ -72,3 +73,6 @@ yolocrypto = ["yggy-core/yolocrypto"]
 
 # [target.'cfg(target_os="android")'.dependencies]
 # jni = "0.10"
+
+[patch.crates-io]
+futures-locks = { git = "https://github.com/asomers/futures-locks" }

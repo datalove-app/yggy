@@ -1,8 +1,8 @@
-use super::Router;
+use futures_locks::Mutex;
 use std::{
     collections::HashMap,
     convert::TryFrom,
-    sync::{Arc, Mutex},
+    sync::Arc,
     time::{Duration, Instant},
 };
 use wg::{Tunn, TunnResult};
@@ -18,20 +18,29 @@ use yggy_core::{
 type ISwitch<C> = <C as Core>::Switch;
 type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
 
+// #[derive(Debug)]
+// pub struct SessionManager<C: Core>(Mutex<InnerSessionManager<C>>);
+
 /// Maintains all active sessions, indexed by their [`Handle`].
 ///
 /// [`Handle`]: ../../core_types/crypto/struct.Handle.html
 #[derive(Debug)]
 pub struct SessionManager<C: Core> {
+    // external state
     core: Addr<C>,
     router: Addr<C::Router>,
     listener: Addr<C::Listener>,
+    pub(crate) lookup_table: ILookupTable<C>,
+
+    // session state
     allowed_peer_keys: AllowedEncryptionPublicKeys,
     max_allowed_mtu: MTU,
-    sessions: HashMap<Handle, Addr<Session<C>>>,
-    // shared_keys: HashMap<BoxPublicKey, BoxSharedKey>,
-    handles: HashMap<BoxPublicKey, Handle>,
     last_cleanup: Instant,
+
+    // active and indexed sessions
+    pub(crate) sessions: Mutex<HashMap<Handle, Addr<Session<C>>>>,
+    pub(crate) handles: Mutex<HashMap<BoxPublicKey, Handle>>,
+    // shared_keys: HashMap<BoxPublicKey, BoxSharedKey>,
 }
 
 impl<C: Core> SessionManager<C> {
@@ -40,10 +49,16 @@ impl<C: Core> SessionManager<C> {
         let config = C::current_config(&mut core).await?;
         let router = C::router(&mut core).await?;
         let listener = C::listener(&mut core).await?;
+
+        let mut switch = C::switch(&mut core).await?;
+        let lookup_table = <ISwitch<C> as switch::Switch<C>>::get_lookup_table(switch)
+            .await
+            .ok_or_else(|| Error::Init(anyhow::Error::msg("unable to retrieve lookup table")))?;
         Ok(Self {
             core,
             router,
             listener,
+            lookup_table,
             allowed_peer_keys: config.allowed_peer_keys,
             max_allowed_mtu: config.interface_max_mtu, // ? default?
             sessions: Default::default(),
@@ -51,6 +66,17 @@ impl<C: Core> SessionManager<C> {
             handles: Default::default(),
             last_cleanup: Instant::now(),
         })
+    }
+
+    async fn add_session(
+        &self,
+        self_handle: Handle,
+        their_key: BoxPublicKey,
+        session: Addr<Session<C>>,
+    ) -> Result<(), Error> {
+        self.sessions.lock().await.insert(self_handle, session);
+        self.handles.lock().await.insert(their_key, self_handle);
+        Ok(())
     }
 }
 
@@ -62,15 +88,16 @@ impl<C: Core> session::SessionManager<C> for SessionManager<C> {
         unimplemented!()
     }
 
-    fn session_by_handle(&self, handle: &Handle) -> Option<Addr<Self::Session>> {
-        self.sessions.get(handle).map(|addr| addr.clone())
+    async fn session_by_handle(&self, handle: &Handle) -> Option<Addr<Self::Session>> {
+        self.sessions.lock().await.get(handle).map(Clone::clone)
     }
 
-    fn session_by_pub_key(&self, key: &BoxPublicKey) -> Option<Addr<Self::Session>> {
-        self.handles
-            .get(key)
-            .map(|handle| self.session_by_handle(handle))
-            .flatten()
+    async fn session_by_pub_key(&self, key: &BoxPublicKey) -> Option<Addr<Self::Session>> {
+        let mut handles = self.handles.lock().await;
+        match handles.get(key) {
+            Some(handle) => self.session_by_handle(handle).await,
+            None => None,
+        }
     }
 
     async fn create_session(
@@ -78,12 +105,13 @@ impl<C: Core> session::SessionManager<C> for SessionManager<C> {
         their_key: BoxPublicKey,
     ) -> Result<Addr<Self::Session>, Error> {
         let self_handle = Handle::new();
-        // let lookup_table = <ISwitch<C> as switch::Switch<C>>::get_look
         let session =
-            Session::start(self.core.clone(), self.clone(), self_handle, &their_key).await?;
+            Session::start(self.clone(), self.core.clone(), self_handle, &their_key).await?;
 
-        (&mut self.sessions).insert(self_handle, session.clone());
-        (&mut self.handles).insert(their_key.clone(), self_handle);
+        Arc::get_mut(&mut self)
+            .unwrap()
+            .add_session(self_handle, their_key, session.clone())
+            .await?;
 
         Ok(session)
     }
@@ -95,7 +123,7 @@ pub struct Session<C: Core> {
     core: Addr<C>,
     // conn: Addr<<C as Core>::Conn>,
     session_manager: Arc<SessionManager<C>>,
-    // lookup_table: Arc<ILookupTable<C>>,
+    lookup_table: ILookupTable<C>,
 
     // session state
     /// Represents the underlying point-to-point WireGuard connection.
@@ -122,32 +150,31 @@ pub struct Session<C: Core> {
 impl<C: Core> Session<C> {
     #[inline]
     pub async fn start(
-        mut core: Addr<C>,
         session_manager: Arc<SessionManager<C>>,
-        // lookup_table: Arc<ILookupTable<C>>,
+        mut core: Addr<C>,
         self_handle: Handle,
         their_key: &BoxPublicKey,
     ) -> Result<Addr<Self>, Error> {
         let config = C::current_config(&mut core).await?;
-        let mut switch = C::switch(&mut core).await?;
+        let lookup_table = session_manager.lookup_table.clone();
 
         let self_mtu = session_manager.max_allowed_mtu;
         let their_nodeid = NodeID::try_from(their_key)?;
-        let now = Instant::now();
 
+        let now = Instant::now();
         let session = Self {
             core,
             session_manager,
-            // lookup_table,
+            lookup_table,
             tunn: Tunn::new(
                 Arc::new(config.encryption_private_key.into()),
                 Arc::new(their_key.as_bytes().into()),
                 None,
                 None,
-                100,
+                100, // TODO
                 None,
             )
-            .unwrap(),
+            .unwrap(), // TODO
             is_initialized: false,
             was_mtu_fixed: false,
             opened: now,
@@ -167,7 +194,7 @@ impl<C: Core> Session<C> {
             their_mtu: MTU::MIN,
         };
 
-        unimplemented!()
+        Ok(Actor::start(session).await?)
     }
 }
 

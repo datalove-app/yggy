@@ -7,10 +7,10 @@ impl<C: Core> Link<C> {
     ///
     /// [`Link`]: ../mod/struct.Link.html
     pub async fn start_link(
-        listen_uri: PeerURI,
         adapter: Addr<LinkAdapter<C>>,
+        info: LinkInfo,
     ) -> Result<Addr<Self>, Error> {
-        let (reader, writer) = match listen_uri {
+        let (reader, writer) = match info.listen_uri {
             // PeerURI::TCP
             PeerURI::UDP(addr) => UDPSocket::bind(addr)?.split(),
             // PeerURI::SOCKS
@@ -19,7 +19,7 @@ impl<C: Core> Link<C> {
         };
 
         let link = Link {
-            info: LinkInfo { listen_uri },
+            info,
             adapter,
             reader,
             writer,

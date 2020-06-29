@@ -1,6 +1,6 @@
-use super::{LinkAdapter, MulticastAdapter, TunAdapter};
 use crate::{
     dev::*,
+    interfaces::{LinkAdapter, MulticastAdapter, TunAdapter},
     types::{BoxKeypair, SigningKeypair},
 };
 use std::sync::{Arc, Mutex};

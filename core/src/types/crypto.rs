@@ -32,7 +32,7 @@ type InnerDigest = GenericArray<u8, <Sha512 as Digest>::OutputSize>;
 /// It is the SHA-512 digest of the node's [`BoxPublicKey`].
 ///
 /// [`BoxPublicKey`]: ./struct.BoxPublicKey.html
-#[derive(AsRef, Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[derive(AsRef, Clone, Debug, Default, Eq, Hash, PartialEq)]
 #[as_ref(forward)]
 pub struct NodeID(InnerDigest);
 

@@ -1,14 +1,15 @@
 mod search;
 mod session;
 
-use std::{sync::Arc};
+use std::sync::Arc;
 use yggy_core::{
     dev::*,
     interfaces::{peer, router, switch},
     types::wire,
 };
 
-type IPeer<C> = <<C as Core>::PeerManager as peer::PeerManager<C>>::Peer;
+type IPeer<C> = <IPeerManager<C> as peer::PeerManager<C>>::Peer;
+type IPeerManager<C> = <C as Core>::PeerManager;
 type ISwitch<C> = <C as Core>::Switch;
 type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
 

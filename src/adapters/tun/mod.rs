@@ -7,13 +7,7 @@ mod interface;
 mod interface;
 
 use self::interface::{Socket as TunSocket, TunReader, TunWriter};
-use std::{
-    collections::HashMap,
-    fmt,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
-use wg::{Tunn, TunnResult};
+use std::{collections::HashMap, fmt, sync::Arc, time::Duration};
 use yggy_core::{
     dev::*,
     interfaces::{
@@ -23,7 +17,6 @@ use yggy_core::{
     types::{Address, Subnet, MTU},
 };
 
-type ITunConn<C> = <TunAdapter<C> as tun::TunAdapter<C>>::Conn;
 type ITunReader = <TunSocket as TunInterface>::Reader;
 type ITunWriter = <TunSocket as TunInterface>::Writer;
 
@@ -44,10 +37,10 @@ pub struct TunAdapter<C: Core> {
     // /// once?
     // listener: Arc<C::Listener>,
     ///
-    conn_by_addr: HashMap<Address, Addr<ITunConn<C>>>,
+    conn_by_addr: HashMap<Address, Addr<TunConn<C>>>,
 
     ///
-    conn_by_subnet: HashMap<Subnet, Addr<ITunConn<C>>>,
+    conn_by_subnet: HashMap<Subnet, Addr<TunConn<C>>>,
 
     ///
     reader: ITunReader,

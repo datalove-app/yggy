@@ -1,3 +1,5 @@
+//!
+
 use crate::{
     dev::*,
     interfaces::Conn,
@@ -14,9 +16,9 @@ pub trait SessionManager<C: Core>: Sized {
 
     fn reconfigure(&mut self);
 
-    fn session_by_handle(&self, handle: &Handle) -> Option<Addr<Self::Session>>;
+    async fn session_by_handle(&self, handle: &Handle) -> Option<Addr<Self::Session>>;
 
-    fn session_by_pub_key(&self, key: &BoxPublicKey) -> Option<Addr<Self::Session>>;
+    async fn session_by_pub_key(&self, key: &BoxPublicKey) -> Option<Addr<Self::Session>>;
 
     async fn create_session(
         self: Arc<Self>,

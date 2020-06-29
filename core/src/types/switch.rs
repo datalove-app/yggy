@@ -92,8 +92,10 @@ pub struct SwitchLocator {
 }
 
 impl SwitchLocator {
+    /// Gets the distance a `SwitchLocator` is from the provided destination
+    /// [`WireCoords`]
     #[inline]
-    pub fn distance(&self) -> i64 {
+    pub fn distance(&self, coords: &WireCoords) -> i64 {
         unimplemented!()
     }
 
@@ -117,6 +119,7 @@ impl SwitchLocator {
 
 /// Returns an ordering of `SwitchLocator`s, with the lesser being closer to
 /// the root, i.e. the ancestor of the other.
+/// ? aka switchLocator.ldist
 impl PartialOrd for SwitchLocator {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
