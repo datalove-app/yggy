@@ -14,6 +14,13 @@ use std::{
 #[serde(transparent)]
 pub struct PeerURIs(Vec<PeerURI>);
 
+impl PeerURIs {
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = &PeerURI> {
+        self.0.iter()
+    }
+}
+
 ///
 pub type PeerURIsByInterface = HashMap<String, PeerURIs>;
 
@@ -107,9 +114,10 @@ impl FromStr for PeerURI {
             }
             #[cfg(feature = "tor")]
             _ if raw.starts_with("tor:") => {
-                const PORTS: &[u16] = &[
+                const TOR_PORTS: &[u16] = &[
                     21, 22, 706, 1863, 5050, 5190, 5222, 5223, 6523, 6667, 6697, 8300,
                 ];
+                const TOR_PORT_ERR: &str = "must be a valid TOR LongLivedPort";
 
                 let (domain, port): (&str, &str) = raw
                     .trim_start_matches("tor:")
@@ -130,12 +138,11 @@ impl FromStr for PeerURI {
                     ))?;
                 }
 
-                const PORT_ERR: &str = "must be a valid TOR LongLivedPort";
                 let port: u16 = port
                     .parse()
-                    .map_err(|_| TypeError::InvalidTORPeerURI(raw.into(), PORT_ERR))?;
-                if !PORTS.contains(&port) {
-                    Err(TypeError::InvalidTORPeerURI(raw.into(), PORT_ERR))?;
+                    .map_err(|_| TypeError::InvalidTORPeerURI(raw.into(), TOR_PORT_ERR))?;
+                if !TOR_PORTS.contains(&port) {
+                    Err(TypeError::InvalidTORPeerURI(raw.into(), TOR_PORT_ERR))?;
                 }
 
                 Ok(Self::TOR(domain.into(), port))

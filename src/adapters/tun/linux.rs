@@ -1,9 +1,7 @@
 use anyhow::anyhow;
+use futures_locks::Mutex;
 use smol::Async;
-use std::{
-    fs::File,
-    sync::{Arc, Mutex},
-};
+use std::fs::File;
 use utuntap::tun::OpenOptions;
 use yggy_core::{dev::*, interfaces::tun, types::MTU};
 
@@ -31,17 +29,18 @@ impl tun::TunInterface for Socket {
         let (raw_file, name) = OpenOptions::new()
             .nonblock(true)
             .open()
-            .map_err(|e| Error::Init(e.into()))?;
+            .map_err(ConnError::Interface)?;
 
         Ok(Self {
             name,
             // mtu: MTU::default(),
             file: Async::new(raw_file)
                 .map(Some)
-                .map_err(|e| Error::Init(e.into()))?,
+                .map_err(ConnError::Interface)?,
         })
     }
 
+    #[inline]
     fn name(&self) -> &str {
         &self.name
     }
@@ -55,9 +54,9 @@ impl tun::TunInterface for Socket {
             .file
             .take()
             .map(|file| file.split())
-            .ok_or_else(|| Error::Init(anyhow!("already initialized TUN socket")))?;
+            .ok_or_else(|| anyhow::Error::msg("already initialized TUN socket"))?;
 
-        let socket_info = Arc::new(Mutex::from(self));
+        let socket_info = Mutex::new(self);
         Ok((
             TunReader {
                 socket_info: socket_info.clone(),
@@ -73,7 +72,7 @@ impl tun::TunInterface for Socket {
 
 #[derive(Debug)]
 pub struct TunReader {
-    socket_info: Arc<Mutex<Socket>>,
+    socket_info: Mutex<Socket>,
     reader: io::ReadHalf<Async<File>>,
 }
 
@@ -85,6 +84,7 @@ impl Actor for TunReader {
 impl AsyncRead for TunReader {
     ///
     /// ? see: iface.go:tunReader._read
+    #[inline]
     fn poll_read(
         mut self: Pin<&mut Self>,
         cx: &mut task::Context,
@@ -98,7 +98,7 @@ impl AsyncRead for TunReader {
 
 #[derive(Debug)]
 pub struct TunWriter {
-    socket_info: Arc<Mutex<Socket>>,
+    socket_info: Mutex<Socket>,
     writer: io::WriteHalf<Async<File>>,
 }
 
@@ -108,6 +108,7 @@ impl Actor for TunWriter {
 }
 
 impl AsyncWrite for TunWriter {
+    #[inline]
     fn poll_write(
         mut self: Pin<&mut Self>,
         cx: &mut task::Context,
@@ -118,6 +119,7 @@ impl AsyncWrite for TunWriter {
         writer.poll_write(cx, buf)
     }
 
+    #[inline]
     fn poll_flush(
         mut self: Pin<&mut Self>,
         cx: &mut task::Context,
@@ -127,6 +129,7 @@ impl AsyncWrite for TunWriter {
         writer.poll_flush(cx)
     }
 
+    #[inline]
     fn poll_close(
         mut self: Pin<&mut Self>,
         cx: &mut task::Context,

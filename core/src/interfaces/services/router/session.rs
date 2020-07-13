@@ -1,4 +1,4 @@
-//!
+//! Maintains open, E2EE connections to other nodes on the network.
 
 use crate::{
     dev::*,
@@ -26,7 +26,8 @@ pub trait SessionManager<C: Core>: Sized {
     ) -> Result<Addr<Self::Session>, Error>;
 }
 
-///
+/// Cryptographic agreements between two nodes that allow the exchange of
+/// end-to-end encrypted traffic.
 /// ? can be polled until completion, producing a Session
 pub trait Session<C: Core, S: SessionManager<C>>: Sized
 where
@@ -46,3 +47,20 @@ pub mod messages {
     //     type Result = ();
     // }
 }
+
+// pub mod blank {
+//     ///
+//     #[derive(Debug)]
+//     pub struct SessionPingPong {
+//         /// The sender's permanent key.
+//         sender_perm_key: BoxPublicKey,
+//         /// Session key to use.
+//         sender_session_key: BoxPublicKey,
+//         /// Random number used to identify the session.
+//         handle: Handle,
+//         coords: Coords,
+//         timestamp: Instant,
+//         is_pong: bool,
+//         mtu: MTU,
+//     }
+// }

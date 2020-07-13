@@ -17,20 +17,26 @@ impl Coords {
     ///
     const DEFAULT_SIZE: usize = 8;
 
+    // ///
+    // #[inline]
+    // pub fn distance(&self, other: &Self) -> i64 {
+    //     // TODO: other might need to be bytes from the wire protocol
+    //     unimplemented!()
+    // }
+
     ///
     #[inline]
-    pub fn distance(&self, other: &Self) -> i64 {
-        // TODO: other might need to be bytes from the wire protocol
-        unimplemented!()
+    pub fn len(&self) -> usize {
+        self.0.len()
     }
 }
 
-impl std::convert::TryFrom<&WireCoords> for Coords {
-    type Error = Error;
-    fn try_from(coords: &WireCoords) -> Result<Self, Self::Error> {
-        unimplemented!()
-    }
-}
+// impl std::convert::TryFrom<&WireCoords> for Coords {
+//     type Error = Error;
+//     fn try_from(coords: &WireCoords) -> Result<Self, Self::Error> {
+//         unimplemented!()
+//     }
+// }
 
 /// Represents an encoded, compressed representation of [`Coords`].
 ///
@@ -41,35 +47,37 @@ pub struct WireCoords(SmallVec<[u8; Self::DEFAULT_BYTES_SIZE]>);
 impl WireCoords {
     const DEFAULT_BYTES_SIZE: usize = 32;
 
-    ///
-    #[inline]
-    pub fn distance(&self, other: &Self) -> i64 {
-        unimplemented!()
-    }
+    // ///
+    // #[inline]
+    // pub fn distance(&self, other: &Self) -> i64 {
+    //     unimplemented!()
+    // }
 }
 
-impl From<&Coords> for WireCoords {
-    #[inline]
-    fn from(coords: &Coords) -> Self {
-        unimplemented!()
-    }
-}
-
-// impl PartialOrd for WireCoords {
-//     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-//         if self.0.len() > other.0.len() {
-//             Some(Ordering::Greater)
-//         } else {
-//             for i in self.iter() {
-//                 if self.0[i] != other.0[i] {
-//                     return Some(Ordering::Greater);
-//                 }
-//             }
-
-//             Some(Ordering::Less)
-//         }
+// impl From<&Coords> for WireCoords {
+//     #[inline]
+//     fn from(coords: &Coords) -> Self {
+//         unimplemented!()
 //     }
 // }
+
+impl PartialOrd for WireCoords {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        // if self.0.len() > other.0.len() {
+        //     Some(Ordering::Greater)
+        // } else {
+        //     for i in self.iter() {
+        //         if self.0[i] != other.0[i] {
+        //             return Some(Ordering::Greater);
+        //         }
+        //     }
+
+        //     Some(Ordering::Less)
+        // }
+
+        unimplemented!()
+    }
+}
 
 // impl Ord for WireCoords {
 //     fn cmp(&self, other: &Self) -> Ordering {
@@ -77,7 +85,9 @@ impl From<&Coords> for WireCoords {
 //     }
 // }
 
-/// ? Interface number of a given peer (in the switch?)
+/// Uniquely identifies a linked peer
+///
+/// TODO docs Interface number of a given peer (in the switch?)
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct SwitchPort(u64);
 
@@ -87,7 +97,7 @@ pub struct SwitchPort(u64);
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SwitchLocator {
     root: SigningPublicKey,
-    timestamp: Instant,
+    timestamp: u32,
     coords: Coords,
 }
 
@@ -106,6 +116,12 @@ impl SwitchLocator {
 
     #[inline]
     pub fn wire_coords(&self) -> WireCoords {
+        // let mut wire_coords = [u8, self.coords.len()];
+
+        // for port in self.coords.iter() {
+        //     (&mut wire_coords).write()
+        // }
+
         unimplemented!()
     }
 
@@ -144,7 +160,7 @@ impl Ord for SwitchLocator {
 ///
 /// [`SwitchLocator`]: struct.SwitchLocator
 #[derive(Clone, Copy, Debug)]
-pub struct SwitchMessage {
+pub struct RootUpdate {
     root: SigningPublicKey,
     timestamp: Instant,
     // hops: TODO:

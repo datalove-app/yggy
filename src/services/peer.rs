@@ -56,7 +56,13 @@ impl<C: Core> Handler<peer::messages::Close> for PeerManager<C> {
 #[derive(Debug)]
 pub struct Peer<C: Core> {
     core: Addr<C>,
-    peer_manager: Addr<PeerManager<C>>,
+    peers: Addr<PeerManager<C>>,
+}
+
+impl<C: Core> Peer<C> {
+    pub async fn start(core: Addr<C>) -> Result<Addr<Self>, Error> {
+        unimplemented!()
+    }
 }
 
 impl<C: Core> peer::Peer<C, PeerManager<C>> for Peer<C> {}

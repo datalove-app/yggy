@@ -3,16 +3,14 @@
 mod address;
 mod crypto;
 mod peer;
-mod session;
 mod switch;
 pub mod wire;
 
 pub use address::*;
 pub use crypto::*;
 pub use peer::*;
-pub use session::*;
 pub use switch::*;
-pub use wire::{Header as WireHeader, Wire};
+// pub use wire::{Header as WireHeader, Wire};
 
 use crate::error::{Error, TypeError};
 use derive_more::{AsRef, IntoIterator};
@@ -20,6 +18,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
     convert::TryFrom,
+    iter::Iterator,
     net::{IpAddr, Ipv4Addr, SocketAddr},
     str::FromStr,
 };
@@ -33,6 +32,13 @@ pub type AllowedEncryptionPublicKeys = HashSet<BoxPublicKey>;
 #[derive(AsRef, Clone, Debug, Deserialize, Eq, IntoIterator, PartialEq, Serialize)]
 #[serde(transparent)]
 pub struct ListenAddresses(Vec<PeerURI>);
+
+impl ListenAddresses {
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = &PeerURI> {
+        self.0.iter()
+    }
+}
 
 impl Default for ListenAddresses {
     #[inline]

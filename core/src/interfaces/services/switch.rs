@@ -1,3 +1,7 @@
+//! Maintains a spanning tree of a subset of the network, allowing us to route
+//! packets based on distance between nodes in the tree, potentially taking
+//! shortcuts if found.
+
 use crate::{
     dev::*,
     types::{NodeID, SigningPublicKey, SwitchLocator, SwitchPort},
@@ -18,39 +22,42 @@ where
     Self: Handler<messages::GetLookupTable<C, Self>>,
 {
     ///
-    type LookupTable: LookupTable + Clone;
+    type LookupTable: LookupTable;
 
-    async fn get_lookup_table(mut addr: Addr<Self>) -> Option<Self::LookupTable> {
-        addr.call(messages::GetLookupTable::<C, Self>::new())
+    /// Retrieves a copy of the `Switch`'s [`LookupTable`].
+    ///
+    /// [`LookupTable`]: trait.LookupTable.html
+    async fn get_lookup_table(addr: &mut Addr<Self>) -> Option<Self::LookupTable> {
+        addr.call(messages::GetLookupTable::<C, Self>::MSG)
             .await
             .ok()
     }
 }
 
 /// Marker trait for the `Switch`'s inner lookup table.
-pub trait LookupTable: 'static + fmt::Debug + Send + Sync {}
+pub trait LookupTable: 'static + Clone + fmt::Debug + Send + Sync {
+    type Item;
+}
 
 pub mod messages {
     use super::*;
+    use crate::dev::*;
     use std::marker::PhantomData;
 
-    // #[derive(Debug)]
+    /// Retrieves the underlying `LookupTable`.
     pub struct GetLookupTable<C: Core, S: Switch<C>> {
         core: PhantomData<C>,
         switch: PhantomData<S>,
     }
 
     impl<C: Core, S: Switch<C>> GetLookupTable<C, S> {
-        #[inline]
-        pub fn new() -> Self {
-            Self {
-                core: PhantomData,
-                switch: PhantomData,
-            }
-        }
+        pub const MSG: Self = Self {
+            core: PhantomData,
+            switch: PhantomData,
+        };
     }
 
-    impl<C: Core, S: Switch<C>> xactor::Message for GetLookupTable<C, S> {
+    impl<C: Core, S: Switch<C>> Message for GetLookupTable<C, S> {
         type Result = S::LookupTable;
     }
 }

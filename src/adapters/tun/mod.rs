@@ -26,27 +26,23 @@ const CONNECTION_TIMEOUT: Duration = Duration::from_secs(120);
 ///
 #[derive(Debug)]
 pub struct TunAdapter<C: Core> {
+    core: Addr<C>,
+    // dialer: C::Dialer,
+    // listener: Arc<C::Listener>,
+
     // ///
     // state: State,
-    ///
-    core: Addr<C>,
-
-    // ///
-    // dialer: C::Dialer,
-    // ///
-    // /// once?
-    // listener: Arc<C::Listener>,
-    ///
-    conn_by_addr: HashMap<Address, Addr<TunConn<C>>>,
-
-    ///
-    conn_by_subnet: HashMap<Subnet, Addr<TunConn<C>>>,
-
     ///
     reader: ITunReader,
 
     ///
     writer: Addr<ITunWriter>,
+
+    ///
+    conn_by_addr: HashMap<Address, Addr<TunConn<C>>>,
+
+    ///
+    conn_by_subnet: HashMap<Subnet, Addr<TunConn<C>>>,
 }
 
 impl<C: Core> TunAdapter<C> {
@@ -65,10 +61,10 @@ impl<C: Core> TunAdapter<C> {
             core,
             // dialer,
             // listener,
-            conn_by_addr: HashMap::default(),
-            conn_by_subnet: HashMap::default(),
             reader,
             writer,
+            conn_by_addr: Default::default(),
+            conn_by_subnet: Default::default(),
         };
 
         Ok(Actor::start(adapter).await?)
@@ -108,7 +104,6 @@ impl<C: Core> StreamHandler<tun::messages::Packet> for TunAdapter<C> {
 ///
 #[derive(Debug)]
 pub struct TunConn<C: Core> {
-    ///
     adapter: Addr<TunAdapter<C>>,
 
     /// The yggdrasil connection.

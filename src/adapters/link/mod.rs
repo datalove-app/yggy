@@ -1,8 +1,15 @@
 mod interface;
+mod tcp;
 mod udp;
 
-use self::interface::{LinkReader, LinkWriter};
-use std::{collections::HashMap, hash, time::Duration};
+use self::interface::{LinkInterface, LinkReader, LinkWriter};
+use futures::stream;
+use std::{
+    collections::{HashMap, HashSet},
+    hash,
+    sync::Arc,
+    time::Duration,
+};
 use yggy_core::{
     dev::*,
     interfaces::{link, peer},
@@ -32,11 +39,12 @@ const STALL_TIMEOUT: Duration = Duration::from_secs(6);
 
 type IPeer<C> = <<C as Core>::PeerManager as peer::PeerManager<C>>::Peer;
 type Links<C> = HashMap<LinkInfo, Addr<Link<C>>>;
+type Interfaces = HashSet<Arc<LinkInterface>>;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct LinkInfo {
-    /// The non-yggy URI for communicating with the linked peer.
+    /// The non-protocol URI for communicating with the linked peer.
     listen_uri: PeerURI,
     // /// The linked node's signing public key.
     // signing_pub_key: Once<SigningPublicKey>,
@@ -61,6 +69,9 @@ pub struct LinkAdapter<C: Core> {
 
     ///
     links: Links<C>,
+
+    ///
+    interfaces: Interfaces,
 }
 
 impl<C: Core> LinkAdapter<C> {
@@ -69,12 +80,31 @@ impl<C: Core> LinkAdapter<C> {
     /// [`ListenAddresses`]: ../../core_types/struct.ListenAddresses.html
     #[inline]
     pub async fn start(core: Addr<C>) -> Result<Addr<Self>, Error> {
-        let adapter = Self {
+        Ok(Actor::start(Self {
             core,
             links: Default::default(),
-        };
+            interfaces: Default::default(),
+        })
+        .await?)
+    }
 
-        Ok(Actor::start(adapter).await?)
+    /// Starts a listener for incoming connections.
+    pub fn listen(&mut self, listen_uri: PeerURI, ctx: &Context<Self>) -> Result<(), Error> {
+        let info = Arc::new(LinkInfo { listen_uri });
+        let interface = Arc::new(LinkInterface::new(info.clone())?);
+        (&mut self.interfaces).insert(interface.clone());
+
+        // TODO start the link
+        // ctx.add_stream(mut stream: S)
+
+        Ok(())
+    }
+
+    /// Opens a `Link` to an outbound peer.
+    pub async fn open(&mut self, self_addr: Addr<Self>, peer_uri: PeerURI) -> Result<(), Error> {
+        // let link = Link::start(info.clone(), self_addr).await?;
+        // (&mut self.links).insert(info, link);
+        unimplemented!()
     }
 }
 
@@ -90,12 +120,22 @@ impl<C: Core> Actor for LinkAdapter<C> {
     async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
         let config = C::current_config(&mut self.core).await?;
 
-        // initialize links
-        for listen_uri in config.listen_addrs.into_iter() {
-            let info = LinkInfo { listen_uri };
-            let link = Link::start_link(ctx.address(), info.clone()).await?;
-            (&mut self.links).insert(info, link);
+        // initialize links for incoming connections
+        // TODO do these in parallel
+        for listen_uri in config.listen_addrs.iter() {
+            // self.listen(ctx, listen_uri.clone());
+            // self.listen(ctx.address(), listen_uri.clone()).await?;
         }
+
+        // initialize links for outgoing connections
+        // TODO do these in parallel
+        // TODO set a timer to attempt to add peers from config
+        // for peer_uri in config.peers.iter() {
+        //     self.open(ctx.address(), peer_uri.clone()).await?;
+        // }
+        // for peer_uri in config.peers_by_interface.iter() {
+        //     self.open(peer_uri.clone()).await?;
+        // }
 
         unimplemented!()
     }
@@ -112,24 +152,40 @@ impl<C: Core> Handler<link::messages::Listen> for LinkAdapter<C> {
 #[derive(Debug)]
 pub struct Link<C: Core> {
     adapter: Addr<LinkAdapter<C>>,
-
-    ///
     info: LinkInfo,
-
     // ///
     // peer: Addr<IPeer<C>>,
+    // ///
+    // interface: LinkInterface,
     ///
     reader: LinkReader,
-
     ///
     writer: LinkWriter,
 }
 
 impl<C: Core> Link<C> {
-    // #[inline]
-    // pub fn info(&self) -> &LinkInfo {
-    //     &self.info
-    // }
+    /// Starts a `Link` that reads and writes packets on the provided [`PeerURI`].
+    ///
+    /// [`PeerURI`]:
+    pub async fn start(
+        info: LinkInfo,
+        adapter: Addr<LinkAdapter<C>>,
+        reader: LinkReader,
+        writer: LinkWriter,
+    ) -> Result<Addr<Self>, Error> {
+        // let (reader, writer) = interface.listen(info.listen_uri.clone());
+
+        let link = Link {
+            info,
+            // peer: IPeer<C> as Peer<C>
+            adapter,
+            // interface,
+            reader,
+            writer,
+        };
+
+        Ok(Actor::start(link).await?)
+    }
 }
 
 #[async_trait::async_trait]

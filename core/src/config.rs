@@ -1,5 +1,5 @@
 use crate::{dev::*, types::*};
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::Arc};
 
 /// Contains configuration options necessary for an Yggdrasil node to run. You
 /// will need to supply one of these structs to the Yggdrasil core when starting
@@ -29,8 +29,12 @@ pub struct Config {
     #[serde(rename = "Listen")]
     pub listen_addrs: ListenAddresses,
 
-    // /// Regular expressions for which interfaces multicast peer discovery should be enabled on. If none specified, multicast peer discovery is disabled. The default value is .* which uses all interfaces."`
-    // MulticastInterfaces         []string
+    /// Regular expressions for which interfaces multicast peer discovery
+    /// should be enabled on. If none specified, multicast peer discovery is
+    /// disabled. The default value is .* which uses all interfaces.
+    #[serde(rename = "MulticastInterfaces")]
+    pub multicast_interfaces: Vec<String>,
+
     /// List of peer encryption public keys to allow incoming TCP peering
     /// connections from. If left empty or undefined, then all connections will
     /// be allowed by default. This does not affect outgoing peerings, nor does
@@ -61,7 +65,7 @@ pub struct Config {
 
     /// Your private signing key. DO NOT share this with anyone!
     #[serde(rename = "SigningPrivateKey")]
-    pub signing_private_key: SigningSecretKey,
+    pub signing_private_key: Arc<SigningSecretKey>,
 
     /// The port number to be used for the link-local TCP listeners for the
     /// configured `MulticastInterfaces`. This option does not affect listeners

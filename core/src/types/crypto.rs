@@ -13,11 +13,15 @@ use sha2::{
 use std::{
     cmp::Ordering,
     convert::{TryFrom, TryInto},
-    sync::Mutex,
+    str::FromStr,
+    sync::{Arc, Mutex},
 };
 use wg_crypto::x25519;
 
 lazy_static! {
+    ///
+    ///
+    /// TODO is this too blocking?
     static ref RNG: Mutex<ChaChaRng> = ChaChaRng::from_rng(thread_rng()).unwrap().into();
 }
 
@@ -40,8 +44,9 @@ impl NodeID {
     ///
     const BYTE_LENGTH: usize = 64;
 
-    ///
-    const MAX_PREFIX_LEN: u8 = 127;
+    /// Maximum number of leading ones in the `NodeID`, also known as the
+    /// prefix length.
+    const MAX_PREFIX_LENGTH: u8 = 127;
 
     /// Returns the number of bits set in a masked `NodeID`.
     #[inline]
@@ -65,11 +70,11 @@ impl NodeID {
             .try_into()
             .ok();
 
-        count.filter(|count| count <= &Self::MAX_PREFIX_LEN)
+        count.filter(|count| count <= &Self::MAX_PREFIX_LENGTH)
     }
 }
 
-/// TODO assert leading ones <= 127?
+/// Creates a `NodeID` from a `BoxPublicKey`, verifying it's prefix length.
 impl TryFrom<&BoxPublicKey> for NodeID {
     type Error = Error;
 
@@ -95,7 +100,6 @@ pub type NodeIDMask = InnerDigest;
 pub struct TreeID(InnerDigest);
 
 impl TreeID {
-    ///
     const BYTE_LENGTH: usize = 64;
 }
 
@@ -129,6 +133,7 @@ impl Handle {
  */
 
 ///
+/// TODO docs
 /// Used for protocol traffic.
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct SigningKeypair {
@@ -140,6 +145,7 @@ pub struct SigningKeypair {
 pub type Signature = ed25519_dalek::Signature;
 
 ///
+/// TODO docs
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, From, PartialEq, Serialize)]
 #[from(forward)]
 pub struct SigningPublicKey(ed25519_dalek::PublicKey);
@@ -181,9 +187,11 @@ impl Ord for SigningPublicKey {
 }
 
 ///
+/// TODO docs
 pub type SigningSecretKey = ed25519_dalek::SecretKey;
 
 ///
+/// TODO docs
 /// Used for encapsulated IPv6 traffic.
 #[derive(Debug)]
 pub struct BoxKeypair {
@@ -192,6 +200,7 @@ pub struct BoxKeypair {
 }
 
 ///
+/// TODO docs
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct BoxNonce([u8; 24]);
 
@@ -199,13 +208,19 @@ impl BoxNonce {
     #[inline]
     pub fn new() -> Self {
         let mut rng = RNG.lock().unwrap();
-        let mut nonce = [0u8; 24];
-        (&mut rng).fill_bytes(&mut nonce);
-        Self(nonce)
+        loop {
+            let mut nonce = [0u8; 24];
+            (&mut rng).fill_bytes(&mut nonce);
+
+            if nonce[0] != 0xff {
+                return Self(nonce);
+            }
+        }
     }
 }
 
 ///
+/// TODO docs
 #[derive(AsRef, Debug, From, FromStr, Eq, Hash, PartialEq)]
 #[from(forward)]
 pub struct BoxPublicKey(x25519::X25519PublicKey);
@@ -291,8 +306,9 @@ impl<'de> Deserialize<'de> for BoxPublicKey {
 }
 
 ///
-#[derive(AsRef, Debug, From, FromStr, Into)]
-pub struct BoxSecretKey(x25519::X25519SecretKey);
+/// TODO docs
+#[derive(AsRef, Clone, Debug, From, Into)]
+pub struct BoxSecretKey(Arc<x25519::X25519SecretKey>);
 
 impl BoxSecretKey {
     #[inline]
@@ -311,6 +327,14 @@ impl BoxSecretKey {
             .shared_key(peer_public.as_ref())
             .map(Into::into)
             .map_err(|e| TypeError::FailedSharedKeyGeneration(e).into())
+    }
+}
+
+impl FromStr for BoxSecretKey {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let key = s.parse().map_err(TypeError::FailedPrivateKeyParsing)?;
+        Ok(Self(Arc::new(key)))
     }
 }
 
@@ -360,4 +384,5 @@ impl<'de> Deserialize<'de> for BoxSecretKey {
 }
 
 ///
+/// TODO docs
 pub type BoxSharedKey = [u8; 32];

@@ -1,9 +1,13 @@
+//! Types and traits related to connections to other nodes on the network.
+
 use crate::{
     dev::*,
     types::{BoxPublicKey, BoxSharedKey, SigningPublicKey},
 };
 
-/// Represents peer
+/// Represents peer...
+///
+/// TODO docs
 pub trait PeerManager<C: Core>
 where
     Self: Actor,
@@ -22,7 +26,7 @@ where
 }
 
 ///
-/// TODO
+/// TODO docs, is this necessary?
 #[async_trait::async_trait]
 pub trait PeerInterface {
     ///
@@ -63,16 +67,4 @@ pub mod messages {
 //     endpoint: PeerURI, // TODO protocol + endpoint + port
 //     // socket:
 //     uptime: Duration,
-// }
-
-// ///
-// #[derive(Clone, Debug, Eq, PartialEq)]
-// pub struct PeerInfo {
-//     key: SigningPublicKey,
-//     locator: SwitchLocator,
-//     port: SwitchPort,
-//     degree: u64,
-//     last_seen: Instant,
-//     // msg: SwitchMessage,
-//     is_blocked: bool,
 // }

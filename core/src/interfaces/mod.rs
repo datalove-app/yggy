@@ -28,7 +28,7 @@ use crate::{
     types::{BoxKeypair, SigningKeypair},
     Config,
 };
-use std::fmt::Debug;
+use std::{fmt::Debug, sync::Arc};
 use xactor::{Actor, Addr, Handler};
 
 ///
@@ -57,7 +57,7 @@ where
     type Switch: Switch<Self>;
 
     ///
-    async fn current_config(core: &mut Addr<Self>) -> Result<Config, Error> {
+    async fn current_config(core: &mut Addr<Self>) -> Result<Arc<Config>, Error> {
         Ok(core.call(messages::GetConfig).await?)
     }
 
@@ -79,11 +79,12 @@ where
 
 pub mod messages {
     use crate::Config;
+    use std::sync::Arc;
 
-    #[xactor::message(result = "Config")]
+    #[xactor::message(result = "Arc<Config>")]
     pub struct GetConfig;
 
-    #[xactor::message(result = "Config")]
+    #[xactor::message(result = "Arc<Config>")]
     pub struct Reconfigure;
 }
 

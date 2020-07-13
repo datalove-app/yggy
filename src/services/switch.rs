@@ -25,26 +25,78 @@ const PARENT_UPDATE_THRESHOLD: u8 = 240;
 const MIN_TOTAL_QUEUE_SIZE: u64 = 4 * 1024 * 1024;
 
 ///
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PeerInfo {
+    /// ID of the peer.
+    /// ? TreeID?
+    key: SigningPublicKey,
+
+    ///
+    locator: SwitchLocator,
+
+    /// Self-reported degree.
+    degree: u64,
+
+    /// Interface number of this peer.
+    port: SwitchPort,
+
+    /// Time this node was last seen
+    /// ? u32?
+    last_seen: Instant,
+
+    // msg: RootUpdate,
+    is_blocked: bool,
+    // /// Counter of how often a node is faster than the current parent, penalized extra if slower.
+    // faster_nodes: HashMap<SwitchPort, u64>,
+}
+
+///
+/// TODO
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SwitchData {
+    locator: SwitchLocator,
+    seq: u64,
+    peers: HashMap<SwitchPort, PeerInfo>,
+    // msg: RootUpdate
+}
+
+///
 #[derive(Debug)]
 pub struct Switch<C: Core> {
-    ///
     core: Addr<C>,
 
+    // ///
+    // self_signing_key: SigningPublicKey,
     ///
-    self_signing_key: SigningPublicKey,
+    switch_data: SwitchData,
 
-    ///
-    last_locator_update: Instant,
+    /// Time
+    last_locator_update: Option<Instant>,
+
+    /// Port of whatever peer is our parent, or our own port if we're the root.
+    parent_port: Option<SwitchPort>,
 
     ///
     dropped_roots: HashMap<SigningPublicKey, Instant>,
 
     ///
-    parent_port: SwitchPort,
-    // ///
-    // switch_data: SwitchData,
-    ///
     lookup_table: LookupTable,
+}
+
+impl<C: Core> Switch<C> {
+    pub async fn start(mut core: Addr<C>) -> Result<Addr<Self>, Error> {
+        //     let config = C::current_config(&mut core).await?;
+
+        //     let switch = Self {
+        //         core,
+        //         self_signing_key: config.signing_public_key,
+        //         last_locator_update: Default::default(),
+        //         dropped_roots: Default::default(),
+        //         lookup_table:
+        //     };
+
+        unimplemented!()
+    }
 }
 
 #[async_trait::async_trait]
@@ -66,44 +118,22 @@ impl<C: Core> Handler<switch::messages::GetLookupTable<C, Self>> for Switch<C> {
     }
 }
 
-///
-/// TODO
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SwitchData {
+/// Subset of information about a peer needed to make routing decisions.
+#[derive(Debug)]
+pub struct LookupTableElem {
+    port: SwitchPort,
+    last_seen: Instant,
     locator: SwitchLocator,
-    seq: u64,
-    peers: HashMap<SwitchPort, PeerInfo>,
-    // msg: SwitchMessage
+    // next:
 }
-
-// ///
-// #[derive(Debug)]
-// pub struct LookupTable {
-//     our_locator: SwitchLocator,
-//     elems:
-// }
-
-// #[derive(Debug)]
-// pub struct LookupTableElement
 
 /// Subset of information about all peers needed to make routing decisions.
 #[derive(Clone, Debug)]
 pub struct LookupTable(RwLock<InnerLookupTable>);
 
-#[derive(Debug)]
-struct InnerLookupTable {
-    /// Our current [`SwitchLocator`].
-    ///
-    /// [`SwitchLocator`]:
-    self_locator: SwitchLocator,
-
-    /// All switch peers, just for sanity checks + API/debugging.
-    peers: HashMap<SwitchPort, LookupTableElem>,
-    // _start
-    // _msg
+impl switch::LookupTable for LookupTable {
+    type Item = LookupTableElem;
 }
-
-impl switch::LookupTable for LookupTable {}
 
 impl LookupTable {
     ///
@@ -143,34 +173,13 @@ impl LookupTable {
     }
 }
 
-/// Subset of information about a peer needed to make routing decisions.
 #[derive(Debug)]
-pub struct LookupTableElem {
-    port: SwitchPort,
-    last_seen: Instant,
-    locator: SwitchLocator,
-}
+struct InnerLookupTable {
+    /// Our current `SwitchLocator`.
+    self_locator: SwitchLocator,
 
-///
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PeerInfo {
-    /// ID of this peer
-    /// ? TreeID?
-    key: SigningPublicKey,
-
-    /// Self-reported degree.
-    degree: u64,
-
-    /// Time this node was last seen.
-    last_seen: Instant,
-
-    locator: SwitchLocator,
-    port: SwitchPort,
-
-    // /// The wire [`SwitchMessage`] used.
-    // ///
-    // /// [`SwitchMessage`]:
-    // msg: SwitchMessage,
-    /// Used to avoid parenting a blocked link.
-    is_blocked: bool,
+    /// All switch peers, just for sanity checks + API/debugging.
+    peers: HashMap<SwitchPort, LookupTableElem>,
+    // _start
+    // _msg
 }

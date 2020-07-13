@@ -1,8 +1,6 @@
-use crate::{
-    dev::*,
-    interfaces::{peer},
-    types::PeerURI,
-};
+//!
+
+use crate::{dev::*, interfaces::peer, types::PeerURI};
 
 /// Represents direct connections to peers, over some `LinkInterface` (TCP, UDP, AWDL, etc).
 /// TODO tor?

@@ -8,18 +8,18 @@ use yggy_core::{
     types::wire,
 };
 
+type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
 type IPeer<C> = <IPeerManager<C> as peer::PeerManager<C>>::Peer;
 type IPeerManager<C> = <C as Core>::PeerManager;
 type ISwitch<C> = <C as Core>::Switch;
-type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
 
 ///
 #[derive(Debug)]
 pub struct Router<C: Core> {
     core: Addr<C>,
     // dht
-    search_manager: search::SearchManager<C>,
-    session_manager: session::SessionManager<C>,
+    searches: search::SearchManager<C>,
+    sessions: session::SessionManager<C>,
 
     ///
     self_peer: Addr<IPeer<C>>,

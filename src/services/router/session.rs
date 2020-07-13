@@ -15,8 +15,8 @@ use yggy_core::{
     },
 };
 
-type ISwitch<C> = <C as Core>::Switch;
 type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
+type ISwitch<C> = <C as Core>::Switch;
 
 // #[derive(Debug)]
 // pub struct SessionManager<C: Core>(Mutex<InnerSessionManager<C>>);
@@ -40,7 +40,7 @@ pub struct SessionManager<C: Core> {
     // active and indexed sessions
     pub(crate) sessions: Mutex<HashMap<Handle, Addr<Session<C>>>>,
     pub(crate) handles: Mutex<HashMap<BoxPublicKey, Handle>>,
-    // shared_keys: HashMap<BoxPublicKey, BoxSharedKey>,
+    // pub(crate) shared_keys: HashMap<BoxPublicKey, BoxSharedKey>,
 }
 
 impl<C: Core> SessionManager<C> {
@@ -51,7 +51,7 @@ impl<C: Core> SessionManager<C> {
         let listener = C::listener(&mut core).await?;
 
         let mut switch = C::switch(&mut core).await?;
-        let lookup_table = <ISwitch<C> as switch::Switch<C>>::get_lookup_table(switch)
+        let lookup_table = <ISwitch<C> as switch::Switch<C>>::get_lookup_table(&mut switch)
             .await
             .ok_or_else(|| Error::Init(anyhow::Error::msg("unable to retrieve lookup table")))?;
         Ok(Self {
@@ -59,7 +59,7 @@ impl<C: Core> SessionManager<C> {
             router,
             listener,
             lookup_table,
-            allowed_peer_keys: config.allowed_peer_keys,
+            allowed_peer_keys: config.allowed_peer_keys.clone(),
             max_allowed_mtu: config.interface_max_mtu, // ? default?
             sessions: Default::default(),
             // shared_keys: Default::default(),
@@ -76,6 +76,7 @@ impl<C: Core> SessionManager<C> {
     ) -> Result<(), Error> {
         self.sessions.lock().await.insert(self_handle, session);
         self.handles.lock().await.insert(their_key, self_handle);
+        // self.shared_keys.lock().await.insert(their_key, )
         Ok(())
     }
 }
@@ -167,7 +168,7 @@ impl<C: Core> Session<C> {
             session_manager,
             lookup_table,
             tunn: Tunn::new(
-                Arc::new(config.encryption_private_key.into()),
+                config.encryption_private_key.clone().into(),
                 Arc::new(their_key.as_bytes().into()),
                 None,
                 None,

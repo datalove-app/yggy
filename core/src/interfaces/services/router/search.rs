@@ -1,4 +1,6 @@
+//! Manages searches for ...
 //!
+//! ? `Coords` and `SigningPublicKey`s for nodes for which the IPv6 is known
 
 use crate::{dev::*, types::NodeID};
 

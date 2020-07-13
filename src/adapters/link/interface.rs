@@ -1,54 +1,67 @@
-use super::{udp::UDPSocket, Link, LinkAdapter, LinkInfo};
-use smol::Async;
+use super::{
+    tcp::{TCPListener, TCPStream},
+    udp::UDPSocket,
+    LinkInfo,
+};
+// use smol::Async;
+use std::sync::Arc;
 use yggy_core::{dev::*, types::PeerURI};
 
-impl<C: Core> Link<C> {
-    /// Starts a [`Link`] that reads and writes packets on the provided `PeerURI`.
+///
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub enum LinkInterface {
+    TCP(TCPListener),
+    UDP,
+}
+
+impl LinkInterface {
     ///
-    /// [`Link`]: ../mod/struct.Link.html
-    pub async fn start_link(
-        adapter: Addr<LinkAdapter<C>>,
-        info: LinkInfo,
-    ) -> Result<Addr<Self>, Error> {
-        let (reader, writer) = match info.listen_uri {
-            // PeerURI::TCP
-            PeerURI::UDP(addr) => UDPSocket::bind(addr)?.split(),
+    pub fn new(info: Arc<LinkInfo>) -> Result<Self, Error> {
+        match info.listen_uri {
+            PeerURI::TCP(addr) => Ok(Self::TCP(TCPListener::bind(addr)?)),
+            _ => unimplemented!(),
+        }
+    }
+
+    /// Establishes the link interface, returning a `Stream` of
+    /// `LinkReader` + `LinkWriter` pairs upon every new connection.
+    pub fn listen(&self) -> impl Stream<Item = Result<(LinkReader, LinkWriter), Error>> + '_ {
+        match self {
+            Self::TCP(listener) => listener.incoming().map_ok(|stream| stream.split()),
+            // PeerURI::TCP(addr) => stream::once(async move { TCPListener::bind(addr) })
+            //     .map_ok(|listener: TCPListener| listener.incoming())
+            //     .try_flatten()
+            //     .map_ok(|stream| stream.split()),
+            // PeerURI::UDP(addr) => UDPSocket::bind(addr)?.split(),
             // PeerURI::SOCKS
             // PeerURI::TOR
             _ => unimplemented!(),
-        };
-
-        let link = Link {
-            info,
-            adapter,
-            reader,
-            writer,
-        };
-
-        Ok(Actor::start(link).await?)
+        }
     }
 }
 
 ///
 #[derive(Debug)]
 pub enum LinkReader {
-    // TCP(io::ReadHalf<TCPStream>),
+    TCP(io::ReadHalf<TCPStream>),
     UDP(io::ReadHalf<UDPSocket>),
     // SOCKS(io::ReadHalf<TCPStream>),
+    // #[cfg(feature = "tor")]
     // TOR(io::ReadHalf<TCPStream>),
 }
 
 impl AsyncRead for LinkReader {
+    #[inline]
     fn poll_read(
-        mut self: Pin<&mut Self>,
+        self: Pin<&mut Self>,
         cx: &mut task::Context,
         buf: &mut [u8],
     ) -> task::Poll<Result<usize, io::Error>> {
         match self.get_mut() {
-            Self::UDP(reader) => {
-                futures::pin_mut!(reader);
-                reader.poll_read(cx, buf)
-            }
+            // Self::UDP(reader) => {
+            //     futures::pin_mut!(reader);
+            //     reader.poll_read(cx, buf)
+            // }
             _ => unimplemented!(),
         }
     }
@@ -57,49 +70,53 @@ impl AsyncRead for LinkReader {
 ///
 #[derive(Debug)]
 pub enum LinkWriter {
-    // TCP(io::WriteHalf<TCPStream>),
+    TCP(io::WriteHalf<TCPStream>),
     UDP(io::WriteHalf<UDPSocket>),
     // SOCKS(io::WriteHalf<TCPStream>),
+    // #[cfg(feature = "tor")]
     // TOR(io::WriteHalf<TCPStream>),
 }
 
 impl AsyncWrite for LinkWriter {
+    #[inline]
     fn poll_write(
-        mut self: Pin<&mut Self>,
+        self: Pin<&mut Self>,
         cx: &mut task::Context,
         buf: &[u8],
     ) -> task::Poll<Result<usize, io::Error>> {
         match self.get_mut() {
-            Self::UDP(writer) => {
-                futures::pin_mut!(writer);
-                writer.poll_write(cx, buf)
-            }
+            // Self::UDP(writer) => {
+            //     futures::pin_mut!(writer);
+            //     writer.poll_write(cx, buf)
+            // }
             _ => unimplemented!(),
         }
     }
 
+    #[inline]
     fn poll_flush(
-        mut self: Pin<&mut Self>,
+        self: Pin<&mut Self>,
         cx: &mut task::Context,
     ) -> task::Poll<Result<(), io::Error>> {
         match self.get_mut() {
-            Self::UDP(writer) => {
-                futures::pin_mut!(writer);
-                writer.poll_flush(cx)
-            }
+            // Self::UDP(writer) => {
+            //     futures::pin_mut!(writer);
+            //     writer.poll_flush(cx)
+            // }
             _ => unimplemented!(),
         }
     }
 
+    #[inline]
     fn poll_close(
-        mut self: Pin<&mut Self>,
+        self: Pin<&mut Self>,
         cx: &mut task::Context,
     ) -> task::Poll<Result<(), io::Error>> {
         match self.get_mut() {
-            Self::UDP(writer) => {
-                futures::pin_mut!(writer);
-                writer.poll_close(cx)
-            }
+            // Self::UDP(writer) => {
+            //     futures::pin_mut!(writer);
+            //     writer.poll_close(cx)
+            // }
             _ => unimplemented!(),
         }
     }

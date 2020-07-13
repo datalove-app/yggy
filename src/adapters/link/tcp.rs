@@ -1,66 +1,90 @@
 use super::interface::{LinkReader, LinkWriter};
 use smol::Async;
-use std::net::{SocketAddr, UdpSocket};
+use std::{
+    hash,
+    net::{SocketAddr, TcpListener, TcpStream},
+};
 use yggy_core::dev::*;
 
 #[derive(Debug)]
-pub struct UDPSocket {
+pub struct TCPListener {
     addr: SocketAddr,
-    socket: Async<UdpSocket>,
+    listener: Async<TcpListener>,
 }
 
-impl UDPSocket {
+impl TCPListener {
     #[inline]
     pub fn bind(addr: SocketAddr) -> Result<Self, Error> {
-        let socket = Async::<UdpSocket>::bind(addr).map_err(ConnError::Interface)?;
-        Ok(Self { addr, socket })
+        let listener = Async::<TcpListener>::bind(&addr).map_err(ConnError::Interface)?;
+        Ok(Self { addr, listener })
     }
 
     #[inline]
-    pub fn connect(&self, addr: &SocketAddr) -> Result<(), Error> {
-        Ok(self
-            .socket
-            .get_ref()
-            .connect(addr)
-            .map_err(ConnError::Interface)?)
+    pub fn incoming(&self) -> impl Stream<Item = Result<TCPStream, Error>> + '_ {
+        self.listener.incoming().map(|s| match s {
+            Err(e) => Err(ConnError::Interface(e))?,
+            Ok(stream) => {
+                let addr = stream.get_ref().peer_addr().map_err(ConnError::Interface)?;
+                Ok(TCPStream { addr, stream })
+            }
+        })
     }
 
     #[inline]
     pub fn local_addr(&self) -> &SocketAddr {
         &self.addr
     }
+}
 
+impl Eq for TCPListener {}
+impl PartialEq<Self> for TCPListener {
+    fn eq(&self, other: &Self) -> bool {
+        self.addr == other.addr
+    }
+}
+
+impl hash::Hash for TCPListener {
     #[inline]
-    pub fn remote_addr(&self) -> Result<SocketAddr, Error> {
-        Ok(self
-            .socket
-            .get_ref()
-            .peer_addr()
-            .map_err(ConnError::Interface)?)
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        self.addr.hash(state);
+    }
+}
+
+#[derive(Debug)]
+pub struct TCPStream {
+    addr: SocketAddr,
+    stream: Async<TcpStream>,
+}
+
+impl TCPStream {
+    #[inline]
+    pub async fn connect(addr: SocketAddr) -> Result<Self, Error> {
+        let stream = Async::<TcpStream>::connect(&addr)
+            .await
+            .map_err(ConnError::Interface)?;
+        Ok(Self { addr, stream })
     }
 
     #[inline]
     pub fn split(self) -> (LinkReader, LinkWriter) {
         let (r, w) = io::AsyncReadExt::split(self);
-        (LinkReader::UDP(r), LinkWriter::UDP(w))
+        (LinkReader::TCP(r), LinkWriter::TCP(w))
+    }
+
+    #[inline]
+    pub fn remote_addr(&self) -> &SocketAddr {
+        &self.addr
     }
 }
 
-impl AsyncRead for UDPSocket {
+impl AsyncRead for TCPStream {
     #[inline]
     fn poll_read(
         mut self: Pin<&mut Self>,
         cx: &mut task::Context,
         buf: &mut [u8],
     ) -> task::Poll<Result<usize, io::Error>> {
-        // If we're connected to a remote addr,
-        // if let Some(addr) = self.remote_addr().ok() {
-
-        // } else {
-
-        // }
-
-        // let reader = self.socket;
+        // let reader = self.stream;
         // futures::pin_mut!(reader);
         // reader.poll_read(cx, buf)
 
@@ -68,7 +92,7 @@ impl AsyncRead for UDPSocket {
     }
 }
 
-impl AsyncWrite for UDPSocket {
+impl AsyncWrite for TCPStream {
     #[inline]
     fn poll_write(
         mut self: Pin<&mut Self>,
