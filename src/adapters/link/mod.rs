@@ -1,6 +1,5 @@
 mod interface;
 mod tcp;
-mod udp;
 
 use self::interface::{LinkInterface, LinkReader, LinkWriter};
 use futures::stream;

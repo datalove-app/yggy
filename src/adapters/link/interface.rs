@@ -1,6 +1,5 @@
 use super::{
     tcp::{TCPListener, TCPStream},
-    udp::UDPSocket,
     LinkInfo,
 };
 // use smol::Async;
@@ -11,7 +10,9 @@ use yggy_core::{dev::*, types::PeerURI};
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum LinkInterface {
     TCP(TCPListener),
-    UDP,
+    SOCKS,
+    #[cfg(feature = "tor")]
+    TOR,
 }
 
 impl LinkInterface {
@@ -19,6 +20,8 @@ impl LinkInterface {
     pub fn new(info: Arc<LinkInfo>) -> Result<Self, Error> {
         match info.listen_uri {
             PeerURI::TCP(addr) => Ok(Self::TCP(TCPListener::bind(addr)?)),
+            // PeerURI::SOCKS
+            // PeerURI::TOR
             _ => unimplemented!(),
         }
     }
@@ -28,13 +31,6 @@ impl LinkInterface {
     pub fn listen(&self) -> impl Stream<Item = Result<(LinkReader, LinkWriter), Error>> + '_ {
         match self {
             Self::TCP(listener) => listener.incoming().map_ok(|stream| stream.split()),
-            // PeerURI::TCP(addr) => stream::once(async move { TCPListener::bind(addr) })
-            //     .map_ok(|listener: TCPListener| listener.incoming())
-            //     .try_flatten()
-            //     .map_ok(|stream| stream.split()),
-            // PeerURI::UDP(addr) => UDPSocket::bind(addr)?.split(),
-            // PeerURI::SOCKS
-            // PeerURI::TOR
             _ => unimplemented!(),
         }
     }
@@ -44,7 +40,6 @@ impl LinkInterface {
 #[derive(Debug)]
 pub enum LinkReader {
     TCP(io::ReadHalf<TCPStream>),
-    UDP(io::ReadHalf<UDPSocket>),
     // SOCKS(io::ReadHalf<TCPStream>),
     // #[cfg(feature = "tor")]
     // TOR(io::ReadHalf<TCPStream>),
@@ -71,7 +66,6 @@ impl AsyncRead for LinkReader {
 #[derive(Debug)]
 pub enum LinkWriter {
     TCP(io::WriteHalf<TCPStream>),
-    UDP(io::WriteHalf<UDPSocket>),
     // SOCKS(io::WriteHalf<TCPStream>),
     // #[cfg(feature = "tor")]
     // TOR(io::WriteHalf<TCPStream>),

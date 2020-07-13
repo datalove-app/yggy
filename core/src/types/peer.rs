@@ -34,9 +34,8 @@ pub enum PeerURI {
 
     // ///
     // TLS(SocketAddr),
-    ///
-    UDP(SocketAddr),
-
+    // ///
+    // UDP(SocketAddr),
     ///
     SOCKS(SocketAddr, SocketAddr),
 
@@ -67,7 +66,7 @@ impl PeerURI {
 
 impl Default for PeerURI {
     fn default() -> Self {
-        Self::UDP(SocketAddr::new(Ipv4Addr::new(0, 0, 0, 0).into(), 0))
+        Self::TCP(SocketAddr::new(Ipv4Addr::new(0, 0, 0, 0).into(), 0))
     }
 }
 
@@ -92,13 +91,6 @@ impl FromStr for PeerURI {
                     .parse()
                     .map_err(TypeError::InvalidPeerURI)?;
                 Ok(Self::TCP(addr))
-            }
-            _ if raw.starts_with("udp://") => {
-                let addr = raw
-                    .trim_start_matches("udp://")
-                    .parse()
-                    .map_err(TypeError::InvalidPeerURI)?;
-                Ok(Self::UDP(addr))
             }
             _ if raw.starts_with("socks://") => {
                 let (addr1, addr2): (&str, &str) = raw
