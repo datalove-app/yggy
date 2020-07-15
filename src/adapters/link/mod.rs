@@ -38,13 +38,13 @@ const STALL_TIMEOUT: Duration = Duration::from_secs(6);
 
 type IPeer<C> = <<C as Core>::PeerManager as peer::PeerManager<C>>::Peer;
 type Links<C> = HashMap<LinkInfo, Addr<Link<C>>>;
-type Interfaces = HashSet<Arc<LinkInterface>>;
+type Interfaces = HashSet<LinkInterface>;
 
 ///
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct LinkInfo {
     /// The non-protocol URI for communicating with the linked peer.
-    listen_uri: PeerURI,
+    addr: PeerURI,
     // /// The linked node's signing public key.
     // signing_pub_key: Once<SigningPublicKey>,
 
@@ -56,7 +56,7 @@ pub struct LinkInfo {
 impl hash::Hash for LinkInfo {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        self.listen_uri.hash(state);
+        self.addr.hash(state);
     }
 }
 
@@ -88,14 +88,16 @@ impl<C: Core> LinkAdapter<C> {
     }
 
     /// Starts a listener for incoming connections.
-    pub fn listen(&mut self, listen_uri: PeerURI, ctx: &Context<Self>) -> Result<(), Error> {
-        let info = Arc::new(LinkInfo { listen_uri });
-        let interface = Arc::new(LinkInterface::new(info.clone())?);
-        (&mut self.interfaces).insert(interface.clone());
-
-        // TODO start the link
-        // ctx.add_stream(mut stream: S)
-
+    /// TODO? check against allowed keys?
+    pub async fn accept(
+        &mut self,
+        ctx: &Context<Self>,
+        info: LinkInfo,
+        reader: LinkReader,
+        writer: LinkWriter,
+    ) -> Result<(), Error> {
+        let link = Link::start(ctx.address(), info.clone(), reader, writer).await?;
+        (&mut self.links).insert(info, link);
         Ok(())
     }
 
@@ -120,10 +122,12 @@ impl<C: Core> Actor for LinkAdapter<C> {
         let config = C::current_config(&mut self.core).await?;
 
         // initialize links for incoming connections
-        // TODO do these in parallel
         for listen_uri in config.listen_addrs.iter() {
-            // self.listen(ctx, listen_uri.clone());
-            // self.listen(ctx.address(), listen_uri.clone()).await?;
+            let (handle, intf) = LinkInterface::new(LinkInfo {
+                addr: listen_uri.clone(),
+            })?;
+            (&mut self.interfaces).insert(handle);
+            ctx.add_stream(intf);
         }
 
         // initialize links for outgoing connections
@@ -140,11 +144,22 @@ impl<C: Core> Actor for LinkAdapter<C> {
     }
 }
 
+// #[async_trait::async_trait]
+// impl<C: Core> Handler<link::messages::Listen> for LinkAdapter<C> {
+//     async fn handle(&mut self, ctx: &Context<Self>, msg: link::messages::Listen) {
+//         // self.listen(msg.addr, ctx);
+//         unimplemented!()
+//     }
+// }
+
 #[async_trait::async_trait]
-impl<C: Core> Handler<link::messages::Listen> for LinkAdapter<C> {
-    async fn handle(&mut self, ctx: &Context<Self>, msg: link::messages::Listen) {
-        unimplemented!()
+impl<C: Core> StreamHandler<(LinkInfo, LinkReader, LinkWriter)> for LinkAdapter<C> {
+    async fn handle(&mut self, ctx: &Context<Self>, msg: (LinkInfo, LinkReader, LinkWriter)) {
+        // TODO handle result
+        self.accept(ctx, msg.0, msg.1, msg.2).await;
     }
+
+    async fn finished(&mut self, ctx: &Context<Self>) {}
 }
 
 ///
@@ -167,18 +182,15 @@ impl<C: Core> Link<C> {
     ///
     /// [`PeerURI`]:
     pub async fn start(
-        info: LinkInfo,
         adapter: Addr<LinkAdapter<C>>,
+        info: LinkInfo,
         reader: LinkReader,
         writer: LinkWriter,
     ) -> Result<Addr<Self>, Error> {
-        // let (reader, writer) = interface.listen(info.listen_uri.clone());
-
         let link = Link {
             info,
             // peer: IPeer<C> as Peer<C>
             adapter,
-            // interface,
             reader,
             writer,
         };

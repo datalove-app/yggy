@@ -4,7 +4,7 @@ use std::{
     hash,
     net::{SocketAddr, TcpListener, TcpStream},
 };
-use yggy_core::dev::*;
+use yggy_core::{dev::*, types::PeerURI};
 
 #[derive(Debug)]
 pub struct TCPListener {
@@ -20,14 +20,9 @@ impl TCPListener {
     }
 
     #[inline]
-    pub fn incoming(&self) -> impl Stream<Item = Result<TCPStream, Error>> + '_ {
-        self.listener.incoming().map(|s| match s {
-            Err(e) => Err(ConnError::Interface(e))?,
-            Ok(stream) => {
-                let addr = stream.get_ref().peer_addr().map_err(ConnError::Interface)?;
-                Ok(TCPStream { addr, stream })
-            }
-        })
+    pub async fn accept(&self) -> Result<TCPStream, Error> {
+        let (stream, addr) = self.listener.accept().await.map_err(ConnError::Interface)?;
+        Ok(TCPStream { stream, addr })
     }
 
     #[inline]

@@ -9,7 +9,6 @@ use crate::{dev::*, interfaces::peer, types::PeerURI};
 pub trait LinkAdapter<C: Core>
 where
     Self: Actor,
-    Self: Handler<messages::Listen>,
 {
     fn reconfigure(&mut self);
 }
@@ -55,13 +54,14 @@ pub mod messages {
         KeepAlive,
     }
 
-    #[derive(Debug)]
-    pub struct Listen {
-        addr: PeerURI,
-    }
+    // #[derive(Debug)]
+    // #[xactor::message(result = "()")]
+    // pub struct Listen {
+    //     addr: PeerURI,
+    // }
 
-    #[async_trait::async_trait]
-    impl xactor::Message for Listen {
-        type Result = ();
-    }
+    // #[async_trait::async_trait]
+    // impl xactor::Message for Listen {
+    //     type Result = ();
+    // }
 }

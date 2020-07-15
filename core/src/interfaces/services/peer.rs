@@ -41,16 +41,12 @@ pub mod messages {
     use super::*;
 
     /// Signals the creation of a new `Peer`.
+    #[xactor::message(result = "()")]
     #[derive(Debug)]
     pub struct NewPeer {
         signing_pub_key: SigningPublicKey,
         box_pub_key: BoxPublicKey,
         box_shared_key: BoxSharedKey,
-    }
-
-    #[async_trait::async_trait]
-    impl xactor::Message for NewPeer {
-        type Result = ();
     }
 
     /// Signals the closing of a `Peer` connection.

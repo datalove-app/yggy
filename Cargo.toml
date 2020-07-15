@@ -47,6 +47,7 @@ yggy-core = { path = "./core", default-features = false }
 async-log = "2.0.0"
 lazy_static = "1.4"
 log = "0.4.8"
+stream-cancel = "0.6"
 
 [features]
 default = ["std", "u64_backend"]

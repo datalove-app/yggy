@@ -1,6 +1,9 @@
 use super::interface::{LinkReader, LinkWriter};
 use smol::Async;
-use std::net::{SocketAddr, UdpSocket};
+use std::{
+    hash,
+    net::{SocketAddr, UdpSocket},
+};
 use yggy_core::dev::*;
 
 #[derive(Debug)]
@@ -43,6 +46,20 @@ impl UDPSocket {
     pub fn split(self) -> (LinkReader, LinkWriter) {
         let (r, w) = io::AsyncReadExt::split(self);
         (LinkReader::UDP(r), LinkWriter::UDP(w))
+    }
+}
+
+impl Eq for UDPSocket {}
+impl PartialEq<Self> for UDPSocket {
+    fn eq(&self, other: &Self) -> bool {
+        self.addr == other.addr
+    }
+}
+
+impl hash::Hash for UDPSocket {
+    #[inline]
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        self.addr.hash(state);
     }
 }
 

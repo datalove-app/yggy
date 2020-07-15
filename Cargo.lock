@@ -1866,6 +1866,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
+name = "stream-cancel"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c701433009034f047e385aa930890e6c1d717c7e6374bbd9b81795dee55aff72"
+dependencies = [
+ "futures-core",
+ "futures-util",
+ "pin-project",
+ "tokio",
+]
+
+[[package]]
 name = "strsim"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2348,6 +2360,7 @@ dependencies = [
  "log",
  "packet",
  "smol",
+ "stream-cancel",
  "utuntap",
  "yggy-core",
 ]
