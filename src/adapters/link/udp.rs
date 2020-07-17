@@ -50,7 +50,7 @@ impl UDPSocket {
 }
 
 impl Eq for UDPSocket {}
-impl PartialEq<Self> for UDPSocket {
+impl PartialEq for UDPSocket {
     fn eq(&self, other: &Self) -> bool {
         self.addr == other.addr
     }

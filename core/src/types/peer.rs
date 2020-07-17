@@ -33,8 +33,6 @@ pub enum PeerURI {
     TCP(SocketAddr),
 
     // ///
-    // TLS(SocketAddr),
-    // ///
     // UDP(SocketAddr),
     ///
     SOCKS(SocketAddr, SocketAddr),

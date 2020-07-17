@@ -6,6 +6,7 @@ use std::{hash, sync::Arc};
 use stream_cancel::{StreamExt as _, Trigger, Tripwire};
 use yggy_core::{dev::*, types::PeerURI};
 
+/// Handle to an open hardware interface, listening for incoming connections.
 #[derive(Debug)]
 pub struct LinkInterface {
     info: LinkInfo,
@@ -23,7 +24,7 @@ impl LinkInterface {
 }
 
 impl Eq for LinkInterface {}
-impl PartialEq<Self> for LinkInterface {
+impl PartialEq for LinkInterface {
     fn eq(&self, other: &Self) -> bool {
         self.info == other.info
     }
@@ -72,13 +73,14 @@ impl Stream for LinkListener {
                     let (r, w) = stream.split();
                     (info, r, w)
                 });
-                match item.now_or_never() {
-                    Some(Ok(res)) => Poll::Ready(Some(res)),
-                    Some(Err(e)) => {
+                futures::pin_mut!(item);
+                match Future::poll(item, cx) {
+                    Poll::Pending => Poll::Pending,
+                    Poll::Ready(Ok(i)) => Poll::Ready(Some(i)),
+                    Poll::Ready(Err(e)) => {
                         // TODO
                         Poll::Ready(None)
                     }
-                    _ => Poll::Pending,
                 }
             }
             _ => unimplemented!(),

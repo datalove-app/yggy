@@ -63,19 +63,22 @@ impl hash::Hash for LinkInfo {
 ///
 #[derive(Debug)]
 pub struct LinkAdapter<C: Core> {
-    ///
     core: Addr<C>,
 
-    ///
+    /// Opened `Link`s.
     links: Links<C>,
 
+    /// Our opened and connected [`LinkInterface`]s.
     ///
+    /// [`LinkInterface`]: ./interfaces/struct.LinkInterface.html
     interfaces: Interfaces,
 }
 
 impl<C: Core> LinkAdapter<C> {
-    /// Starts the `LinkAdapter`, opening `Link`s for each address listed in [`ListenAddresses`].
+    /// Starts the `LinkAdapter`, opening [`LinkInterface`]s for each interface
+    /// address listed in [`ListenAddresses`].
     ///
+    /// [`LinkInterface`]: ./interfaces/struct.Link.html
     /// [`ListenAddresses`]: ../../core_types/struct.ListenAddresses.html
     #[inline]
     pub async fn start(core: Addr<C>) -> Result<Addr<Self>, Error> {
@@ -123,14 +126,14 @@ impl<C: Core> Actor for LinkAdapter<C> {
 
         // initialize links for incoming connections
         for listen_uri in config.listen_addrs.iter() {
-            let (handle, intf) = LinkInterface::new(LinkInfo {
+            let (handle, listener) = LinkInterface::new(LinkInfo {
                 addr: listen_uri.clone(),
             })?;
             (&mut self.interfaces).insert(handle);
-            ctx.add_stream(intf);
+            ctx.add_stream(listener);
         }
 
-        // initialize links for outgoing connections
+        // initialize links for peers
         // TODO do these in parallel
         // TODO set a timer to attempt to add peers from config
         // for peer_uri in config.peers.iter() {
@@ -154,6 +157,7 @@ impl<C: Core> Actor for LinkAdapter<C> {
 
 #[async_trait::async_trait]
 impl<C: Core> StreamHandler<(LinkInfo, LinkReader, LinkWriter)> for LinkAdapter<C> {
+    #[inline]
     async fn handle(&mut self, ctx: &Context<Self>, msg: (LinkInfo, LinkReader, LinkWriter)) {
         // TODO handle result
         self.accept(ctx, msg.0, msg.1, msg.2).await;
@@ -215,9 +219,9 @@ impl<C: Core> Actor for Link<C> {
     }
 }
 
-#[async_trait::async_trait]
-impl<C: Core> Handler<link::messages::Notification> for Link<C> {
-    async fn handle(&mut self, ctx: &Context<Self>, msg: link::messages::Notification) {
-        unimplemented!()
-    }
-}
+// #[async_trait::async_trait]
+// impl<C: Core> Handler<link::messages::Notification> for Link<C> {
+//     async fn handle(&mut self, ctx: &Context<Self>, msg: link::messages::Notification) {
+//         unimplemented!()
+//     }
+// }

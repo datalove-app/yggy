@@ -18,7 +18,7 @@ pub trait Link<C: Core, L: LinkAdapter<C>>
 where
     Self: Actor,
     // Self: PeerInterface,
-    Self: Handler<messages::Notification>,
+    // Self: Handler<messages::Notification>,
 {
     // ///
     // async fn split()

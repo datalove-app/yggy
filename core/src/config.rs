@@ -201,9 +201,11 @@ pub struct SwitchOptions {
 }
 
 impl SwitchOptions {
+    const MAX_TOTAL_QUEUE_SIZE: u64 = 0;
+
     ///
     /// TODO
     const fn default_max_total_queue_size() -> u64 {
-        0
+        Self::MAX_TOTAL_QUEUE_SIZE
     }
 }

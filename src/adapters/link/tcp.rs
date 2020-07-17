@@ -6,6 +6,8 @@ use std::{
 };
 use yggy_core::{dev::*, types::PeerURI};
 
+///
+/// TODO look into https://github.com/wzhd/ustcp
 #[derive(Debug)]
 pub struct TCPListener {
     addr: SocketAddr,
@@ -32,7 +34,7 @@ impl TCPListener {
 }
 
 impl Eq for TCPListener {}
-impl PartialEq<Self> for TCPListener {
+impl PartialEq for TCPListener {
     fn eq(&self, other: &Self) -> bool {
         self.addr == other.addr
     }
