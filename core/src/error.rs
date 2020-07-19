@@ -16,11 +16,8 @@ pub enum Error {
     #[error("{0}")]
     Conn(#[from] ConnError),
 
-    #[error("wire read error: {0}")]
-    WireRead(std::io::Error),
-
-    #[error("wire write error: {0}")]
-    WireWrite(std::io::Error),
+    #[error("wire error: {0}")]
+    Wire(#[from] WireError),
 }
 
 /// Type errors.
@@ -60,4 +57,17 @@ pub enum ConnError {
 
     #[error("session error: {0}")]
     Session(&'static str),
+}
+
+///
+#[derive(Debug, Error)]
+pub enum WireError {
+    #[error("wire codec error: {0}")]
+    Codec(&'static str),
+
+    #[error("wire read error: {0}")]
+    Read(std::io::Error),
+
+    #[error("wire write error: {0}")]
+    Write(std::io::Error),
 }

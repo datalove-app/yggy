@@ -18,7 +18,7 @@ pub trait Link<C: Core, L: LinkAdapter<C>>
 where
     Self: Actor,
     // Self: PeerInterface,
-    // Self: Handler<messages::Notification>,
+    Self: Handler<messages::Notification>,
 {
     // ///
     // async fn split()
@@ -45,8 +45,8 @@ pub mod messages {
     #[xactor::message(result = "()")]
     #[derive(Clone, Copy, Debug)]
     pub enum Notification {
-        Sending,
         BlockedSend,
+        Sending { size: usize, is_link_traffic: bool },
         Sent { size: usize, is_link_traffic: bool },
         Stalled,
         Reading,

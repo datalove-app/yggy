@@ -12,7 +12,8 @@ use std::{
 use yggy_core::{
     dev::*,
     interfaces::{link, peer},
-    types::{BoxPublicKey, PeerURI, SigningPublicKey},
+    types::{BoxKeypair, BoxPublicKey, PeerURI, SigningPublicKey},
+    version::{Metadata, MetadataKeys},
 };
 
 lazy_static! {
@@ -45,11 +46,22 @@ type Interfaces = HashSet<LinkInterface>;
 pub struct LinkInfo {
     /// The non-protocol URI for communicating with the linked peer.
     addr: PeerURI,
-    // /// The linked node's signing public key.
-    // signing_pub_key: Once<SigningPublicKey>,
 
-    // /// The linked node's encryption public key.
-    // box_pub_key: Once<BoxPublicKey>,
+    /// The linked node's signing public key.
+    signing_pub_key: Option<SigningPublicKey>,
+
+    /// The linked node's encryption public key.
+    box_pub_key: Option<BoxPublicKey>,
+}
+
+impl LinkInfo {
+    pub const fn new(addr: PeerURI) -> Self {
+        LinkInfo {
+            addr,
+            signing_pub_key: None,
+            box_pub_key: None,
+        }
+    }
 }
 
 // TODO
@@ -65,7 +77,7 @@ impl hash::Hash for LinkInfo {
 pub struct LinkAdapter<C: Core> {
     core: Addr<C>,
 
-    /// Opened `Link`s.
+    /// Our opened and connected `Link`s.
     links: Links<C>,
 
     /// Our opened and connected [`LinkInterface`]s.
@@ -99,7 +111,16 @@ impl<C: Core> LinkAdapter<C> {
         reader: LinkReader,
         writer: LinkWriter,
     ) -> Result<(), Error> {
-        let link = Link::start(ctx.address(), info.clone(), reader, writer).await?;
+        let config = C::current_config(&mut self.core).await?;
+        let link = Link::start(
+            ctx.address(),
+            config.encryption_public_key.clone(),
+            config.signing_public_key,
+            info.clone(),
+            reader,
+            writer,
+        )
+        .await?;
         (&mut self.links).insert(info, link);
         Ok(())
     }
@@ -126,9 +147,7 @@ impl<C: Core> Actor for LinkAdapter<C> {
 
         // initialize links for incoming connections
         for listen_uri in config.listen_addrs.iter() {
-            let (handle, listener) = LinkInterface::new(LinkInfo {
-                addr: listen_uri.clone(),
-            })?;
+            let (handle, listener) = LinkInterface::new(listen_uri.clone())?;
             (&mut self.interfaces).insert(handle);
             ctx.add_stream(listener);
         }
@@ -187,6 +206,8 @@ impl<C: Core> Link<C> {
     /// [`PeerURI`]:
     pub async fn start(
         adapter: Addr<LinkAdapter<C>>,
+        our_box_pub_key: BoxPublicKey,
+        our_signing_pub_key: SigningPublicKey,
         info: LinkInfo,
         reader: LinkReader,
         writer: LinkWriter,
@@ -198,6 +219,18 @@ impl<C: Core> Link<C> {
             reader,
             writer,
         };
+
+        let link_keypair = BoxKeypair::new();
+
+        // send meta bytes or timeout
+        let mut meta = Metadata::default();
+        (&mut meta).keys = Some(MetadataKeys {
+            r#box: our_box_pub_key,
+            sig: our_signing_pub_key,
+            link: link_keypair.public.clone(),
+        });
+
+        // recv meta bytes or timeout
 
         Ok(Actor::start(link).await?)
     }
@@ -219,9 +252,9 @@ impl<C: Core> Actor for Link<C> {
     }
 }
 
-// #[async_trait::async_trait]
-// impl<C: Core> Handler<link::messages::Notification> for Link<C> {
-//     async fn handle(&mut self, ctx: &Context<Self>, msg: link::messages::Notification) {
-//         unimplemented!()
-//     }
-// }
+#[async_trait::async_trait]
+impl<C: Core> Handler<link::messages::Notification> for Link<C> {
+    async fn handle(&mut self, ctx: &Context<Self>, msg: link::messages::Notification) {
+        unimplemented!()
+    }
+}

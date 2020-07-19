@@ -24,7 +24,7 @@ pub mod session;
 pub use search::{Search, SearchManager};
 pub use session::{Session, SessionManager};
 
-use crate::{dev::*, interfaces::Core, types::wire};
+use crate::{dev::*, interfaces::Core};
 use std::fmt::Debug;
 
 /// Handles packets to/from self.

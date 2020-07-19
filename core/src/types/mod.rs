@@ -4,15 +4,11 @@ mod address;
 mod crypto;
 mod peer;
 mod switch;
-pub mod version;
-pub mod wire;
 
 pub use address::*;
 pub use crypto::*;
 pub use peer::*;
 pub use switch::*;
-// pub use wire::{Header as WireHeader, Wire};
-pub use version::*;
 
 use crate::error::{Error, TypeError};
 use derive_more::{AsRef, IntoIterator};

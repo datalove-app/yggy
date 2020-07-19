@@ -9,6 +9,7 @@ pub mod error;
 pub mod interfaces;
 pub mod types;
 pub mod version;
+pub mod wire;
 
 #[doc(inline)]
 pub use config::Config;
@@ -16,10 +17,14 @@ pub use config::Config;
 pub use error::Error;
 #[doc(inline)]
 pub use interfaces::Core;
+#[doc(inline)]
+pub use version::{Metadata, MetadataKeys};
+#[doc(inline)]
+pub use wire::Wire;
 
 /// Re-exports for developer convenience.
 pub mod dev {
-    pub use crate::{error::*, interfaces, types, version, Config, Core};
+    pub use crate::{error::*, interfaces, types, version, wire, Config, Core};
 
     // dependency re-exports
     pub use async_trait::async_trait;

@@ -9,34 +9,35 @@ use yggy_core::{dev::*, types::PeerURI};
 /// Handle to an open hardware interface, listening for incoming connections.
 #[derive(Debug)]
 pub struct LinkInterface {
-    info: LinkInfo,
+    // name: String,
+    addr: PeerURI,
     stop: Trigger,
 }
 
 impl LinkInterface {
     pub fn new(
-        info: LinkInfo,
+        addr: PeerURI,
     ) -> Result<(Self, impl Stream<Item = (LinkInfo, LinkReader, LinkWriter)>), Error> {
-        let listener = LinkListener::new(&info.addr)?;
+        let listener = LinkListener::new(&addr)?;
         let (stop, stopped) = Tripwire::new();
-        Ok((Self { info, stop }, listener.take_until_if(stopped)))
+        Ok((Self { addr, stop }, listener.take_until_if(stopped)))
     }
 }
 
 impl Eq for LinkInterface {}
 impl PartialEq for LinkInterface {
     fn eq(&self, other: &Self) -> bool {
-        self.info == other.info
+        self.addr == other.addr
     }
 }
 impl hash::Hash for LinkInterface {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        self.info.hash(state);
+        self.addr.hash(state);
     }
 }
 
-///
+/// Listens for incoming `Link`s.
 #[derive(Debug, Eq, Hash, PartialEq)]
 enum LinkListener {
     TCP(TCPListener),
@@ -46,7 +47,7 @@ enum LinkListener {
 }
 
 impl LinkListener {
-    /// Creates a new interface.
+    /// Creates a new `LinkListener`.
     pub fn new(listen_uri: &PeerURI) -> Result<Self, Error> {
         match listen_uri {
             PeerURI::TCP(addr) => Ok(Self::TCP(TCPListener::bind(*addr)?)),
@@ -67,9 +68,8 @@ impl Stream for LinkListener {
         match self.into_ref().get_ref() {
             Self::TCP(listener) => {
                 let mut item = listener.accept().map_ok(|stream| {
-                    let info = LinkInfo {
-                        addr: PeerURI::TCP(stream.remote_addr().clone()),
-                    };
+                    let addr = stream.remote_addr().clone();
+                    let info = LinkInfo::new(PeerURI::TCP(addr));
                     let (r, w) = stream.split();
                     (info, r, w)
                 });
@@ -88,7 +88,7 @@ impl Stream for LinkListener {
     }
 }
 
-///
+/// Reads bytes from an established `Link`.
 #[derive(Debug)]
 pub enum LinkReader {
     TCP(io::ReadHalf<TCPStream>),
@@ -114,7 +114,7 @@ impl AsyncRead for LinkReader {
     }
 }
 
-///
+/// Writes bytes to an established `Link`.
 #[derive(Debug)]
 pub enum LinkWriter {
     TCP(io::WriteHalf<TCPStream>),

@@ -137,8 +137,8 @@ impl Handle {
 /// Used for protocol traffic.
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct SigningKeypair {
-    public: SigningPublicKey,
-    secret: SigningSecretKey,
+    pub secret: SigningSecretKey,
+    pub public: SigningPublicKey,
 }
 
 ///
@@ -195,8 +195,16 @@ pub type SigningSecretKey = ed25519_dalek::SecretKey;
 /// Used for encapsulated IPv6 traffic.
 #[derive(Debug)]
 pub struct BoxKeypair {
-    public: BoxPublicKey,
-    secret: BoxSecretKey,
+    pub secret: BoxSecretKey,
+    pub public: BoxPublicKey,
+}
+
+impl BoxKeypair {
+    pub fn new() -> Self {
+        let secret = BoxSecretKey::new();
+        let public = secret.public_key();
+        Self { secret, public }
+    }
 }
 
 ///
@@ -311,6 +319,11 @@ impl<'de> Deserialize<'de> for BoxPublicKey {
 pub struct BoxSecretKey(Arc<x25519::X25519SecretKey>);
 
 impl BoxSecretKey {
+    #[inline]
+    pub fn new() -> Self {
+        Self(Arc::new(x25519::X25519SecretKey::new()))
+    }
+
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()

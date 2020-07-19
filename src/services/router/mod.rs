@@ -5,7 +5,6 @@ use std::sync::Arc;
 use yggy_core::{
     dev::*,
     interfaces::{peer, router, switch},
-    types::wire,
 };
 
 type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
