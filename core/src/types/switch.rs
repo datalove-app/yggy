@@ -52,14 +52,19 @@ impl WireCoords {
     // pub fn distance(&self, other: &Self) -> i64 {
     //     unimplemented!()
     // }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
 }
 
-// impl From<&Coords> for WireCoords {
-//     #[inline]
-//     fn from(coords: &Coords) -> Self {
-//         unimplemented!()
-//     }
-// }
+impl From<&Coords> for WireCoords {
+    #[inline]
+    fn from(coords: &Coords) -> Self {
+        unimplemented!()
+    }
+}
 
 impl PartialOrd for WireCoords {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
