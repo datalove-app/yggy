@@ -9,7 +9,6 @@ edition = "2018"
 anyhow = "1.0"
 async-trait = "0.1"
 boringtun = "0.3"
-bytes = "0.5.4"
 ed25519-dalek = { version = "0.9", features = ["serde"] }
 futures = { version = "0.3", default-features = false }
 futures_codec = "0.4"

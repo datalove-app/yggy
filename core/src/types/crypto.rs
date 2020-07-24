@@ -115,6 +115,7 @@ impl From<&SigningPublicKey> for TreeID {
 ///
 /// [`Session`]: ../core_interfaces/services/router/session/trait.Session.html
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[repr(C)]
 pub struct Handle([u8; 8]);
 
 impl Handle {
@@ -210,6 +211,7 @@ impl BoxKeypair {
 ///
 /// TODO docs
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(C)]
 pub struct BoxNonce([u8; 24]);
 
 impl BoxNonce {
@@ -231,6 +233,7 @@ impl BoxNonce {
 /// TODO docs
 #[derive(AsRef, Debug, From, FromStr, Eq, Hash, PartialEq)]
 #[from(forward)]
+#[repr(transparent)]
 pub struct BoxPublicKey(x25519::X25519PublicKey);
 
 impl BoxPublicKey {
@@ -315,6 +318,7 @@ impl<'de> Deserialize<'de> for BoxPublicKey {
 
 ///
 /// TODO docs
+/// TODO should we repr?
 #[derive(AsRef, Clone, Debug, From, Into)]
 pub struct BoxSecretKey(Arc<x25519::X25519SecretKey>);
 
@@ -336,10 +340,11 @@ impl BoxSecretKey {
 
     #[inline]
     pub fn shared_key(&self, peer_public: &BoxPublicKey) -> Result<BoxSharedKey, Error> {
-        self.0
+        Ok(self
+            .0
             .shared_key(peer_public.as_ref())
             .map(Into::into)
-            .map_err(|e| TypeError::FailedSharedKeyGeneration(e).into())
+            .map_err(TypeError::FailedSharedKeyGeneration)?)
     }
 }
 

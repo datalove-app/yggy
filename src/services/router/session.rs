@@ -44,7 +44,6 @@ pub struct SessionManager<C: Core> {
 }
 
 impl<C: Core> SessionManager<C> {
-    #[inline]
     pub async fn new(mut core: Addr<C>) -> Result<Self, Error> {
         let config = C::current_config(&mut core).await?;
         let router = C::router(&mut core).await?;
@@ -149,7 +148,6 @@ pub struct Session<C: Core> {
 }
 
 impl<C: Core> Session<C> {
-    #[inline]
     pub async fn start(
         session_manager: Arc<SessionManager<C>>,
         mut core: Addr<C>,

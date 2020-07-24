@@ -2,10 +2,11 @@ mod interface;
 mod tcp;
 
 use self::interface::{LinkInterface, LinkReader, LinkWriter};
-use futures::stream;
+use futures::future::{select, Either};
+use smol::Timer;
 use std::{
     collections::{HashMap, HashSet},
-    hash,
+    hash, io,
     sync::Arc,
     time::Duration,
 };
@@ -103,7 +104,6 @@ impl<C: Core> LinkAdapter<C> {
     }
 
     /// Starts a listener for incoming connections.
-    /// TODO? check against allowed keys?
     pub async fn accept(
         &mut self,
         ctx: &Context<Self>,
@@ -140,6 +140,7 @@ impl<C: Core> link::LinkAdapter<C> for LinkAdapter<C> {
     }
 }
 
+/// Initializes listeners for incoming `Link`s and configured outgoing `Link`s.
 #[async_trait::async_trait]
 impl<C: Core> Actor for LinkAdapter<C> {
     async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
@@ -174,6 +175,7 @@ impl<C: Core> Actor for LinkAdapter<C> {
 //     }
 // }
 
+/// Handles new incoming `Link`s.
 #[async_trait::async_trait]
 impl<C: Core> StreamHandler<(LinkInfo, LinkReader, LinkWriter)> for LinkAdapter<C> {
     #[inline]
@@ -209,9 +211,18 @@ impl<C: Core> Link<C> {
         our_box_pub_key: BoxPublicKey,
         our_signing_pub_key: SigningPublicKey,
         info: LinkInfo,
-        reader: LinkReader,
-        writer: LinkWriter,
+        mut reader: LinkReader,
+        mut writer: LinkWriter,
     ) -> Result<Addr<Self>, Error> {
+        let link_keypair = BoxKeypair::new();
+        let mut our_meta = Metadata::default();
+        (&mut our_meta).keys = Some(MetadataKeys {
+            r#box: our_box_pub_key,
+            sig: our_signing_pub_key,
+            link: link_keypair.public.clone(),
+        });
+        Self::trade_meta(our_meta, &mut reader, &mut writer).await?;
+
         let link = Link {
             info,
             // peer: IPeer<C> as Peer<C>
@@ -219,20 +230,37 @@ impl<C: Core> Link<C> {
             reader,
             writer,
         };
+        Ok(Actor::start(link).await?)
+    }
 
-        let link_keypair = BoxKeypair::new();
-
+    async fn trade_meta(
+        our_meta: Metadata,
+        reader: &mut LinkReader,
+        writer: &mut LinkWriter,
+    ) -> Result<Metadata, Error> {
         // send meta bytes or timeout
-        let mut meta = Metadata::default();
-        (&mut meta).keys = Some(MetadataKeys {
-            r#box: our_box_pub_key,
-            sig: our_signing_pub_key,
-            link: link_keypair.public.clone(),
-        });
+        let timeout = Timer::after(Duration::from_secs(30));
+        match select(Metadata::sink(writer).send(our_meta), timeout).await {
+            Either::Left((Ok(_), _)) => (),
+            Either::Left((Err(e), _)) => Err(e)?,
+            Either::Right((_, _)) => Err(ConnError::Link("timed out sending metadata"))?,
+        };
 
         // recv meta bytes or timeout
+        // TODO? check against allowed keys?
+        let timeout = Timer::after(Duration::from_secs(30));
+        let meta = match select(Metadata::stream(reader).try_next(), timeout).await {
+            Either::Left((Ok(Some(meta)), _)) => meta,
+            Either::Left((Err(e), _)) => Err(e)?,
+            Either::Left((Ok(None), _)) => Err(ConnError::Link("connection yielded nothing"))?,
+            Either::Right((_, _)) => Err(ConnError::Link("timed out receiving metadata"))?,
+        };
 
-        Ok(Actor::start(link).await?)
+        if meta > CURRENT_METADATA {
+            return Err(ConnError::Link("failed to connect: wrong version"))?;
+        }
+
+        Ok(meta)
     }
 }
 

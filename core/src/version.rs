@@ -1,4 +1,8 @@
-use crate::types::{BoxPublicKey, SigningPublicKey};
+use crate::{
+    dev::*,
+    types::{BoxPublicKey, SigningPublicKey},
+};
+use futures_codec::{Decoder, Encoder};
 use std::cmp::Ordering;
 
 /// Template metadata for the current yggdrasil protocl version.
@@ -19,12 +23,19 @@ pub const METADATA_V0_2: Metadata = Metadata {
 /// The current version also includes a wire-formatted `u64` minor version
 /// number, and the box/sig/link keys that need to be exchanged to establish
 /// a connection.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Metadata {
     meta: [u8; 4],
     major_version: u64,
     minor_version: u64,
     pub keys: Option<MetadataKeys>,
+}
+
+#[derive(Clone, Debug)]
+pub struct MetadataKeys {
+    pub r#box: BoxPublicKey,
+    pub sig: SigningPublicKey,
+    pub link: BoxPublicKey,
 }
 
 impl Default for Metadata {
@@ -68,9 +79,26 @@ impl Ord for Metadata {
     }
 }
 
-#[derive(Debug)]
-pub struct MetadataKeys {
-    pub r#box: BoxPublicKey,
-    pub sig: SigningPublicKey,
-    pub link: BoxPublicKey,
+impl Wire for Metadata {
+    // const LENGTH: usize = 0;
+
+    fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
+        unimplemented!()
+    }
+
+    fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
+        unimplemented!()
+    }
+}
+
+impl Wire for MetadataKeys {
+    // const LENGTH: usize = 0;
+
+    fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
+        unimplemented!()
+    }
+
+    fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
+        unimplemented!()
+    }
 }

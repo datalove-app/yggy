@@ -36,7 +36,6 @@ members = [
 # main
 anyhow = "1.0"
 async-trait = "0.1"
-bytes = "0.5.4"
 etherparse = "0.9"
 futures-locks = { version = "0.5.1-pre", default-features = false }
 libtor = { version = "43.5.1", optional = true }

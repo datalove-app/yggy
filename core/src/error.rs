@@ -57,17 +57,17 @@ pub enum ConnError {
 
     #[error("session error: {0}")]
     Session(&'static str),
+
+    #[error("link error: {0}")]
+    Link(&'static str),
 }
 
-///
+/// Errors that occur when encoding and decoding messages from the wire.
 #[derive(Debug, Error)]
 pub enum WireError {
     #[error("wire codec error: {0}")]
     Codec(&'static str),
 
-    #[error("wire read error: {0}")]
-    Read(std::io::Error),
-
-    #[error("wire write error: {0}")]
-    Write(std::io::Error),
+    #[error("wire I/O error: {0}")]
+    IO(#[from] std::io::Error),
 }
