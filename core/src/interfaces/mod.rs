@@ -23,11 +23,7 @@ pub use ports::*;
 #[doc(inline)]
 pub use services::*;
 
-use crate::{
-    error::Error,
-    types::{BoxKeypair, SigningKeypair},
-    Config,
-};
+use crate::{error::Error, Config};
 use std::{fmt::Debug, sync::Arc};
 use xactor::{Actor, Addr, Handler};
 

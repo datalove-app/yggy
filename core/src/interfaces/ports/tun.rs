@@ -48,8 +48,6 @@ use std::sync::{Arc, Mutex};
 pub trait TunAdapter<C: Core>
 where
     Self: Actor,
-    // Self: Handler<messages::IncomingConnection>,
-    Self: StreamHandler<messages::Packet>,
 {
     // const IPV6_HEADER_LEN: u8 = 40;
 
@@ -93,6 +91,6 @@ pub mod messages {
     pub struct IncomingConnection;
 
     // #[xactor::message(result = "()")]
-    #[derive(Debug)]
-    pub struct Packet;
+    // #[derive(Debug)]
+    // pub struct Packet;
 }

@@ -5,7 +5,7 @@ pub mod router;
 pub mod switch;
 
 #[doc(inline)]
-pub use peer::{Peer, PeerInterface, PeerManager};
+pub use peer::{Peer, PeerManager};
 #[doc(inline)]
 pub use router::Router;
 #[doc(inline)]

@@ -8,13 +8,13 @@ use yggy_core::{dev::*, types::PeerURI};
 
 /// Handle to an open hardware interface, listening for incoming connections.
 #[derive(Debug)]
-pub struct LinkInterface {
+pub struct LinkHandle {
     // name: String,
     addr: PeerURI,
     stop: Trigger,
 }
 
-impl LinkInterface {
+impl LinkHandle {
     pub fn new(
         addr: PeerURI,
     ) -> Result<(Self, impl Stream<Item = (LinkInfo, LinkReader, LinkWriter)>), Error> {
@@ -24,67 +24,16 @@ impl LinkInterface {
     }
 }
 
-impl Eq for LinkInterface {}
-impl PartialEq for LinkInterface {
+impl Eq for LinkHandle {}
+impl PartialEq for LinkHandle {
     fn eq(&self, other: &Self) -> bool {
         self.addr == other.addr
     }
 }
-impl hash::Hash for LinkInterface {
+impl hash::Hash for LinkHandle {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         self.addr.hash(state);
-    }
-}
-
-/// Listens for incoming `Link`s.
-#[derive(Debug, Eq, Hash, PartialEq)]
-enum LinkListener {
-    TCP(TCPListener),
-    SOCKS,
-    #[cfg(feature = "tor")]
-    TOR,
-}
-
-impl LinkListener {
-    /// Creates a new `LinkListener`.
-    pub fn new(listen_uri: &PeerURI) -> Result<Self, Error> {
-        match listen_uri {
-            PeerURI::TCP(addr) => Ok(Self::TCP(TCPListener::bind(*addr)?)),
-            // PeerURI::SOCKS
-            // PeerURI::TOR
-            _ => unimplemented!(),
-        }
-    }
-}
-
-/// Produces a link upon each incoming connection.
-impl Stream for LinkListener {
-    type Item = (LinkInfo, LinkReader, LinkWriter);
-
-    fn poll_next(self: Pin<&mut Self>, cx: &mut task::Context) -> task::Poll<Option<Self::Item>> {
-        use task::Poll;
-
-        match self.into_ref().get_ref() {
-            Self::TCP(listener) => {
-                let mut item = listener.accept().map_ok(|stream| {
-                    let addr = stream.remote_addr().clone();
-                    let info = LinkInfo::new(PeerURI::TCP(addr));
-                    let (r, w) = stream.split();
-                    (info, r, w)
-                });
-                futures::pin_mut!(item);
-                match Future::poll(item, cx) {
-                    Poll::Pending => Poll::Pending,
-                    Poll::Ready(Ok(i)) => Poll::Ready(Some(i)),
-                    Poll::Ready(Err(e)) => {
-                        // TODO
-                        Poll::Ready(None)
-                    }
-                }
-            }
-            _ => unimplemented!(),
-        }
     }
 }
 
@@ -116,12 +65,18 @@ impl AsyncRead for LinkReader {
 
 /// Writes bytes to an established `Link`.
 #[derive(Debug)]
-pub enum LinkWriter {
-    TCP(io::WriteHalf<TCPStream>),
-    // SOCKS(io::WriteHalf<TCPStream>),
-    // #[cfg(feature = "tor")]
-    // TOR(io::WriteHalf<TCPStream>),
+pub struct LinkWriter {
+    inner: LinkWriterInner,
 }
+
+impl From<LinkWriterInner> for LinkWriter {
+    fn from(inner: LinkWriterInner) -> Self {
+        Self { inner }
+    }
+}
+
+#[async_trait::async_trait]
+impl Actor for LinkWriter {}
 
 impl AsyncWrite for LinkWriter {
     #[inline]
@@ -130,8 +85,8 @@ impl AsyncWrite for LinkWriter {
         cx: &mut task::Context,
         buf: &[u8],
     ) -> task::Poll<Result<usize, io::Error>> {
-        match self.get_mut() {
-            Self::TCP(writer) => {
+        match &mut (self.get_mut().inner) {
+            LinkWriterInner::TCP(writer) => {
                 futures::pin_mut!(writer);
                 writer.poll_write(cx, buf)
             }
@@ -144,8 +99,8 @@ impl AsyncWrite for LinkWriter {
         self: Pin<&mut Self>,
         cx: &mut task::Context,
     ) -> task::Poll<Result<(), io::Error>> {
-        match self.get_mut() {
-            Self::TCP(writer) => {
+        match &mut (self.get_mut().inner) {
+            LinkWriterInner::TCP(writer) => {
                 futures::pin_mut!(writer);
                 writer.poll_flush(cx)
             }
@@ -158,10 +113,68 @@ impl AsyncWrite for LinkWriter {
         self: Pin<&mut Self>,
         cx: &mut task::Context,
     ) -> task::Poll<Result<(), io::Error>> {
-        match self.get_mut() {
-            Self::TCP(writer) => {
+        match &mut (self.get_mut().inner) {
+            LinkWriterInner::TCP(writer) => {
                 futures::pin_mut!(writer);
                 writer.poll_close(cx)
+            }
+            _ => unimplemented!(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum LinkWriterInner {
+    TCP(io::WriteHalf<TCPStream>),
+    // SOCKS(io::WriteHalf<TCPStream>),
+    // #[cfg(feature = "tor")]
+    // TOR(io::WriteHalf<TCPStream>),
+}
+
+/// Listens for incoming `Link`s.
+#[derive(Debug, Eq, Hash, PartialEq)]
+enum LinkListener {
+    TCP(TCPListener),
+    SOCKS,
+    #[cfg(feature = "tor")]
+    TOR,
+}
+
+impl LinkListener {
+    /// Creates a new `LinkListener`.
+    pub fn new(listen_uri: &PeerURI) -> Result<Self, Error> {
+        match listen_uri {
+            PeerURI::TCP(addr) => Ok(Self::TCP(TCPListener::bind(*addr)?)),
+            // PeerURI::SOCKS
+            // PeerURI::TOR
+            _ => unimplemented!(),
+        }
+    }
+}
+
+/// Produces a link upon each incoming connection.
+impl Stream for LinkListener {
+    type Item = (LinkInfo, LinkReader, LinkWriter);
+    fn poll_next(self: Pin<&mut Self>, cx: &mut task::Context) -> task::Poll<Option<Self::Item>> {
+        use task::Poll;
+
+        match self.into_ref().get_ref() {
+            Self::TCP(listener) => {
+                let mut item = listener.accept().map_ok(|stream| {
+                    let addr = stream.remote_addr().clone();
+                    let info = LinkInfo::new(PeerURI::TCP(addr));
+                    let (r, w) = stream.split();
+                    (info, r, w)
+                });
+                futures::pin_mut!(item);
+                match Future::poll(item, cx) {
+                    Poll::Pending => Poll::Pending,
+                    Poll::Ready(Ok(i)) => Poll::Ready(Some(i)),
+                    Poll::Ready(Err(e)) => {
+                        // TODO log
+                        Poll::Ready(None)
+                    }
+                }
             }
             _ => unimplemented!(),
         }

@@ -9,14 +9,16 @@ use yggy_core::{
     types::{NodeID, SigningPublicKey, SwitchLocator, SwitchPort},
 };
 
-///
+lazy_static! {
+    /// TODO?
+    static ref UPDATE_INTERVAL: Duration = ROOT_TIMEOUT / 2;
+
+    /// TODO?
+    static ref THROTTLE_INTERVAL: Duration = *UPDATE_INTERVAL / 2;
+}
+
+/// TODO?
 const ROOT_TIMEOUT: Duration = Duration::from_secs(60);
-
-///
-const UPDATE_INTERVAL: Duration = Duration::from_secs(ROOT_TIMEOUT.as_secs() >> 1);
-
-///
-const THROTTLE_INTERVAL: Duration = Duration::from_secs(UPDATE_INTERVAL.as_secs() >> 1);
 
 /// Number of switch updates before switching to a faster parent.
 const PARENT_UPDATE_THRESHOLD: u8 = 240;

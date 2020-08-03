@@ -45,7 +45,7 @@ yggy-core = { path = "./core", default-features = false }
 # helper, util
 async-log = "2.0.0"
 lazy_static = "1.4"
-log = "0.4.8"
+log = "0.4"
 stream-cancel = "0.6"
 
 [features]
@@ -58,10 +58,8 @@ alloc = ["yggy-core/alloc"]
 nightly = ["yggy-core/nightly"]
 # re-exported features of various dependencies
 asm = ["yggy-core/asm"]
-avx2_backend = ["yggy-core/avx2_backend"]
 u32_backend = ["yggy-core/u32_backend"]
 u64_backend = ["yggy-core/u64_backend"]
-yolocrypto = ["yggy-core/yolocrypto"]
 
 # [target.'cfg(not(target_arch="arm"))'.dependencies]
 # ring = "0.16"

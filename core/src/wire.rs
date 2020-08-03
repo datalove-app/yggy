@@ -37,130 +37,16 @@ pub struct LinkProtocolTraffic;
 //     // NodeInfoResponse,
 // }
 
-///
-#[derive(Debug)]
-pub struct WireReader<T: Wire, R: AsyncRead + Unpin>(FramedRead<R, WireCodec<T>>);
-
-// impl<T: Wire, R: AsyncRead + Unpin> WireReader<T, R> {
-//     #[inline]
-//     pub async fn read(reader: R) -> Result<Option<T>, WireError> {
-//         Self::new(reader).try_next().await
-//     }
-
-//     #[inline]
-//     fn new(reader: R) -> Self {
-//         Self(FramedRead::new(reader, WireCodec::<T>::default()))
-//     }
-// }
-
-impl<T: Wire, R: AsyncRead + Unpin> From<R> for WireReader<T, R> {
-    fn from(reader: R) -> Self {
-        Self(FramedRead::new(reader, WireCodec::<T>::default()))
-    }
-}
-
-impl<T: Wire, R: AsyncRead + Unpin> Stream for WireReader<T, R> {
-    type Item = Result<T, WireError>;
-    fn poll_next(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context,
-    ) -> task::Poll<Option<Self::Item>> {
-        let inner = &mut self.0;
-        futures::pin_mut!(inner);
-        inner.poll_next(cx)
-    }
-}
-
-///
-#[derive(Debug)]
-pub struct WireWriter<T: Wire, W: AsyncWrite + Unpin>(FramedWrite<W, WireCodec<T>>);
-
-// impl<T: Wire, W: AsyncWrite + Unpin> WireWriter<T, W> {
-//     #[inline]
-//     pub async fn write(t: T, writer: W) -> Result<(), WireError> {
-//         Self::new(writer).send(t).await
-//     }
-
-//     #[inline]
-//     fn new(writer: W) -> Self {
-//         Self(FramedWrite::new(writer, WireCodec::<T>::default()))
-//     }
-// }
-
-impl<T: Wire, W: AsyncWrite + Unpin> Sink<T> for WireWriter<T, W> {
-    type Error = WireError;
-    fn poll_ready(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context,
-    ) -> task::Poll<Result<(), Self::Error>> {
-        let inner = &mut self.0;
-        futures::pin_mut!(inner);
-        inner.poll_ready(cx)
-    }
-    fn start_send(mut self: Pin<&mut Self>, item: T) -> Result<(), Self::Error> {
-        let inner = &mut self.0;
-        futures::pin_mut!(inner);
-        inner.start_send(item)
-    }
-    fn poll_flush(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context,
-    ) -> task::Poll<Result<(), Self::Error>> {
-        let inner = &mut self.0;
-        futures::pin_mut!(inner);
-        inner.poll_flush(cx)
-    }
-    fn poll_close(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context,
-    ) -> task::Poll<Result<(), Self::Error>> {
-        let inner = &mut self.0;
-        futures::pin_mut!(inner);
-        inner.poll_close(cx)
-    }
-}
-
-impl<T: Wire, W: AsyncWrite + Unpin> From<W> for WireWriter<T, W> {
-    fn from(writer: W) -> Self {
-        Self(FramedWrite::new(writer, WireCodec::<T>::default()))
-    }
-}
-
-///
-#[derive(Debug)]
-struct WireCodec<T: Wire>(PhantomData<T>);
-
-impl<T: Wire> Default for WireCodec<T> {
-    #[inline]
-    fn default() -> Self {
-        Self(PhantomData)
-    }
-}
-
-impl<T: Wire> Decoder for WireCodec<T> {
-    type Item = T;
-    type Error = WireError;
-    #[inline]
-    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
-        T::decode(src)
-    }
-}
-
-impl<T: Wire> Encoder for WireCodec<T> {
-    type Item = T;
-    type Error = WireError;
-    #[inline]
-    fn encode(&mut self, mut src: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
-        T::encode(src, dst)
-    }
-}
-
-/// Sealed trait for all wire types.
+/// A wire-encodable type.
 pub trait Wire: Sized {
+    /// Returns a framed `Stream` that wraps the provided `AsyncRead` and from
+    /// which this type can be read.
     fn stream<R: AsyncRead + Unpin>(reader: R) -> WireReader<Self, R> {
         WireReader::<Self, R>::from(reader)
     }
 
+    /// Returns a framed 'Sink` that can write this type to the provided
+    /// `AsyncWrite`.
     fn sink<W: AsyncWrite + Unpin>(writer: W) -> WireWriter<Self, W> {
         WireWriter::<Self, W>::from(writer)
     }
@@ -171,21 +57,30 @@ pub trait Wire: Sized {
 }
 
 impl Wire for u64 {
+    #[inline]
     fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
+        if src.is_empty() {
+            return Ok(None);
+        }
+
         let mut len = 0usize;
         let mut num = 0u64;
-        for b in src.iter() {
+        for (i, b) in src.iter().enumerate() {
             num <<= 7;
             num |= (b & 0x7f) as u64;
             len += 1;
             if b & 0x80 == 0 {
+                src.split_to(i);
                 break;
+            } else if i > 9 {
+                return Err(WireError::Codec("expected u64"));
             }
         }
 
         Ok(Some(num))
     }
 
+    #[inline]
     fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
         let mut bytes = [0u8; 10];
         let mut idx = 9usize;
@@ -206,99 +101,30 @@ impl Wire for u64 {
     }
 }
 
+/// Converts `i64` to `u64`, then writes it to the wire.
+///
+/// Non-negative integers are mapped to even integers: 0 -> 0, 1 -> 2, etc.
+/// Negative integers are mapped to odd integers: -1 -> 1, -2 -> -3, etc.
+/// This means that the least significant bit is a sign bit.
+/// This is known as zigzag encoding.
 impl Wire for i64 {
+    #[inline]
     fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
-        if let Some(uint64) = <u64>::decode(src)? {
-            let int64 = (((uint64 >> 1) as i64) ^ -((uint64 & 1) as i64));
-
-            Ok(Some(int64))
-        } else {
-            Err(WireError::Codec("expected i64"))
+        match <u64>::decode(src).or(Err(WireError::Codec("expected i64")))? {
+            None => Ok(None),
+            Some(uint64) => {
+                let int64 = (((uint64 >> 1) as i64) ^ -((uint64 & 1) as i64));
+                Ok(Some(int64))
+            }
         }
     }
 
+    #[inline]
     fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
         let uint64 = ((self >> 63) ^ (self << 1)) as u64;
         uint64.encode(dst)
     }
 }
-
-// /// Encodes and decodes
-// pub trait Wire: Sized {
-//     /// Maximum length of the type on the wire, sans the payload.
-//     const LENGTH: usize;
-
-//     // /// Length of the type on the wire.
-//     // fn len(&self) -> Option<usize> {
-//     //     None
-//     // }
-
-//     /// Decodes the type from a `Read`.
-//     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error>;
-
-//     /// Encodes the type to a `Write`.
-//     fn encode<W: Write>(&self, writer: W) -> Result<usize, Error>;
-// }
-
-// impl Wire for u64 {
-//     const LENGTH: usize = 10;
-
-//     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
-//         let mut len = 0usize;
-//         let mut num = 0u64;
-//         for b in reader.bytes() {
-//             let b = b.map_err(WireError::Read)?;
-//             num <<= 7;
-//             num |= (b & 0x7f) as u64;
-//             len += 1;
-//             if b & 0x80 == 0 {
-//                 break;
-//             }
-//         }
-
-//         Ok((num, len))
-//     }
-
-//     fn encode<W: Write>(&self, mut writer: W) -> Result<usize, Error> {
-//         let mut bytes = [0u8; Self::LENGTH];
-//         let mut idx = Self::LENGTH - 1;
-//         let mut num = *self;
-
-//         bytes[idx] = num as u8 & 0x7f;
-//         loop {
-//             num >>= 7;
-//             if num == 0 {
-//                 break;
-//             }
-//             idx -= 1;
-//             bytes[idx] = num as u8 | 0x80;
-//         }
-
-//         writer.write_all(&bytes[idx..]).map_err(WireError::Write)?;
-//         Ok(Self::LENGTH - idx)
-//     }
-// }
-
-// /// Converts `i64` to `u64`, then writes it to the wire.
-// ///
-// /// Non-negative integers are mapped to even integers: 0 -> 0, 1 -> 2, etc.
-// /// Negative integers are mapped to odd integers: -1 -> 1, -2 -> -3, etc.
-// /// This means that the least significant bit is a sign bit.
-// /// This is known as zigzag encoding.
-// impl Wire for i64 {
-//     const LENGTH: usize = 10;
-
-//     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
-//         let (uint64, size) = <u64>::decode(reader)?;
-//         let int64 = (((uint64 >> 1) as i64) ^ -((uint64 & 1) as i64));
-//         Ok((int64, size))
-//     }
-
-//     fn encode<W: Write>(&self, writer: W) -> Result<usize, Error> {
-//         let uint64 = ((self >> 63) ^ (self << 1)) as u64;
-//         <u64>::encode(&uint64, writer)
-//     }
-// }
 
 // impl Wire for Coords {
 //     const LENGTH: usize = 0;
@@ -349,6 +175,100 @@ impl Wire for i64 {
 //         unimplemented!()
 //     }
 // }
+
+/// Produces `Wire` types from a wrapped `AsyncRead`.
+#[derive(Debug)]
+pub struct WireReader<T: Wire, R: AsyncRead + Unpin>(FramedRead<R, WireCodec<T>>);
+
+impl<T: Wire, R: AsyncRead + Unpin> From<R> for WireReader<T, R> {
+    fn from(reader: R) -> Self {
+        Self(FramedRead::new(reader, WireCodec::<T>::default()))
+    }
+}
+
+impl<T: Wire, R: AsyncRead + Unpin> Stream for WireReader<T, R> {
+    type Item = Result<T, WireError>;
+    fn poll_next(
+        mut self: Pin<&mut Self>,
+        cx: &mut task::Context,
+    ) -> task::Poll<Option<Self::Item>> {
+        let inner = &mut self.0;
+        futures::pin_mut!(inner);
+        inner.poll_next(cx)
+    }
+}
+
+/// Produces `Wire` types from a wrapped `AsyncRead`.
+#[derive(Debug)]
+pub struct WireWriter<T: Wire, W: AsyncWrite + Unpin>(FramedWrite<W, WireCodec<T>>);
+
+impl<T: Wire, W: AsyncWrite + Unpin> From<W> for WireWriter<T, W> {
+    fn from(writer: W) -> Self {
+        Self(FramedWrite::new(writer, WireCodec::<T>::default()))
+    }
+}
+
+impl<T: Wire, W: AsyncWrite + Unpin> Sink<T> for WireWriter<T, W> {
+    type Error = WireError;
+    fn poll_ready(
+        mut self: Pin<&mut Self>,
+        cx: &mut task::Context,
+    ) -> task::Poll<Result<(), Self::Error>> {
+        let inner = &mut self.0;
+        futures::pin_mut!(inner);
+        inner.poll_ready(cx)
+    }
+    fn start_send(mut self: Pin<&mut Self>, item: T) -> Result<(), Self::Error> {
+        let inner = &mut self.0;
+        futures::pin_mut!(inner);
+        inner.start_send(item)
+    }
+    fn poll_flush(
+        mut self: Pin<&mut Self>,
+        cx: &mut task::Context,
+    ) -> task::Poll<Result<(), Self::Error>> {
+        let inner = &mut self.0;
+        futures::pin_mut!(inner);
+        inner.poll_flush(cx)
+    }
+    fn poll_close(
+        mut self: Pin<&mut Self>,
+        cx: &mut task::Context,
+    ) -> task::Poll<Result<(), Self::Error>> {
+        let inner = &mut self.0;
+        futures::pin_mut!(inner);
+        inner.poll_close(cx)
+    }
+}
+
+/// Zero-sized type representing the `Wire` codec.
+#[derive(Debug)]
+struct WireCodec<T: Wire>(PhantomData<T>);
+
+impl<T: Wire> Default for WireCodec<T> {
+    #[inline]
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
+
+impl<T: Wire> Decoder for WireCodec<T> {
+    type Item = T;
+    type Error = WireError;
+    #[inline]
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+        T::decode(src)
+    }
+}
+
+impl<T: Wire> Encoder for WireCodec<T> {
+    type Item = T;
+    type Error = WireError;
+    #[inline]
+    fn encode(&mut self, mut src: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
+        T::encode(src, dst)
+    }
+}
 
 #[cfg(test)]
 mod tests {

@@ -15,15 +15,6 @@ pub trait SessionManager<C: Core>: Sized {
     type Session: Session<C, Self>;
 
     fn reconfigure(&mut self);
-
-    async fn session_by_handle(&self, handle: &Handle) -> Option<Addr<Self::Session>>;
-
-    async fn session_by_pub_key(&self, key: &BoxPublicKey) -> Option<Addr<Self::Session>>;
-
-    async fn create_session(
-        self: Arc<Self>,
-        their_key: BoxPublicKey,
-    ) -> Result<Addr<Self::Session>, Error>;
 }
 
 /// Cryptographic agreements between two nodes that allow the exchange of

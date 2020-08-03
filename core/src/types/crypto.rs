@@ -13,17 +13,17 @@ use sha2::{
 use std::{
     cmp::Ordering,
     convert::{TryFrom, TryInto},
+    fmt, hash,
     str::FromStr,
     sync::{Arc, Mutex},
 };
-use wg_crypto::x25519;
 
-lazy_static! {
-    ///
-    ///
-    /// TODO is this too blocking?
-    static ref RNG: Mutex<ChaChaRng> = ChaChaRng::from_rng(thread_rng()).unwrap().into();
-}
+// lazy_static! {
+//     ///
+//     ///
+//     /// TODO is this too blocking?
+//     static ref RNG: Mutex<ChaChaRng> = ChaChaRng::from_rng(thread_rng()).unwrap().into();
+// }
 
 type InnerDigest = GenericArray<u8, <Sha512 as Digest>::OutputSize>;
 
@@ -122,9 +122,8 @@ impl Handle {
     /// Generates cryptographically-random session handles.
     #[inline]
     pub fn new() -> Self {
-        let mut rng = RNG.lock().unwrap();
         let mut handle = [0u8; 8];
-        (&mut rng).fill_bytes(&mut handle);
+        (&mut thread_rng()).fill_bytes(&mut handle);
         Self(handle)
     }
 }
@@ -133,28 +132,37 @@ impl Handle {
  * Keys
  */
 
-///
-/// TODO docs
-/// Used for protocol traffic.
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct SigningKeypair {
-    pub secret: SigningSecretKey,
-    pub public: SigningPublicKey,
-}
+// ///
+// /// TODO docs
+// /// Used for protocol traffic.
+// #[derive(Debug, Default, Deserialize, Serialize)]
+// pub struct SigningKeypair {
+//     pub secret: SigningSecretKey,
+//     pub public: SigningPublicKey,
+// }
 
 ///
 pub type Signature = ed25519_dalek::Signature;
 
 ///
 /// TODO docs
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, From, PartialEq, Serialize)]
+#[derive(AsRef, Clone, Copy, Debug, Default, Deserialize, Eq, From, PartialEq, Serialize)]
 #[from(forward)]
+#[repr(transparent)]
+#[serde(transparent)]
 pub struct SigningPublicKey(ed25519_dalek::PublicKey);
 
 impl SigningPublicKey {
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
+    }
+}
+
+impl hash::Hash for SigningPublicKey {
+    #[inline]
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        self.as_bytes().hash(state);
     }
 }
 
@@ -201,6 +209,7 @@ pub struct BoxKeypair {
 }
 
 impl BoxKeypair {
+    #[inline]
     pub fn new() -> Self {
         let secret = BoxSecretKey::new();
         let public = secret.public_key();
@@ -210,31 +219,11 @@ impl BoxKeypair {
 
 ///
 /// TODO docs
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-#[repr(C)]
-pub struct BoxNonce([u8; 24]);
-
-impl BoxNonce {
-    #[inline]
-    pub fn new() -> Self {
-        let mut rng = RNG.lock().unwrap();
-        loop {
-            let mut nonce = [0u8; 24];
-            (&mut rng).fill_bytes(&mut nonce);
-
-            if nonce[0] != 0xff {
-                return Self(nonce);
-            }
-        }
-    }
-}
-
-///
-/// TODO docs
-#[derive(AsRef, Debug, From, FromStr, Eq, Hash, PartialEq)]
+#[derive(AsRef, Clone, Copy, Debug, Deserialize, From, Serialize)]
 #[from(forward)]
 #[repr(transparent)]
-pub struct BoxPublicKey(x25519::X25519PublicKey);
+#[serde(transparent)]
+pub struct BoxPublicKey(x25519_dalek::PublicKey);
 
 impl BoxPublicKey {
     #[inline]
@@ -243,129 +232,90 @@ impl BoxPublicKey {
     }
 }
 
-impl Clone for BoxPublicKey {
+impl PartialEq for BoxPublicKey {
     #[inline]
-    fn clone(&self) -> Self {
-        Self(self.as_bytes().into())
+    fn eq(&self, other: &Self) -> bool {
+        self.as_bytes() == other.as_bytes()
+    }
+}
+impl Eq for BoxPublicKey {}
+
+impl hash::Hash for BoxPublicKey {
+    #[inline]
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        self.as_bytes().hash(state);
     }
 }
 
-// impl Default for BoxPublicKey {
-//     #[inline]
-//     fn default() -> Self {
-//         Self::from([0; 32].as_ref())
+// impl FromStr for BoxPublicKey {
+//     type Err = Error;
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         let key = s.parse().map_err(TypeError::FailedBoxKeyParsing)?;
+//         Ok(Self(Arc::new(key)))
 //     }
 // }
-
-impl Serialize for BoxPublicKey {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_bytes(self.as_bytes())
-    }
-}
-
-/// Tries to deserialize from bytes or hex or base64 string.
-impl<'de> Deserialize<'de> for BoxPublicKey {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        use serde::de::{Error, Visitor as DeVisitor};
-        use std::str::FromStr;
-
-        struct BoxPublicKeyVisitor;
-        impl<'de> DeVisitor<'de> for BoxPublicKeyVisitor {
-            type Value = BoxPublicKey;
-
-            fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.write_str("an X25519 public encryption key")
-            }
-
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: Error,
-            {
-                BoxPublicKey::from_str(v).map_err(Error::custom)
-            }
-
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-            where
-                E: Error,
-            {
-                self.visit_str(&v)
-            }
-
-            fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-            where
-                E: Error,
-            {
-                Ok(BoxPublicKey::from(v))
-            }
-
-            fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Self::Value, E>
-            where
-                E: Error,
-            {
-                self.visit_bytes(&v)
-            }
-        }
-
-        deserializer.deserialize_any(BoxPublicKeyVisitor)
-    }
-}
 
 ///
 /// TODO docs
 /// TODO should we repr?
-#[derive(AsRef, Clone, Debug, From, Into)]
-pub struct BoxSecretKey(Arc<x25519::X25519SecretKey>);
+#[derive(AsRef, Clone)]
+#[repr(transparent)]
+pub struct BoxSecretKey(x25519_dalek::StaticSecret);
 
 impl BoxSecretKey {
     #[inline]
     pub fn new() -> Self {
-        Self(Arc::new(x25519::X25519SecretKey::new()))
-    }
-
-    #[inline]
-    pub fn as_bytes(&self) -> &[u8] {
-        self.0.as_bytes()
+        Self(x25519_dalek::StaticSecret::new(&mut thread_rng()))
     }
 
     #[inline]
     pub fn public_key(&self) -> BoxPublicKey {
-        BoxPublicKey::from(self.0.public_key())
+        BoxPublicKey((&self.0).into())
     }
 
     #[inline]
-    pub fn shared_key(&self, peer_public: &BoxPublicKey) -> Result<BoxSharedKey, Error> {
-        Ok(self
-            .0
-            .shared_key(peer_public.as_ref())
-            .map(Into::into)
-            .map_err(TypeError::FailedSharedKeyGeneration)?)
+    pub fn diffie_hellman(&self, peer_public: &BoxPublicKey) -> Result<BoxSharedKey, Error> {
+        Ok(self.0.diffie_hellman(peer_public.as_ref()).into())
+    }
+
+    #[inline]
+    pub fn to_bytes(&self) -> [u8; 32] {
+        self.0.to_bytes()
     }
 }
 
-impl FromStr for BoxSecretKey {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let key = s.parse().map_err(TypeError::FailedPrivateKeyParsing)?;
-        Ok(Self(Arc::new(key)))
+// TODO
+impl From<&SigningSecretKey> for BoxSecretKey {
+    fn from(sig_key: &SigningSecretKey) -> Self {
+        unimplemented!()
     }
 }
+
+impl fmt::Debug for BoxSecretKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "BoxSecretKey: {:?}", &self.to_bytes())
+    }
+}
+
+// impl FromStr for BoxSecretKey {
+//     type Err = Error;
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         let key = s.parse().map_err(TypeError::FailedBoxKeyParsing)?;
+//         Ok(Self(Arc::new(key)))
+//     }
+// }
 
 impl Serialize for BoxSecretKey {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(self.as_bytes())
+        serializer.serialize_bytes(&self.0.to_bytes())
     }
 }
 
 /// Tries to deserialize from hex or base64 string.
+/// TODO? from hex or base64 str
 impl<'de> Deserialize<'de> for BoxSecretKey {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -382,19 +332,19 @@ impl<'de> Deserialize<'de> for BoxSecretKey {
                 f.write_str("an X25519 secret encryption key")
             }
 
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: Error,
-            {
-                BoxSecretKey::from_str(v).map_err(Error::custom)
-            }
+            // fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            // where
+            //     E: Error,
+            // {
+            //     BoxSecretKey::from_str(v).map_err(Error::custom)
+            // }
 
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-            where
-                E: Error,
-            {
-                self.visit_str(&v)
-            }
+            // fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            // where
+            //     E: Error,
+            // {
+            //     self.visit_str(&v)
+            // }
         }
 
         deserializer.deserialize_any(BoxSecretKeyVisitor)
@@ -402,5 +352,41 @@ impl<'de> Deserialize<'de> for BoxSecretKey {
 }
 
 ///
+#[derive(AsRef, From)]
+#[from(forward)]
+#[repr(transparent)]
+pub struct BoxSharedKey(x25519_dalek::SharedSecret);
+
+impl BoxSharedKey {
+    #[inline]
+    pub fn as_bytes(&self) -> &[u8; 32] {
+        self.0.as_bytes()
+    }
+}
+
+impl fmt::Debug for BoxSharedKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "BoxSharedKey: {:?}", self.as_bytes())
+    }
+}
+
+///
 /// TODO docs
-pub type BoxSharedKey = [u8; 32];
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(C)]
+pub struct BoxNonce([u8; 24]);
+
+impl BoxNonce {
+    #[inline]
+    pub fn new() -> Self {
+        let mut rng = thread_rng();
+        loop {
+            let mut nonce = [0u8; 24];
+            (&mut rng).fill_bytes(&mut nonce);
+
+            if nonce[0] != 0xff {
+                return Self(nonce);
+            }
+        }
+    }
+}

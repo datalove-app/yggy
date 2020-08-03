@@ -93,12 +93,12 @@ impl<C: Core> Actor for TunAdapter<C> {
 //     }
 // }
 
-#[async_trait::async_trait]
-impl<C: Core> StreamHandler<tun::messages::Packet> for TunAdapter<C> {
-    async fn handle(&mut self, ctx: &Context<Self>, msg: tun::messages::Packet) {
-        unimplemented!()
-    }
-}
+// #[async_trait::async_trait]
+// impl<C: Core> StreamHandler<tun::messages::Packet> for TunAdapter<C> {
+//     async fn handle(&mut self, ctx: &Context<Self>, msg: tun::messages::Packet) {
+//         unimplemented!()
+//     }
+// }
 
 ///
 ///

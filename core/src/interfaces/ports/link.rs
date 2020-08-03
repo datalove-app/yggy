@@ -38,6 +38,30 @@ where
 // {
 // }
 
+///
+/// TODO docs, is this necessary?
+#[async_trait::async_trait]
+pub trait LinkInterface: Actor {
+    // ///
+    // type Reader: AsyncRead; // ? Stream?
+    // ///
+    // type Writer: AsyncWrite; // ? Actor? Sink?
+
+    fn out(intf: Addr<Self>);
+
+    fn link_out(intf: Addr<Self>);
+
+    fn close(intf: Addr<Self>);
+
+    fn name(&self) -> &str;
+
+    fn local(&self) -> &PeerURI;
+
+    fn remote(&self) -> &PeerURI;
+
+    fn interface_type(&self) -> &str;
+}
+
 pub mod messages {
     use super::*;
 
@@ -45,8 +69,8 @@ pub mod messages {
     #[xactor::message(result = "()")]
     #[derive(Clone, Copy, Debug)]
     pub enum Notification {
-        BlockedSend,
         Sending { size: usize, is_link_traffic: bool },
+        BlockedSend,
         Sent { size: usize, is_link_traffic: bool },
         Stalled,
         Reading,

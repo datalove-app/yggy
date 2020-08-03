@@ -31,6 +31,16 @@ pub struct Metadata {
     pub keys: Option<MetadataKeys>,
 }
 
+impl Metadata {
+    #[inline]
+    pub const fn new(r#box: BoxPublicKey, sig: SigningPublicKey, link: BoxPublicKey) -> Self {
+        Self {
+            keys: Some(MetadataKeys { r#box, sig, link }),
+            ..CURRENT_METADATA
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct MetadataKeys {
     pub r#box: BoxPublicKey,

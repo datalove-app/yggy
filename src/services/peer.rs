@@ -1,5 +1,9 @@
 use std::collections::HashMap;
-use yggy_core::{dev::*, interfaces::peer, types::SwitchPort};
+use yggy_core::{
+    dev::*,
+    interfaces::peer,
+    types::{PeerURI, SwitchPort},
+};
 
 /// Represents peers with active connections.
 ///
@@ -57,6 +61,10 @@ impl<C: Core> Handler<peer::messages::Close> for PeerManager<C> {
 pub struct Peer<C: Core> {
     core: Addr<C>,
     peers: Addr<PeerManager<C>>,
+
+    // link:
+    port: SwitchPort,
+    endpoint: PeerURI,
 }
 
 impl<C: Core> Peer<C> {

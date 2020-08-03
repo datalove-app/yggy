@@ -5,13 +5,12 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use wg::{Tunn, TunnResult};
 use yggy_core::{
     dev::*,
     interfaces::{router::session, switch},
     types::{
-        Address, AllowedEncryptionPublicKeys, BoxNonce, BoxPublicKey, BoxSharedKey, Coords, Handle,
-        NodeID, Subnet, MTU,
+        Address, AllowedEncryptionPublicKeys, BoxNonce, BoxPublicKey, Coords, Handle, NodeID,
+        Subnet, MTU,
     },
 };
 
@@ -67,16 +66,37 @@ impl<C: Core> SessionManager<C> {
         })
     }
 
-    async fn add_session(
-        &self,
-        self_handle: Handle,
+    /// Retrieves a `Session` by it's `Handle`.
+    async fn session_by_handle(&self, handle: &Handle) -> Option<Addr<Session<C>>> {
+        self.sessions.lock().await.get(handle).map(Clone::clone)
+    }
+
+    /// Retrieves a `Session` by the peer's `BoxPublicKey`.
+    async fn session_by_pub_key(&self, key: &BoxPublicKey) -> Option<Addr<Session<C>>> {
+        let mut handles = self.handles.lock().await;
+        match handles.get(key) {
+            Some(handle) => self.session_by_handle(handle).await,
+            None => None,
+        }
+    }
+
+    async fn create_session(
+        self: Arc<Self>,
         their_key: BoxPublicKey,
-        session: Addr<Session<C>>,
-    ) -> Result<(), Error> {
-        self.sessions.lock().await.insert(self_handle, session);
+    ) -> Result<Addr<Session<C>>, Error> {
+        let self_handle = Handle::new();
+        let session =
+            Session::start(self.clone(), self.core.clone(), self_handle, &their_key).await?;
+
+        // store session address
+        self.sessions
+            .lock()
+            .await
+            .insert(self_handle, session.clone());
         self.handles.lock().await.insert(their_key, self_handle);
         // self.shared_keys.lock().await.insert(their_key, )
-        Ok(())
+
+        Ok(session)
     }
 }
 
@@ -86,34 +106,6 @@ impl<C: Core> session::SessionManager<C> for SessionManager<C> {
 
     fn reconfigure(&mut self) {
         unimplemented!()
-    }
-
-    async fn session_by_handle(&self, handle: &Handle) -> Option<Addr<Self::Session>> {
-        self.sessions.lock().await.get(handle).map(Clone::clone)
-    }
-
-    async fn session_by_pub_key(&self, key: &BoxPublicKey) -> Option<Addr<Self::Session>> {
-        let mut handles = self.handles.lock().await;
-        match handles.get(key) {
-            Some(handle) => self.session_by_handle(handle).await,
-            None => None,
-        }
-    }
-
-    async fn create_session(
-        mut self: Arc<Self>,
-        their_key: BoxPublicKey,
-    ) -> Result<Addr<Self::Session>, Error> {
-        let self_handle = Handle::new();
-        let session =
-            Session::start(self.clone(), self.core.clone(), self_handle, &their_key).await?;
-
-        Arc::get_mut(&mut self)
-            .unwrap()
-            .add_session(self_handle, their_key, session.clone())
-            .await?;
-
-        Ok(session)
     }
 }
 
@@ -127,7 +119,7 @@ pub struct Session<C: Core> {
 
     // session state
     /// Represents the underlying point-to-point WireGuard connection.
-    tunn: Box<Tunn>,
+    // tunn: Box<Tunn>,
     is_initialized: bool,
     was_mtu_fixed: bool,
     opened: Instant,
@@ -165,15 +157,15 @@ impl<C: Core> Session<C> {
             core,
             session_manager,
             lookup_table,
-            tunn: Tunn::new(
-                config.encryption_private_key.clone().into(),
-                Arc::new(their_key.as_bytes().into()),
-                None,
-                None,
-                100, // TODO
-                None,
-            )
-            .unwrap(), // TODO
+            // tunn: Tunn::new(
+            //     config.encryption_private_key.clone().into(),
+            //     Arc::new(their_key.as_bytes().into()),
+            //     None,
+            //     None,
+            //     100, // TODO
+            //     None,
+            // )
+            // .unwrap(), // TODO
             is_initialized: false,
             was_mtu_fixed: false,
             opened: now,

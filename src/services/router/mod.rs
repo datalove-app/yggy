@@ -4,7 +4,8 @@ mod session;
 use std::sync::Arc;
 use yggy_core::{
     dev::*,
-    interfaces::{peer, router, switch},
+    interfaces::{link, peer, router, switch},
+    types::PeerURI,
 };
 
 type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
@@ -25,9 +26,8 @@ pub struct Router<C: Core> {
 
     // ///
     // reader
-    ///
-    writer: RouterWriter<C>,
-
+    // ///
+    // writer: RouterWriter<C>,
     lookup_table: Arc<ILookupTable<C>>,
 }
 
@@ -69,60 +69,75 @@ impl<C: Core> StreamHandler<wire::ProtocolTraffic> for Router<C> {
     }
 }
 
-///
-/// TODO
-#[derive(Debug)]
-pub struct RouterInterface<C: Core> {
-    router: Addr<Router<C>>,
-}
-
 #[async_trait::async_trait]
-impl<C: Core> peer::PeerInterface for RouterInterface<C> {
-    type Reader = Unreadable;
-    type Writer = RouterWriter<C>;
-}
+impl<C: Core> link::LinkInterface for Router<C> {
+    // type Reader = Unreadable;
+    // type Writer = RouterWriter<C>;
 
-///
-/// TODO
-#[derive(Debug)]
-pub struct RouterWriter<C: Core> {
-    intf: RouterInterface<C>,
-}
+    fn out(intf: Addr<Self>) {}
 
-impl<C: Core> AsyncWrite for RouterWriter<C> {
-    fn poll_write(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context,
-        buf: &[u8],
-    ) -> task::Poll<Result<usize, io::Error>> {
+    fn link_out(intf: Addr<Self>) {}
+
+    fn close(intf: Addr<Self>) {}
+
+    fn name(&self) -> &str {
+        "(self)"
+    }
+
+    fn local(&self) -> &PeerURI {
         unimplemented!()
     }
 
-    fn poll_flush(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context,
-    ) -> task::Poll<Result<(), io::Error>> {
+    fn remote(&self) -> &PeerURI {
         unimplemented!()
     }
 
-    fn poll_close(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context,
-    ) -> task::Poll<Result<(), io::Error>> {
-        unimplemented!()
+    fn interface_type(&self) -> &str {
+        "self"
     }
 }
 
-///
-#[derive(Debug)]
-pub struct Unreadable;
+// ///
+// /// TODO
+// #[derive(Debug)]
+// pub struct RouterWriter<C: Core> {
+//     router: Addr<Router<C>>,
+// }
 
-impl AsyncRead for Unreadable {
-    fn poll_read(
-        mut self: Pin<&mut Self>,
-        cx: &mut task::Context,
-        buf: &mut [u8],
-    ) -> task::Poll<Result<usize, io::Error>> {
-        unreachable!()
-    }
-}
+// impl<C: Core> AsyncWrite for RouterWriter<C> {
+//     fn poll_write(
+//         mut self: Pin<&mut Self>,
+//         cx: &mut task::Context,
+//         buf: &[u8],
+//     ) -> task::Poll<Result<usize, io::Error>> {
+//         unimplemented!()
+//     }
+
+//     fn poll_flush(
+//         mut self: Pin<&mut Self>,
+//         cx: &mut task::Context,
+//     ) -> task::Poll<Result<(), io::Error>> {
+//         unimplemented!()
+//     }
+
+//     fn poll_close(
+//         mut self: Pin<&mut Self>,
+//         cx: &mut task::Context,
+//     ) -> task::Poll<Result<(), io::Error>> {
+//         unimplemented!()
+//     }
+// }
+
+// ///
+// #[derive(Debug)]
+// pub struct Unreadable;
+
+// impl AsyncRead for Unreadable {
+//     fn poll_read(
+//         mut self: Pin<&mut Self>,
+//         cx: &mut task::Context,
+//         buf: &mut [u8],
+//     ) -> task::Poll<Result<usize, io::Error>> {
+//         unreachable!()
+//     }
+// }

@@ -8,7 +8,7 @@ use yggy_core::{dev::*, interfaces::tun, types::MTU};
 // const MAX_UDP_SIZE: usize = (1 << 16) - 1;
 
 ///
-///
+/// TODO rename
 #[derive(Debug)]
 pub struct Socket {
     name: String,

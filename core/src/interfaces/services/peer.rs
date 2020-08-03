@@ -2,7 +2,7 @@
 
 use crate::{
     dev::*,
-    types::{BoxPublicKey, BoxSharedKey, SigningPublicKey},
+    types::{BoxPublicKey, SigningPublicKey},
 };
 
 /// Represents peer...
@@ -25,28 +25,16 @@ where
 {
 }
 
-///
-/// TODO docs, is this necessary?
-#[async_trait::async_trait]
-pub trait PeerInterface {
-    ///
-    type Reader: AsyncRead; // ? Stream?
-    ///
-    type Writer: AsyncWrite; // ? Actor? Sink?
-
-    // fn split()
-}
-
 pub mod messages {
     use super::*;
 
-    /// Signals the creation of a new `Peer`.
+    /// Signals the creation of a new `Peer` with the provided cryptographic keys.
     #[xactor::message(result = "()")]
     #[derive(Debug)]
     pub struct NewPeer {
-        signing_pub_key: SigningPublicKey,
-        box_pub_key: BoxPublicKey,
-        box_shared_key: BoxSharedKey,
+        // signing_pub_key: SigningPublicKey,
+    // box_pub_key: BoxPublicKey,
+    // box_shared_key: BoxSharedKey,
     }
 
     /// Signals the closing of a `Peer` connection.

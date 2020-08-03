@@ -24,11 +24,10 @@ pub use version::CURRENT_METADATA;
 pub mod dev {
     pub use crate::{error::*, interfaces, types, version, wire, Config, Core};
     pub use version::CURRENT_METADATA;
-    pub use wire::{Wire, WireReader, WireWriter};
+    pub use wire::Wire;
 
     // dependency re-exports
     pub use async_trait::async_trait;
-    pub use boringtun::{crypto as wg_crypto, noise as wg};
     pub use futures::{self, io, prelude::*, task};
     pub use futures_codec::{Bytes, BytesMut};
     pub use serde::{Deserialize, Deserializer, Serialize, Serializer};

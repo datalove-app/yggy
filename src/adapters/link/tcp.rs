@@ -1,4 +1,4 @@
-use super::interface::{LinkReader, LinkWriter};
+use super::interface::{LinkReader, LinkWriter, LinkWriterInner};
 use smol::Async;
 use std::{
     hash,
@@ -65,7 +65,7 @@ impl TCPStream {
     #[inline]
     pub fn split(self) -> (LinkReader, LinkWriter) {
         let (r, w) = io::AsyncReadExt::split(self);
-        (LinkReader::TCP(r), LinkWriter::TCP(w))
+        (LinkReader::TCP(r), LinkWriterInner::TCP(w).into())
     }
 
     #[inline]
