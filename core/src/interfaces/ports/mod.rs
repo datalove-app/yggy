@@ -32,7 +32,7 @@ pub mod tun;
 #[doc(inline)]
 pub use self::tun::TunAdapter;
 #[doc(inline)]
-pub use link::LinkAdapter;
+pub use link::LinkManager;
 #[doc(inline)]
 pub use multicast::MulticastAdapter;
 

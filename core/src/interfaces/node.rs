@@ -1,6 +1,6 @@
 use crate::{
     dev::*,
-    interfaces::{LinkAdapter, MulticastAdapter, TunAdapter},
+    interfaces::{LinkManager, MulticastAdapter, TunAdapter},
 };
 use std::sync::{Arc, Mutex};
 
@@ -32,7 +32,7 @@ pub trait Node<C, /* A: Admin */ L, M, T>: Sized
 where
     C: Core,
     // A: Admin,
-    L: LinkAdapter<C>,
+    L: LinkManager<C>,
     M: MulticastAdapter<C>,
     T: TunAdapter<C>,
 {

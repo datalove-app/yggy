@@ -23,7 +23,16 @@ use std::{
 
 ///
 /// TODO
-pub type AllowedEncryptionPublicKeys = HashSet<BoxPublicKey>;
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(transparent)]
+pub struct AllowedEncryptionPublicKeys(HashSet<BoxPublicKey>);
+
+impl AllowedEncryptionPublicKeys {
+    #[inline]
+    pub fn is_allowed(&self, key: &BoxPublicKey) -> bool {
+        self.0.is_empty() || self.0.contains(key)
+    }
+}
 
 ///
 /// TODO

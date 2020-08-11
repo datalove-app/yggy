@@ -18,7 +18,7 @@ serde = { version = "1.0", features = ["derive", "rc"] }
 sha2 = { version = "0.9", default-features = false }
 thiserror = "1.0"
 x25519-dalek = { version = "0.6", features = ["serde"] }
-xactor = "0.7"
+xactor =  { version = "0.7" } # TODO: setup runtime feature
 # helper, util
 # async-log = "2.0.0"
 bitvec = { version = "0.17.4", default-features = false }
@@ -32,6 +32,9 @@ smallvec = { version = "1.4", features = ["write"] }
 default = ["std", "u64_backend"]
 # library features
 tor = []
+# async features
+runtime-async-std = ["xactor/runtime-async-std"]
+runtime-tokio = ["xactor/runtime-tokio"]
 # re-exported features also used by library
 std = ["bitvec/std", "ed25519-dalek/std", "futures/std", "sha2/std", "x25519-dalek/std"]
 alloc = ["bitvec/alloc", "ed25519-dalek/alloc", "rand/alloc"]

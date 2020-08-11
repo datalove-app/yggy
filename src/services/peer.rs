@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use yggy_core::{
     dev::*,
-    interfaces::peer,
+    interfaces::peer::{self, messages},
     types::{PeerURI, SwitchPort},
 };
 

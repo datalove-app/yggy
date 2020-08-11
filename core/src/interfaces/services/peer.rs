@@ -12,7 +12,7 @@ pub trait PeerManager<C: Core>
 where
     Self: Actor,
     Self: Handler<messages::NewPeer>,
-    Self: Handler<messages::Close>,
+    Self: Handler<messages::ClosePeer>,
 {
     ///
     type Peer: Peer<C, Self>;
@@ -40,7 +40,7 @@ pub mod messages {
     /// Signals the closing of a `Peer` connection.
     #[xactor::message(result = "()")]
     #[derive(Debug)]
-    pub struct Close;
+    pub struct ClosePeer;
 }
 
 // ///

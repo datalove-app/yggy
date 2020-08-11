@@ -39,7 +39,7 @@ async-trait = "0.1"
 etherparse = "0.9"
 futures-locks = { version = "0.5.1-pre", default-features = false }
 libtor = { version = "43.5.1", optional = true }
-smol = "0.1"
+smol = "0.1"  # TODO: replace with a generic library?
 utuntap = "0.2.4"
 yggy-core = { path = "./core", default-features = false }
 # helper, util
@@ -52,6 +52,9 @@ stream-cancel = "0.6"
 default = ["std", "u64_backend"]
 # library features
 tor = ["libtor", "yggy-core/tor"] # starts a TOR client + relay, allowing some/all link traffic to be routed over TOR
+# async features
+runtime-async-std = ["yggy-core/runtime-async-std"]
+runtime-tokio = ["yggy-core/runtime-tokio"]
 # re-exported features also used by library
 std = ["yggy-core/std"]
 alloc = ["yggy-core/alloc"]

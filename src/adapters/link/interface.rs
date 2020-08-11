@@ -17,9 +17,9 @@ pub struct LinkHandle {
 impl LinkHandle {
     pub fn new(
         addr: PeerURI,
-    ) -> Result<(Self, impl Stream<Item = (LinkInfo, LinkReader, LinkWriter)>), Error> {
-        let listener = LinkListener::new(&addr)?;
+    ) -> Result<(Self, impl Stream<Item = (PeerURI, LinkReader, LinkWriter)>), Error> {
         let (stop, stopped) = Tripwire::new();
+        let listener = LinkListener::new(&addr)?;
         Ok((Self { addr, stop }, listener.take_until_if(stopped)))
     }
 }
@@ -154,7 +154,7 @@ impl LinkListener {
 
 /// Produces a link upon each incoming connection.
 impl Stream for LinkListener {
-    type Item = (LinkInfo, LinkReader, LinkWriter);
+    type Item = (PeerURI, LinkReader, LinkWriter);
     fn poll_next(self: Pin<&mut Self>, cx: &mut task::Context) -> task::Poll<Option<Self::Item>> {
         use task::Poll;
 
@@ -162,9 +162,9 @@ impl Stream for LinkListener {
             Self::TCP(listener) => {
                 let mut item = listener.accept().map_ok(|stream| {
                     let addr = stream.remote_addr().clone();
-                    let info = LinkInfo::new(PeerURI::TCP(addr));
+                    let uri = PeerURI::TCP(addr);
                     let (r, w) = stream.split();
-                    (info, r, w)
+                    (uri, r, w)
                 });
                 futures::pin_mut!(item);
                 match Future::poll(item, cx) {

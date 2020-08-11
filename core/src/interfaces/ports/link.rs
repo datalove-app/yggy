@@ -6,15 +6,15 @@ use crate::{dev::*, interfaces::peer, types::PeerURI};
 /// TODO tor?
 /// Seems to handle traffic from addresses in the `Listen` configuration option,
 /// restricted by the `AllowedEncryptionPublicKeys` option.
-pub trait LinkAdapter<C: Core>
-where
-    Self: Actor,
-{
+pub trait LinkManager<C: Core>: Sized {
+    ///
+    type Link: Link<C, Self>;
+
     fn reconfigure(&mut self);
 }
 
 ///
-pub trait Link<C: Core, L: LinkAdapter<C>>
+pub trait Link<C: Core, L: LinkManager<C>>
 where
     Self: Actor,
     // Self: PeerInterface,
