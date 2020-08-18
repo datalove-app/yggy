@@ -49,24 +49,24 @@ impl tun::TunInterface for Socket {
     //     unimplemented!()
     // }
 
-    fn split(mut self) -> Result<(Self::Reader, Self::Writer), Error> {
+    fn split(mut self) -> (Self::Reader, Self::Writer) {
         let (reader, writer) = (&mut self)
             .file
             .take()
             .map(|file| file.split())
-            .ok_or_else(|| anyhow::Error::msg("already initialized TUN socket"))?;
+            .expect("already initialized TUN socket");
 
         let socket_info = Mutex::new(self);
-        Ok((
-            TunReader {
-                socket_info: socket_info.clone(),
-                reader,
-            },
-            TunWriter {
-                socket_info,
-                writer,
-            },
-        ))
+        let reader = TunReader {
+            socket_info: socket_info.clone(),
+            reader,
+        };
+        let writer = TunWriter {
+            socket_info,
+            writer,
+        };
+
+        (reader, writer)
     }
 }
 

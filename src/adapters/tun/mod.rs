@@ -52,10 +52,10 @@ impl<C: Core> TunAdapter<C> {
         // dialer: C::Dialer,
         // listener: Arc<C::Listener>,
     ) -> Result<Addr<Self>, Error> {
-        let (reader, writer) = TunSocket::open()?.split()?;
+        let (reader, writer) = TunSocket::open()?.split();
 
         // TODO start for each thread?
-        let writer = writer.start().await?;
+        let writer = Actor::start(writer).await?;
 
         let mut adapter = Self {
             core,

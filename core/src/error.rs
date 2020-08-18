@@ -7,7 +7,10 @@ use thiserror::Error;
 pub enum Error {
     /// TODO:
     #[error("service initialization error: {0}")]
-    Init(#[from] anyhow::Error),
+    Init(anyhow::Error),
+
+    #[error("service error: {0}")]
+    Service(#[from] anyhow::Error),
 
     #[error("type error {0}")]
     Type(#[from] TypeError),

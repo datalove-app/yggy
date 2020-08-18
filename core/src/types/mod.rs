@@ -32,6 +32,16 @@ impl AllowedEncryptionPublicKeys {
     pub fn is_allowed(&self, key: &BoxPublicKey) -> bool {
         self.0.is_empty() || self.0.contains(key)
     }
+
+    #[inline]
+    pub fn add_allowed(&mut self, key: BoxPublicKey) -> bool {
+        self.0.insert(key)
+    }
+
+    #[inline]
+    pub fn remove_allowed(&mut self, key: &BoxPublicKey) -> bool {
+        self.0.remove(key)
+    }
 }
 
 ///

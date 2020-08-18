@@ -39,9 +39,9 @@ impl<C: Core> Router<C> {
 }
 
 impl<C: Core> router::Router<C> for Router<C> {
-    // type Interface = RouterInterface<C>;
     type SearchManager = search::SearchManager<C>;
     type SessionManager = session::SessionManager<C>;
+    // type Interface = RouterInterface<C>;
 
     fn reconfigure(&mut self) {
         unimplemented!()
@@ -74,11 +74,11 @@ impl<C: Core> link::LinkInterface for Router<C> {
     // type Reader = Unreadable;
     // type Writer = RouterWriter<C>;
 
-    fn out(intf: Addr<Self>) {}
+    fn out<T: Wire>(intf: &mut Addr<Self>, msg: T) {}
 
-    fn link_out(intf: Addr<Self>) {}
+    fn link_out<T: Wire>(intf: &mut Addr<Self>, msg: T) {}
 
-    fn close(intf: Addr<Self>) {}
+    fn close(intf: &mut Addr<Self>) {}
 
     fn name(&self) -> &str {
         "(self)"

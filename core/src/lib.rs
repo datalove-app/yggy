@@ -33,6 +33,7 @@ pub mod dev {
     pub use serde::{Deserialize, Deserializer, Serialize, Serializer};
     pub use std::pin::Pin;
     pub use xactor::{
-        block_on, sleep, spawn, timeout, Actor, Addr, Context, Handler, Message, StreamHandler,
+        self, block_on, sleep, spawn, timeout, Actor, Addr, Context, Handler, Message,
+        StreamHandler,
     };
 }

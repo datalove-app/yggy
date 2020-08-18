@@ -7,19 +7,89 @@ use futures_codec::{Decoder, Encoder, FramedRead, FramedWrite};
 use std::marker::PhantomData;
 
 ///
+#[derive(Debug)]
+pub enum Packet {
+    Traffic(Traffic),
+    Protocol(ProtocolTraffic),
+    LinkProtocol(LinkProtocolTraffic),
+}
+
+impl Packet {
+    #[inline]
+    pub fn len(&self) -> usize {
+        unimplemented!()
+    }
+}
+
+impl Wire for Packet {
+    #[inline]
+    fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
+        unimplemented!()
+    }
+
+    #[inline]
+    fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
+        unimplemented!()
+    }
+}
+
+///
 /// TODO:
 #[derive(Clone, Debug)]
 pub struct Traffic;
 
-///
-/// TODO:
-#[derive(Clone, Debug)]
-pub struct ProtocolTraffic;
+impl Wire for Traffic {
+    #[inline]
+    fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
+        unimplemented!()
+    }
+
+    #[inline]
+    fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
+        unimplemented!()
+    }
+}
 
 ///
 /// TODO:
 #[derive(Clone, Debug)]
-pub struct LinkProtocolTraffic;
+pub enum ProtocolTraffic {
+    SessionPing,
+    SessionPong,
+    // DHTRequest,
+    // DHTResponse
+}
+
+impl Wire for ProtocolTraffic {
+    #[inline]
+    fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
+        unimplemented!()
+    }
+
+    #[inline]
+    fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
+        unimplemented!()
+    }
+}
+
+///
+/// TODO:
+#[derive(Clone, Debug)]
+pub enum LinkProtocolTraffic {
+    RootUpdate,
+}
+
+impl Wire for LinkProtocolTraffic {
+    #[inline]
+    fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
+        unimplemented!()
+    }
+
+    #[inline]
+    fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
+        unimplemented!()
+    }
+}
 
 // ///
 // /// TODO
@@ -113,7 +183,7 @@ impl Wire for i64 {
         match <u64>::decode(src).or(Err(WireError::Codec("expected i64")))? {
             None => Ok(None),
             Some(uint64) => {
-                let int64 = (((uint64 >> 1) as i64) ^ -((uint64 & 1) as i64));
+                let int64 = ((uint64 >> 1) as i64) ^ -((uint64 & 1) as i64);
                 Ok(Some(int64))
             }
         }

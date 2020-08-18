@@ -8,6 +8,9 @@ mod link;
 mod multicast;
 mod tun;
 
+pub use link::{Link, LinkManager};
+pub use tun::{TunAdapter, TunConn};
+
 //  Driver/Driving (primary, use-case, UI-facing) adapters:
 //      ** translates driver input to core types + service calls
 //      owns/is given/is generic over a port impl/interface

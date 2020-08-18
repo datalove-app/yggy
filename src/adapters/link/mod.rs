@@ -2,6 +2,7 @@ mod interface;
 mod tcp;
 
 use self::interface::{LinkHandle, LinkReader, LinkWriter};
+use crate::services::PeerInterface;
 use futures::future::{select, Either};
 use futures_locks::{Mutex, RwLock};
 use smol::Timer;
@@ -17,7 +18,7 @@ use yggy_core::{
         link::{self, messages},
         peer,
     },
-    types::{BoxKeypair, BoxPublicKey, PeerURI, SigningPublicKey},
+    types::{BoxKeypair, BoxPublicKey, BoxSecretKey, BoxSharedKey, PeerURI, SigningPublicKey},
     version::{Metadata, MetadataKeys},
 };
 
@@ -42,41 +43,46 @@ const SEND_TIMEOUT: Duration = Duration::from_secs(1);
 ///
 const STALL_TIMEOUT: Duration = Duration::from_secs(6);
 
-type IPeer<C> = <<C as Core>::PeerManager as peer::PeerManager<C>>::Peer;
+type IPeer<C> = <IPeerManager<C> as peer::PeerManager<C>>::Peer;
+type IPeerManager<C> = <C as Core>::PeerManager;
 type Links<C> = HashMap<Arc<LinkInfo>, Addr<Link<C>>>;
 // TODO make a hashmap HashMap<String, LinkHandle>
 type LinkHandles = HashSet<LinkHandle>;
 type LinkCalls = HashSet<PeerURI>;
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub struct LinkInfo {
     /// The non-protocol URI of the remote peer.
-    remote_addr: PeerURI,
+    remote_uri: PeerURI,
 
     /// The linked peer's signing public key.
     sig: SigningPublicKey,
 
     /// The linked peer's encryption public key.
     r#box: BoxPublicKey,
+
+    link_priv: BoxSecretKey,
+
+    /// The linked peer's encryption link public key.
+    link_pub: BoxPublicKey,
 }
 
-impl LinkInfo {
+impl PartialEq for LinkInfo {
     #[inline]
-    pub const fn new(remote_addr: PeerURI, sig: SigningPublicKey, r#box: BoxPublicKey) -> Self {
-        LinkInfo {
-            remote_addr,
-            sig,
-            r#box,
-        }
+    fn eq(&self, other: &Self) -> bool {
+        self.remote_uri == other.remote_uri
+            && self.sig == other.sig
+            && self.r#box == other.r#box
+            && self.link_pub == other.link_pub
     }
 }
-
+impl Eq for LinkInfo {}
 // TODO
 impl hash::Hash for LinkInfo {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        self.remote_addr.hash(state);
+        self.remote_uri.hash(state);
     }
 }
 
@@ -104,7 +110,6 @@ impl<C: Core> LinkManager<C> {
     ///
     /// [`LinkHandle`]: ./interfaces/struct.Link.html
     /// [`ListenAddresses`]: ../../core_types/struct.ListenAddresses.html
-    #[inline]
     pub async fn new(core: Addr<C>) -> Result<Arc<Self>, Error> {
         let mut manager = Arc::from(Self {
             core,
@@ -118,7 +123,7 @@ impl<C: Core> LinkManager<C> {
     }
 
     #[inline]
-    pub async fn has_link(self: &Arc<Self>, info: &LinkInfo) -> bool {
+    async fn has_link(self: &Arc<Self>, info: &LinkInfo) -> bool {
         self.links.read().await.get(info).is_some()
     }
 }
@@ -203,14 +208,15 @@ impl<C: Core> link::LinkManager<C> for LinkManager<C> {
 /// Represents an active, direct, link to another peer established via a `LinkHandle`.
 #[derive(Debug)]
 pub struct Link<C: Core> {
+    core: Addr<C>,
     adapter: Arc<LinkManager<C>>,
     info: Arc<LinkInfo>,
-    peer: Addr<IPeer<C>>,
+    peer: Option<Addr<IPeer<C>>>,
 
     // ///
     // interface: LinkHandle,
     ///
-    reader: LinkReader,
+    reader: Option<LinkReader>,
     ///
     writer: Addr<LinkWriter>,
 }
@@ -220,7 +226,7 @@ impl<C: Core> Link<C> {
     /// Starts a `Link` that reads and writes packets on the provided [`PeerURI`].
     ///
     /// [`PeerURI`]:
-    pub async fn start(
+    async fn start(
         core: &mut Addr<C>,
         adapter: &Arc<LinkManager<C>>,
         remote_uri: PeerURI,
@@ -229,18 +235,9 @@ impl<C: Core> Link<C> {
         incoming: bool,
     ) -> Result<(Arc<LinkInfo>, Addr<Self>), Error> {
         let config = C::current_config(core).await?;
-
-        let link_keypair = BoxKeypair::new();
-        let our_meta = Metadata::new(
-            config.encryption_public_key.clone(),
-            config.signing_public_key,
-            link_keypair.public.clone(),
-        );
-
         let info = Self::init(
             &config,
             adapter,
-            our_meta,
             remote_uri,
             &mut reader,
             &mut writer,
@@ -248,20 +245,16 @@ impl<C: Core> Link<C> {
         )
         .await?;
 
-        // TODO init and start peer in peermanager
-        let peer_manager = C::peer_manager(core).await?;
-        let peer = unimplemented!();
-
-        // TODO ctx.add_stream of reader events
-
         // TODO establish timers
 
+        let info = Arc::from(info);
         let writer = Actor::start(writer).await?;
         let mut link = Link {
+            core: core.clone(),
             info: info.clone(),
-            peer,
+            peer: None,
             adapter: adapter.clone(),
-            reader,
+            reader: Some(reader),
             writer,
         };
 
@@ -285,12 +278,18 @@ impl<C: Core> Link<C> {
     async fn init(
         config: &Arc<Config>,
         adapter: &Arc<LinkManager<C>>,
-        our_meta: Metadata,
         remote_uri: PeerURI,
         reader: &mut LinkReader,
         writer: &mut LinkWriter,
         incoming: bool,
-    ) -> Result<Arc<LinkInfo>, Error> {
+    ) -> Result<LinkInfo, Error> {
+        let BoxKeypair { secret, public } = BoxKeypair::new();
+        let our_meta = Metadata::new(
+            config.encryption_public_key,
+            config.signing_public_key,
+            public,
+        );
+
         // send meta bytes or timeout
         match select(
             Metadata::sink(writer).send(our_meta),
@@ -321,10 +320,17 @@ impl<C: Core> Link<C> {
             return Err(ConnError::Link("failed to connect: wrong version"))?;
         }
 
-        // assert that this key is allowed to connect with us
         let MetadataKeys { sig, r#box, link } =
             meta.keys.expect("metadata keys should have been set");
-        let info = Arc::new(LinkInfo::new(remote_uri, sig, r#box));
+        let info = LinkInfo {
+            remote_uri,
+            sig,
+            r#box,
+            link_priv: secret,
+            link_pub: link,
+        };
+
+        // assert that this key is allowed to connect with us
         if incoming && !config.allowed_peer_keys.is_allowed(&info.r#box) {
             // TODO improve error message
             return Err(ConnError::Link("connection refused"))?;
@@ -337,6 +343,13 @@ impl<C: Core> Link<C> {
 
         Ok(info)
     }
+
+    // fn self_addr(addr: Addr<Self>) -> Addr<<C::LinkManager as link::LinkManager<C>>::Link>
+    // where
+    //     <C::LinkManager as link::LinkManager<C>>::Link: link::Link<C, C::LinkManager>,
+    // {
+    //     addr
+    // }
 }
 
 #[async_trait::async_trait]
@@ -344,9 +357,56 @@ impl<C: Core> link::Link<C, LinkManager<C>> for Link<C> {}
 
 #[async_trait::async_trait]
 impl<C: Core> Actor for Link<C> {
-    // async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
-    //     unimplemented!()
-    // }
+    /// Starts `Read`ing packets from the underlying [`LinkReader`].
+    ///
+    /// [`LinkReader`]:
+    async fn started(&mut self, ctx: &Context<Self>) -> Result<(), anyhow::Error> {
+        use messages::Notification;
+
+        let mut peer_manager = C::peer_manager(&mut self.core).await?;
+        let mut peer = <IPeerManager<C> as peer::PeerManager<C>>::new_peer::<Self>(
+            &mut peer_manager,
+            self.info.sig,
+            self.info.r#box,
+            self.info.link_priv.shared_key(&self.info.link_pub),
+            ctx.address(),
+        )
+        .await?;
+        // (&mut peer).send(PeerInterface::Link(ctx.address()))?;
+        self.peer.replace(peer.clone());
+
+        let peer = peer.clone();
+        let reader = self.reader.take().expect("reader to have been initialized");
+        let stream = wire::Packet::stream(reader)
+            .map_err(Error::Wire)
+            .and_then(move |packet| {
+                let mut peer = peer.clone();
+                <IPeer<C> as peer::Peer<C, C::PeerManager>>::handle_packet(peer, packet)
+            })
+            .take_while(|res| future::ready(res.is_ok()))
+            .map(|res| Notification::Read(res.unwrap()));
+        ctx.add_stream(stream);
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl<C: Core> Handler<messages::Notification> for Link<C> {
+    async fn handle(&mut self, ctx: &Context<Self>, msg: link::messages::Notification) {
+        <Self as StreamHandler<messages::Notification>>::handle(self, ctx, msg).await
+    }
+}
+
+#[async_trait::async_trait]
+impl<C: Core> StreamHandler<messages::Notification> for Link<C> {
+    async fn handle(&mut self, ctx: &Context<Self>, msg: link::messages::Notification) {
+        unimplemented!()
+    }
+
+    async fn finished(&mut self, ctx: &Context<Self>) {
+        ctx.stop(None);
+    }
 }
 
 #[async_trait::async_trait]
@@ -354,13 +414,13 @@ impl<C: Core> link::LinkInterface for Link<C> {
     // type Reader = LinkReader;
     // type Writer = LinkWriter;
 
-    fn out(intf: Addr<Self>) {
+    fn out<T: Wire>(intf: &mut Addr<Self>, msg: T) {
         // intf.send()
     }
 
-    fn link_out(intf: Addr<Self>) {}
+    fn link_out<T: Wire>(intf: &mut Addr<Self>, msg: T) {}
 
-    fn close(intf: Addr<Self>) {}
+    fn close(intf: &mut Addr<Self>) {}
 
     fn name(&self) -> &str {
         unimplemented!()
@@ -375,13 +435,6 @@ impl<C: Core> link::LinkInterface for Link<C> {
     }
 
     fn interface_type(&self) -> &str {
-        unimplemented!()
-    }
-}
-
-#[async_trait::async_trait]
-impl<C: Core> Handler<messages::Notification> for Link<C> {
-    async fn handle(&mut self, ctx: &Context<Self>, msg: link::messages::Notification) {
         unimplemented!()
     }
 }

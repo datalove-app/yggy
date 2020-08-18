@@ -47,6 +47,7 @@ async-log = "2.0.0"
 lazy_static = "1.4"
 log = "0.4"
 stream-cancel = "0.6"
+syllogism = "0.1.1"
 
 [features]
 default = ["std", "u64_backend"]

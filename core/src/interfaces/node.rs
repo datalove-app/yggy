@@ -28,11 +28,11 @@ use std::sync::{Arc, Mutex};
 ///
 /// ?? Handle<...>
 #[async_trait]
-pub trait Node<C, /* A: Admin */ L, M, T>: Sized
+pub trait Node<C, /* A: Admin */ M, T>: Sized
 where
     C: Core,
     // A: Admin,
-    L: LinkManager<C>,
+    // L: LinkManager<C>,
     M: MulticastAdapter<C>,
     T: TunAdapter<C>,
 {

@@ -82,7 +82,7 @@ pub trait TunInterface: Sized {
 
     // fn mtu(&self) -> MTU;
 
-    fn split(self) -> Result<(Self::Reader, Self::Writer), Error>;
+    fn split(self) -> (Self::Reader, Self::Writer);
 }
 
 pub mod messages {

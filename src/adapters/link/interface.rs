@@ -39,11 +39,26 @@ impl hash::Hash for LinkHandle {
 
 /// Reads bytes from an established `Link`.
 #[derive(Debug)]
-pub enum LinkReader {
+pub struct LinkReader {
+    inner: LinkReaderInner,
+}
+
+impl LinkReader {
+    // pub fn read
+}
+
+#[derive(Debug)]
+pub(crate) enum LinkReaderInner {
     TCP(io::ReadHalf<TCPStream>),
     // SOCKS(io::ReadHalf<TCPStream>),
     // #[cfg(feature = "tor")]
     // TOR(io::ReadHalf<TCPStream>),
+}
+
+impl From<LinkReaderInner> for LinkReader {
+    fn from(inner: LinkReaderInner) -> Self {
+        Self { inner }
+    }
 }
 
 impl AsyncRead for LinkReader {
@@ -53,8 +68,8 @@ impl AsyncRead for LinkReader {
         cx: &mut task::Context,
         buf: &mut [u8],
     ) -> task::Poll<Result<usize, io::Error>> {
-        match self.get_mut() {
-            Self::TCP(reader) => {
+        match &mut (self.get_mut().inner) {
+            LinkReaderInner::TCP(reader) => {
                 futures::pin_mut!(reader);
                 reader.poll_read(cx, buf)
             }
@@ -67,6 +82,14 @@ impl AsyncRead for LinkReader {
 #[derive(Debug)]
 pub struct LinkWriter {
     inner: LinkWriterInner,
+}
+
+#[derive(Debug)]
+pub(crate) enum LinkWriterInner {
+    TCP(io::WriteHalf<TCPStream>),
+    // SOCKS(io::WriteHalf<TCPStream>),
+    // #[cfg(feature = "tor")]
+    // TOR(io::WriteHalf<TCPStream>),
 }
 
 impl From<LinkWriterInner> for LinkWriter {
@@ -121,14 +144,6 @@ impl AsyncWrite for LinkWriter {
             _ => unimplemented!(),
         }
     }
-}
-
-#[derive(Debug)]
-pub(crate) enum LinkWriterInner {
-    TCP(io::WriteHalf<TCPStream>),
-    // SOCKS(io::WriteHalf<TCPStream>),
-    // #[cfg(feature = "tor")]
-    // TOR(io::WriteHalf<TCPStream>),
 }
 
 /// Listens for incoming `Link`s.

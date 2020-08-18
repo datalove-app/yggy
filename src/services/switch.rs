@@ -5,7 +5,7 @@ use std::{
 };
 use yggy_core::{
     dev::*,
-    interfaces::switch,
+    interfaces::switch::{self, messages},
     types::{NodeID, SigningPublicKey, SwitchLocator, SwitchPort},
 };
 
@@ -55,7 +55,7 @@ pub struct PeerInfo {
 ///
 /// TODO
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SwitchData {
+struct SwitchData {
     locator: SwitchLocator,
     seq: u64,
     peers: HashMap<SwitchPort, PeerInfo>,
@@ -86,6 +86,8 @@ pub struct Switch<C: Core> {
 }
 
 impl<C: Core> Switch<C> {
+    ///
+    #[inline]
     pub async fn start(mut core: Addr<C>) -> Result<Addr<Self>, Error> {
         //     let config = C::current_config(&mut core).await?;
 

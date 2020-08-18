@@ -27,15 +27,18 @@ where
     /// Retrieves a copy of the `Switch`'s [`LookupTable`].
     ///
     /// [`LookupTable`]: trait.LookupTable.html
-    async fn get_lookup_table(addr: &mut Addr<Self>) -> Option<Self::LookupTable> {
+    async fn get_lookup_table(addr: &mut Addr<Self>) -> Result<Self::LookupTable, Error> {
         addr.call(messages::GetLookupTable::<C, Self>::MSG)
             .await
-            .ok()
+            .map_err(|_| Error::Init(anyhow::anyhow!("unable to retrieve lookup table")))
     }
 }
 
 /// Marker trait for the `Switch`'s inner lookup table.
-pub trait LookupTable: 'static + Clone + fmt::Debug + Send + Sync {
+pub trait LookupTable: Sized
+where
+    Self: Clone + fmt::Debug + Send + Sync,
+{
     type Item;
 }
 

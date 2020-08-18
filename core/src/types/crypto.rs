@@ -274,8 +274,8 @@ impl BoxSecretKey {
     }
 
     #[inline]
-    pub fn diffie_hellman(&self, peer_public: &BoxPublicKey) -> Result<BoxSharedKey, Error> {
-        Ok(self.0.diffie_hellman(peer_public.as_ref()).into())
+    pub fn shared_key(&self, peer_public: &BoxPublicKey) -> BoxSharedKey {
+        self.0.diffie_hellman(peer_public.as_ref()).into()
     }
 
     #[inline]

@@ -44,6 +44,9 @@ where
     type Listener: Listener<Self>;
 
     ///
+    type LinkManager: LinkManager<Self>;
+
+    ///
     type PeerManager: PeerManager<Self>;
 
     ///

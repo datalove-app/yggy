@@ -14,8 +14,8 @@ use yggy_core::{
     },
 };
 
-type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
 type ISwitch<C> = <C as Core>::Switch;
+type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
 
 // #[derive(Debug)]
 // pub struct SessionManager<C: Core>(Mutex<InnerSessionManager<C>>);
@@ -42,6 +42,7 @@ pub struct SessionManager<C: Core> {
     // pub(crate) shared_keys: HashMap<BoxPublicKey, BoxSharedKey>,
 }
 
+// Public methods.
 impl<C: Core> SessionManager<C> {
     pub async fn new(mut core: Addr<C>) -> Result<Self, Error> {
         let config = C::current_config(&mut core).await?;
@@ -49,9 +50,8 @@ impl<C: Core> SessionManager<C> {
         let listener = C::listener(&mut core).await?;
 
         let mut switch = C::switch(&mut core).await?;
-        let lookup_table = <ISwitch<C> as switch::Switch<C>>::get_lookup_table(&mut switch)
-            .await
-            .ok_or_else(|| Error::Init(anyhow::Error::msg("unable to retrieve lookup table")))?;
+        let lookup_table = <ISwitch<C> as switch::Switch<C>>::get_lookup_table(&mut switch).await?;
+
         Ok(Self {
             core,
             router,
@@ -65,21 +65,10 @@ impl<C: Core> SessionManager<C> {
             last_cleanup: Instant::now(),
         })
     }
+}
 
-    /// Retrieves a `Session` by it's `Handle`.
-    async fn session_by_handle(&self, handle: &Handle) -> Option<Addr<Session<C>>> {
-        self.sessions.lock().await.get(handle).map(Clone::clone)
-    }
-
-    /// Retrieves a `Session` by the peer's `BoxPublicKey`.
-    async fn session_by_pub_key(&self, key: &BoxPublicKey) -> Option<Addr<Session<C>>> {
-        let mut handles = self.handles.lock().await;
-        match handles.get(key) {
-            Some(handle) => self.session_by_handle(handle).await,
-            None => None,
-        }
-    }
-
+// Internal methods.
+impl<C: Core> SessionManager<C> {
     async fn create_session(
         self: Arc<Self>,
         their_key: BoxPublicKey,
@@ -97,6 +86,20 @@ impl<C: Core> SessionManager<C> {
         // self.shared_keys.lock().await.insert(their_key, )
 
         Ok(session)
+    }
+
+    /// Retrieves a `Session` by it's `Handle`.
+    async fn session_by_handle(&self, handle: &Handle) -> Option<Addr<Session<C>>> {
+        self.sessions.lock().await.get(handle).map(Clone::clone)
+    }
+
+    /// Retrieves a `Session` by the peer's `BoxPublicKey`.
+    async fn session_by_pub_key(&self, key: &BoxPublicKey) -> Option<Addr<Session<C>>> {
+        let mut handles = self.handles.lock().await;
+        match handles.get(key) {
+            Some(handle) => self.session_by_handle(handle).await,
+            None => None,
+        }
     }
 }
 
@@ -140,7 +143,7 @@ pub struct Session<C: Core> {
 }
 
 impl<C: Core> Session<C> {
-    pub async fn start(
+    async fn start(
         session_manager: Arc<SessionManager<C>>,
         mut core: Addr<C>,
         self_handle: Handle,

@@ -1,12 +1,16 @@
 //!
 
 use crate::{dev::*, interfaces::peer, types::PeerURI};
+use std::fmt::Debug;
 
 /// Represents direct connections to peers, over some `LinkInterface` (TCP, UDP, AWDL, etc).
 /// TODO tor?
 /// Seems to handle traffic from addresses in the `Listen` configuration option,
 /// restricted by the `AllowedEncryptionPublicKeys` option.
-pub trait LinkManager<C: Core>: Sized {
+pub trait LinkManager<C: Core>: Sized
+where
+    Self: Debug,
+{
     ///
     type Link: Link<C, Self>;
 
@@ -41,17 +45,20 @@ where
 ///
 /// TODO docs, is this necessary?
 #[async_trait::async_trait]
-pub trait LinkInterface: Actor {
+pub trait LinkInterface: Sized
+where
+    Self: Actor,
+{
     // ///
     // type Reader: AsyncRead; // ? Stream?
     // ///
     // type Writer: AsyncWrite; // ? Actor? Sink?
 
-    fn out(intf: Addr<Self>);
+    fn out<T: Wire>(intf: &mut Addr<Self>, msg: T);
 
-    fn link_out(intf: Addr<Self>);
+    fn link_out<T: Wire>(intf: &mut Addr<Self>, msg: T);
 
-    fn close(intf: Addr<Self>);
+    fn close(intf: &mut Addr<Self>);
 
     fn name(&self) -> &str;
 
@@ -73,7 +80,6 @@ pub mod messages {
         BlockedSend,
         Sent { size: usize, is_link_traffic: bool },
         Stalled,
-        Reading,
         Read(usize),
         KeepAlive,
     }
