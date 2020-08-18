@@ -111,12 +111,14 @@ impl Wire for LinkProtocolTraffic {
 pub trait Wire: Sized {
     /// Returns a framed `Stream` that wraps the provided `AsyncRead` and from
     /// which this type can be read.
+    #[inline]
     fn stream<R: AsyncRead + Unpin>(reader: R) -> WireReader<Self, R> {
         WireReader::<Self, R>::from(reader)
     }
 
     /// Returns a framed 'Sink` that can write this type to the provided
     /// `AsyncWrite`.
+    #[inline]
     fn sink<W: AsyncWrite + Unpin>(writer: W) -> WireWriter<Self, W> {
         WireWriter::<Self, W>::from(writer)
     }
@@ -142,7 +144,9 @@ impl Wire for u64 {
             if b & 0x80 == 0 {
                 src.split_to(i);
                 break;
-            } else if i > 9 {
+            }
+
+            if i > 9 {
                 return Err(WireError::Codec("expected u64"));
             }
         }

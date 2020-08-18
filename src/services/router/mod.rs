@@ -71,14 +71,15 @@ impl<C: Core> StreamHandler<wire::ProtocolTraffic> for Router<C> {
 
 #[async_trait::async_trait]
 impl<C: Core> link::LinkInterface for Router<C> {
+    type Inner = Addr<Self>;
     // type Reader = Unreadable;
     // type Writer = RouterWriter<C>;
 
-    fn out<T: Wire>(intf: &mut Addr<Self>, msg: T) {}
+    fn out<T: Wire>(intf: &mut Self::Inner, msg: T) {}
 
-    fn link_out<T: Wire>(intf: &mut Addr<Self>, msg: T) {}
+    fn link_out<T: Wire>(intf: &mut Self::Inner, msg: T) {}
 
-    fn close(intf: &mut Addr<Self>) {}
+    fn close(intf: &mut Self::Inner) {}
 
     fn name(&self) -> &str {
         "(self)"

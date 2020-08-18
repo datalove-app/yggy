@@ -3,7 +3,7 @@ use bitvec::{
     order::Msb0,
     slice::{AsBits, BitSlice},
 };
-use derive_more::{AsRef, From, FromStr, Into};
+use derive_more::{AsRef, Constructor, From, FromStr, Into};
 use rand::{thread_rng, CryptoRng, RngCore, SeedableRng};
 use rand_chacha::ChaChaRng;
 use sha2::{
@@ -202,7 +202,7 @@ pub type SigningSecretKey = ed25519_dalek::SecretKey;
 ///
 /// TODO docs
 /// Used for encapsulated IPv6 traffic.
-#[derive(Debug)]
+#[derive(Constructor, Debug)]
 pub struct BoxKeypair {
     pub secret: BoxSecretKey,
     pub public: BoxPublicKey,
@@ -210,10 +210,15 @@ pub struct BoxKeypair {
 
 impl BoxKeypair {
     #[inline]
-    pub fn new() -> Self {
-        let secret = BoxSecretKey::new();
+    pub fn random() -> Self {
+        let secret = BoxSecretKey::random();
         let public = secret.public_key();
         Self { secret, public }
+    }
+
+    #[inline]
+    pub fn shared_key(&self) -> BoxSharedKey {
+        self.secret.shared_key(&self.public)
     }
 }
 
@@ -264,7 +269,7 @@ pub struct BoxSecretKey(x25519_dalek::StaticSecret);
 
 impl BoxSecretKey {
     #[inline]
-    pub fn new() -> Self {
+    pub fn random() -> Self {
         Self(x25519_dalek::StaticSecret::new(&mut thread_rng()))
     }
 

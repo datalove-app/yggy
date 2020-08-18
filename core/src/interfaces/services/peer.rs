@@ -5,7 +5,7 @@ use crate::{
     interfaces::{link, router},
     types::{BoxPublicKey, BoxSecretKey, BoxSharedKey, SigningPublicKey},
 };
-use std::marker::PhantomData;
+use std::{fmt::Debug, marker::PhantomData};
 
 /// Represents ...
 ///
@@ -20,19 +20,17 @@ where
     ///
     type Peer: Peer<C, Self>;
 
-    ///
-    type PeerInterface: Send;
-
     #[inline]
-    async fn new_peer<L: IntoPeerInterface<C, Self>>(
+    async fn new_peer(
         addr: &mut Addr<Self>,
         sig_pub: SigningPublicKey,
         box_pub: BoxPublicKey,
         link_shared: BoxSharedKey,
-        intf_addr: Addr<L>,
-    ) -> Result<Addr<Self::Peer>, Error>;
-    // where
-    //     Self::PeerInterface: From<Addr<L>>;
+        intf: Box<dyn link::LinkInterfaceInner>,
+    ) -> Result<Addr<Self::Peer>, Error> {
+        let msg = messages::NewPeer::<C, Self>::new(sig_pub, box_pub, link_shared, intf);
+        Ok(addr.call(msg).await??)
+    }
 
     #[inline]
     fn close_peer(addr: &mut Addr<Self>) -> Result<(), Error> {
@@ -57,10 +55,6 @@ where
     }
 }
 
-pub trait IntoPeerInterface<C: Core, P: PeerManager<C>>: link::LinkInterface {
-    fn into(addr: Addr<Self>) -> P::PeerInterface;
-}
-
 pub mod messages {
     use super::*;
     use derive_more::{From, Into};
@@ -71,7 +65,7 @@ pub mod messages {
         sig_pub: SigningPublicKey,
         box_pub: BoxPublicKey,
         box_shared: BoxSharedKey,
-        intf: P::PeerInterface,
+        intf: Box<dyn link::LinkInterfaceInner>,
         peer: PhantomData<P::Peer>,
     }
 
@@ -81,7 +75,7 @@ pub mod messages {
             sig_pub: SigningPublicKey,
             box_pub: BoxPublicKey,
             box_shared: BoxSharedKey,
-            intf: P::PeerInterface,
+            intf: Box<dyn link::LinkInterfaceInner>,
         ) -> Self {
             Self {
                 sig_pub,

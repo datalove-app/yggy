@@ -2,7 +2,6 @@ mod interface;
 mod tcp;
 
 use self::interface::{LinkHandle, LinkReader, LinkWriter};
-use crate::services::PeerInterface;
 use futures::future::{select, Either};
 use futures_locks::{Mutex, RwLock};
 use smol::Timer;
@@ -62,19 +61,16 @@ pub struct LinkInfo {
     /// The linked peer's encryption public key.
     r#box: BoxPublicKey,
 
-    link_priv: BoxSecretKey,
-
-    /// The linked peer's encryption link public key.
-    link_pub: BoxPublicKey,
+    /// Link-specific secret key (ours) and public key (theirs).
+    link: BoxKeypair,
 }
 
 impl PartialEq for LinkInfo {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        self.remote_uri == other.remote_uri
+        return self.remote_uri == other.remote_uri
             && self.sig == other.sig
-            && self.r#box == other.r#box
-            && self.link_pub == other.link_pub
+            && self.r#box == other.r#box;
     }
 }
 impl Eq for LinkInfo {}
@@ -283,7 +279,7 @@ impl<C: Core> Link<C> {
         writer: &mut LinkWriter,
         incoming: bool,
     ) -> Result<LinkInfo, Error> {
-        let BoxKeypair { secret, public } = BoxKeypair::new();
+        let BoxKeypair { secret, public } = BoxKeypair::random();
         let our_meta = Metadata::new(
             config.encryption_public_key,
             config.signing_public_key,
@@ -326,8 +322,7 @@ impl<C: Core> Link<C> {
             remote_uri,
             sig,
             r#box,
-            link_priv: secret,
-            link_pub: link,
+            link: BoxKeypair::new(secret, link),
         };
 
         // assert that this key is allowed to connect with us
@@ -364,15 +359,14 @@ impl<C: Core> Actor for Link<C> {
         use messages::Notification;
 
         let mut peer_manager = C::peer_manager(&mut self.core).await?;
-        let mut peer = <IPeerManager<C> as peer::PeerManager<C>>::new_peer::<Self>(
+        let mut peer = <IPeerManager<C> as peer::PeerManager<C>>::new_peer(
             &mut peer_manager,
             self.info.sig,
             self.info.r#box,
-            self.info.link_priv.shared_key(&self.info.link_pub),
-            ctx.address(),
+            self.info.link.shared_key(),
+            Box::new(ctx.address()),
         )
         .await?;
-        // (&mut peer).send(PeerInterface::Link(ctx.address()))?;
         self.peer.replace(peer.clone());
 
         let peer = peer.clone();
@@ -411,16 +405,17 @@ impl<C: Core> StreamHandler<messages::Notification> for Link<C> {
 
 #[async_trait::async_trait]
 impl<C: Core> link::LinkInterface for Link<C> {
+    type Inner = Addr<Self>;
     // type Reader = LinkReader;
     // type Writer = LinkWriter;
 
-    fn out<T: Wire>(intf: &mut Addr<Self>, msg: T) {
+    fn out<T: Wire>(intf: &mut Self::Inner, msg: T) {
         // intf.send()
     }
 
-    fn link_out<T: Wire>(intf: &mut Addr<Self>, msg: T) {}
+    fn link_out<T: Wire>(intf: &mut Self::Inner, msg: T) {}
 
-    fn close(intf: &mut Addr<Self>) {}
+    fn close(intf: &mut Self::Inner) {}
 
     fn name(&self) -> &str {
         unimplemented!()

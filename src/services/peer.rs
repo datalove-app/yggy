@@ -1,11 +1,10 @@
 use crate::{adapters::Link, services::Router};
-use std::{collections::HashMap, sync::Arc};
-use syllogism::IsNot;
+use std::{collections::HashMap, sync::Arc, time::Instant};
 use yggy_core::{
     dev::*,
     interfaces::{
         link,
-        peer::{self, messages, IntoPeerInterface},
+        peer::{self, messages},
         router, switch,
     },
     types::{BoxPublicKey, BoxSharedKey, PeerURI, SigningPublicKey, SwitchPort},
@@ -13,6 +12,8 @@ use yggy_core::{
 
 type ISwitch<C> = <C as Core>::Switch;
 type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
+
+type PortsMap<C> = HashMap<SwitchPort, Addr<Peer<C>>>;
 
 /// Represents peers with active connections.
 ///
@@ -24,7 +25,7 @@ type ILookupTable<C> = <ISwitch<C> as switch::Switch<C>>::LookupTable;
 #[derive(Debug)]
 pub struct PeerManager<C: Core> {
     core: Addr<C>,
-    ports: Arc<HashMap<SwitchPort, Addr<Peer<C>>>>,
+    ports: Arc<PortsMap<C>>,
     lookup_table: ILookupTable<C>,
 }
 
@@ -47,27 +48,6 @@ impl<C: Core> PeerManager<C> {
 #[async_trait::async_trait]
 impl<C: Core> peer::PeerManager<C> for PeerManager<C> {
     type Peer = Peer<C>;
-    type PeerInterface = PeerInterface<C>;
-
-    #[inline]
-    async fn new_peer<L: IntoPeerInterface<C, Self>>(
-        addr: &mut Addr<Self>,
-        sig_pub: SigningPublicKey,
-        box_pub: BoxPublicKey,
-        link_shared: BoxSharedKey,
-        intf_addr: Addr<L>,
-    ) -> Result<Addr<Self::Peer>, Error>
-// where
-    //     Self::PeerInterface: From<Addr<L>>,
-    {
-        let msg = messages::NewPeer::<C, Self>::new(
-            sig_pub,
-            box_pub,
-            link_shared,
-            IntoPeerInterface::into(intf_addr),
-        );
-        Ok(addr.call(msg).await??)
-    }
 }
 
 #[async_trait::async_trait]
@@ -100,10 +80,20 @@ impl<C: Core> Handler<messages::ClosePeer> for PeerManager<C> {
 pub struct Peer<C: Core> {
     core: Addr<C>,
     peers: Addr<PeerManager<C>>,
+    ports: Arc<PortsMap<C>>,
 
-    intf: Option<PeerInterface<C>>,
+    // peer info
     port: SwitchPort,
     endpoint: PeerURI,
+    sig: SigningPublicKey,
+    r#box: BoxPublicKey,
+    shared: BoxSharedKey,
+    link_shared: BoxSharedKey,
+    first_seen: Instant,
+    intf: Box<dyn link::LinkInterfaceInner>,
+    // peer stats
+    // idle: bool,
+    // dropping: bool,
 }
 
 impl<C: Core> Peer<C> {
@@ -121,13 +111,6 @@ impl<C: Core> Actor for Peer<C> {
     }
 }
 
-// #[async_trait::async_trait]
-// impl<C: Core> Handler<PeerInterface<C>> for Peer<C> {
-//     async fn handle(&mut self, ctx: &Context<Self>, intf: PeerInterface<C>) {
-//         self.intf.replace(intf);
-//     }
-// }
-
 #[async_trait::async_trait]
 impl<C: Core> Handler<messages::HandlePacket> for Peer<C> {
     async fn handle(
@@ -138,64 +121,3 @@ impl<C: Core> Handler<messages::HandlePacket> for Peer<C> {
         unimplemented!()
     }
 }
-
-///
-/// TODO
-#[derive(Debug)]
-pub enum PeerInterface<C: Core> {
-    Link(Addr<Link<C>>),
-    Router(Addr<Router<C>>),
-}
-// impl<C: Core> Message for PeerInterface<C> {
-//     type Result = ();
-// }
-
-impl<C: Core> IntoPeerInterface<C, PeerManager<C>> for Link<C> {
-    fn into(addr: Addr<Self>) -> PeerInterface<C> {
-        PeerInterface::Link(addr)
-    }
-}
-
-impl<C: Core> IntoPeerInterface<C, PeerManager<C>> for Router<C> {
-    fn into(addr: Addr<Self>) -> PeerInterface<C> {
-        PeerInterface::Router(addr)
-    }
-}
-
-// impl<C: Core> IntoPeerInterface<C, PeerManager<C>> for L
-// where
-//     L: IsNot<Link<C>> + IsNot<Router<C>>,
-// {
-//     fn into(addr: Addr<Self>) -> P::PeerInterface {
-//         panic!()
-//     }
-// }
-
-impl<C: Core, L: link::LinkInterface> IsNot<L> for Link<C> {}
-impl<C: Core, L: link::LinkInterface> IsNot<L> for Router<C> {}
-
-// impl<C: Core> From<Addr<Link<C>>> for PeerInterface<C> {
-//     fn from(addr: Addr<Link<C>>) -> Self {
-//         Self::Link(addr)
-//     }
-// }
-
-// impl<C: Core> From<Addr<Router<C>>> for PeerInterface<C> {
-//     fn from(addr: Addr<Router<C>>) -> Self {
-//         Self::Router(addr)
-//     }
-// }
-
-// impl<C: Core, L: link::LinkInterface> From<Addr<L>> for PeerInterface<C>
-// where
-//     L: IsNot<Link<C>>,
-//     L: IsNot<Router<C>>,
-// {
-//     fn from(addr: Addr<L>) -> Self {
-//         panic!()
-//     }
-// }
-
-// impl<C: Core, L: link::LinkInterface> From<Addr<L>> for PeerInterface<C>
-// where
-//     Addr<L>: Specialize<>

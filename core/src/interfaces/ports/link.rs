@@ -49,16 +49,18 @@ pub trait LinkInterface: Sized
 where
     Self: Actor,
 {
+    ///
+    type Inner: LinkInterfaceInner;
     // ///
     // type Reader: AsyncRead; // ? Stream?
     // ///
     // type Writer: AsyncWrite; // ? Actor? Sink?
 
-    fn out<T: Wire>(intf: &mut Addr<Self>, msg: T);
+    fn out<T: Wire>(intf: &mut Self::Inner, msg: T);
 
-    fn link_out<T: Wire>(intf: &mut Addr<Self>, msg: T);
+    fn link_out<T: Wire>(intf: &mut Self::Inner, msg: T);
 
-    fn close(intf: &mut Addr<Self>);
+    fn close(intf: &mut Self::Inner);
 
     fn name(&self) -> &str;
 
@@ -68,6 +70,9 @@ where
 
     fn interface_type(&self) -> &str;
 }
+
+pub trait LinkInterfaceInner: Debug + Send {}
+impl<L: LinkInterface<Inner = Addr<L>>> LinkInterfaceInner for Addr<L> {}
 
 pub mod messages {
     use super::*;
