@@ -31,19 +31,18 @@ pub struct Router<C: Core> {
     lookup_table: Arc<ILookupTable<C>>,
 }
 
-impl<C: Core> Router<C> {
-    #[inline]
-    pub async fn start(core: Addr<C>) -> Result<Addr<Self>, Error> {
+impl<C: Core> router::Router<C> for Router<C> {
+    type SearchManager = search::SearchManager<C>;
+    type SessionManager = session::SessionManager<C>;
+
+    fn reconfigure(&mut self) {
         unimplemented!()
     }
 }
 
-impl<C: Core> router::Router<C> for Router<C> {
-    type SearchManager = search::SearchManager<C>;
-    type SessionManager = session::SessionManager<C>;
-    // type Interface = RouterInterface<C>;
-
-    fn reconfigure(&mut self) {
+impl<C: Core> Router<C> {
+    #[inline]
+    pub async fn start(core: Addr<C>) -> Result<Addr<Self>, Error> {
         unimplemented!()
     }
 }

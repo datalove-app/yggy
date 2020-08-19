@@ -237,13 +237,13 @@ impl BoxPublicKey {
     }
 }
 
+impl Eq for BoxPublicKey {}
 impl PartialEq for BoxPublicKey {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.as_bytes() == other.as_bytes()
     }
 }
-impl Eq for BoxPublicKey {}
 
 impl hash::Hash for BoxPublicKey {
     #[inline]

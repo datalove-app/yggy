@@ -21,7 +21,7 @@ where
 pub trait Link<C: Core, L: LinkManager<C>>
 where
     Self: Actor,
-    // Self: PeerInterface,
+    Self: LinkInterface,
     Self: Handler<messages::Notification>,
 {
     // ///

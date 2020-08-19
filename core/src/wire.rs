@@ -131,10 +131,6 @@ pub trait Wire: Sized {
 impl Wire for u64 {
     #[inline]
     fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
-        if src.is_empty() {
-            return Ok(None);
-        }
-
         let mut len = 0usize;
         let mut num = 0u64;
         for (i, b) in src.iter().enumerate() {
@@ -143,22 +139,20 @@ impl Wire for u64 {
             len += 1;
             if b & 0x80 == 0 {
                 src.split_to(i);
-                break;
-            }
-
-            if i > 9 {
+                return Ok(Some(num));
+            } else if i > 9 {
                 return Err(WireError::Codec("expected u64"));
             }
         }
 
-        Ok(Some(num))
+        Ok(None)
     }
 
     #[inline]
     fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
         let mut bytes = [0u8; 10];
         let mut idx = 9usize;
-        let mut src = self;
+        let mut src = self; // TODO? byteorder?
 
         bytes[idx] = src as u8 & 0x7f;
         loop {
@@ -184,13 +178,9 @@ impl Wire for u64 {
 impl Wire for i64 {
     #[inline]
     fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
-        match <u64>::decode(src).or(Err(WireError::Codec("expected i64")))? {
-            None => Ok(None),
-            Some(uint64) => {
-                let int64 = ((uint64 >> 1) as i64) ^ -((uint64 & 1) as i64);
-                Ok(Some(int64))
-            }
-        }
+        <u64>::decode(src)
+            .map(|opt| opt.map(|uint64| ((uint64 >> 1) as i64) ^ -((uint64 & 1) as i64)))
+            .or(Err(WireError::Codec("expected i64")))
     }
 
     #[inline]

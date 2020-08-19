@@ -62,11 +62,11 @@ pub mod messages {
     /// Signals the creation of a new `Peer` with the provided cryptographic keys.
     #[derive(Debug)]
     pub struct NewPeer<C: Core, P: PeerManager<C>> {
-        sig_pub: SigningPublicKey,
-        box_pub: BoxPublicKey,
-        box_shared: BoxSharedKey,
-        intf: Box<dyn link::LinkInterfaceInner>,
-        peer: PhantomData<P::Peer>,
+        pub sig_pub: SigningPublicKey,
+        pub box_pub: BoxPublicKey,
+        pub link_shared: BoxSharedKey,
+        pub intf: Box<dyn link::LinkInterfaceInner>,
+        pub peer: PhantomData<P::Peer>,
     }
 
     impl<C: Core, P: PeerManager<C>> NewPeer<C, P> {
@@ -74,13 +74,13 @@ pub mod messages {
         pub fn new(
             sig_pub: SigningPublicKey,
             box_pub: BoxPublicKey,
-            box_shared: BoxSharedKey,
+            link_shared: BoxSharedKey,
             intf: Box<dyn link::LinkInterfaceInner>,
         ) -> Self {
             Self {
                 sig_pub,
                 box_pub,
-                box_shared,
+                link_shared,
                 intf,
                 peer: PhantomData,
             }

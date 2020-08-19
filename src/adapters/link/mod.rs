@@ -53,7 +53,7 @@ type LinkCalls = HashSet<PeerURI>;
 #[derive(Debug)]
 pub struct LinkInfo {
     /// The non-protocol URI of the remote peer.
-    remote_uri: PeerURI,
+    peer_uri: PeerURI,
 
     /// The linked peer's signing public key.
     sig: SigningPublicKey,
@@ -65,20 +65,21 @@ pub struct LinkInfo {
     link: BoxKeypair,
 }
 
+impl Eq for LinkInfo {}
 impl PartialEq for LinkInfo {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        return self.remote_uri == other.remote_uri
+        return self.peer_uri == other.peer_uri
             && self.sig == other.sig
             && self.r#box == other.r#box;
     }
 }
-impl Eq for LinkInfo {}
+
 // TODO
 impl hash::Hash for LinkInfo {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        self.remote_uri.hash(state);
+        self.peer_uri.hash(state);
     }
 }
 
@@ -99,6 +100,15 @@ pub struct LinkManager<C: Core> {
     calls: RwLock<LinkCalls>,
 }
 
+#[async_trait::async_trait]
+impl<C: Core> link::LinkManager<C> for LinkManager<C> {
+    type Link = Link<C>;
+
+    fn reconfigure(&mut self) {
+        unimplemented!()
+    }
+}
+
 // Public methods.
 impl<C: Core> LinkManager<C> {
     /// Starts the `LinkManager`, opening [`LinkHandle`]s for each interface
@@ -116,11 +126,6 @@ impl<C: Core> LinkManager<C> {
 
         manager.init().await?;
         Ok(manager)
-    }
-
-    #[inline]
-    async fn has_link(self: &Arc<Self>, info: &LinkInfo) -> bool {
-        self.links.read().await.get(info).is_some()
     }
 }
 
@@ -140,7 +145,7 @@ impl<C: Core> LinkManager<C> {
             spawn(async move {
                 while let Some((uri, r, w)) = listener.next().await {
                     // TODO? handle error
-                    self_.accept(&mut core_, uri, r, w).await;
+                    self_.accept(uri, r, w).await;
                 }
             });
         }
@@ -161,35 +166,30 @@ impl<C: Core> LinkManager<C> {
     /// Accepts an incoming connection, creating a new `Link`.
     async fn accept(
         self: &Arc<Self>,
-        core: &mut Addr<C>,
-        remote_uri: PeerURI,
+        peer_uri: PeerURI,
         reader: LinkReader,
         writer: LinkWriter,
     ) -> Result<(), Error> {
-        let (info, link) = Link::start(core, self, remote_uri, reader, writer, true).await?;
+        let (info, link) = Link::start(self, peer_uri, reader, writer, true).await?;
         self.links.write().await.insert(info, link);
         Ok(())
     }
 
     /// Opens a `Link` to an outbound peer.
-    async fn open(self: &Arc<Self>, self_addr: Addr<Self>, peer_uri: PeerURI) -> Result<(), Error> {
+    async fn open(self: &Arc<Self>, peer_uri: PeerURI) -> Result<(), Error> {
         // let link = Link::start(info.clone(), self_addr).await?;
         // (&mut self.links).insert(info, link);
         unimplemented!()
     }
 
     /// Closes a `Link` to a linked peer.
-    async fn close(self: &Arc<Self>, remote_addr: &PeerURI) -> Result<(), Error> {
+    async fn close(self: &Arc<Self>, peer_uri: &PeerURI) -> Result<(), Error> {
         unimplemented!()
     }
-}
 
-#[async_trait::async_trait]
-impl<C: Core> link::LinkManager<C> for LinkManager<C> {
-    type Link = Link<C>;
-
-    fn reconfigure(&mut self) {
-        unimplemented!()
+    #[inline]
+    async fn has_link(self: &Arc<Self>, info: &LinkInfo) -> bool {
+        self.links.read().await.get(info).is_some()
     }
 }
 
@@ -201,19 +201,21 @@ impl<C: Core> link::LinkManager<C> for LinkManager<C> {
 //     }
 // }
 
+#[async_trait::async_trait]
+impl<C: Core> link::Link<C, LinkManager<C>> for Link<C> {}
+
 /// Represents an active, direct, link to another peer established via a `LinkHandle`.
 #[derive(Debug)]
 pub struct Link<C: Core> {
     core: Addr<C>,
     adapter: Arc<LinkManager<C>>,
+
+    // link info
     info: Arc<LinkInfo>,
     peer: Option<Addr<IPeer<C>>>,
 
-    // ///
     // interface: LinkHandle,
-    ///
     reader: Option<LinkReader>,
-    ///
     writer: Addr<LinkWriter>,
 }
 
@@ -223,18 +225,18 @@ impl<C: Core> Link<C> {
     ///
     /// [`PeerURI`]:
     async fn start(
-        core: &mut Addr<C>,
         adapter: &Arc<LinkManager<C>>,
-        remote_uri: PeerURI,
+        peer_uri: PeerURI,
         mut reader: LinkReader,
         mut writer: LinkWriter,
         incoming: bool,
     ) -> Result<(Arc<LinkInfo>, Addr<Self>), Error> {
-        let config = C::current_config(core).await?;
+        let mut core = adapter.core.clone();
+        let config = C::current_config(&mut core).await?;
         let info = Self::init(
             &config,
             adapter,
-            remote_uri,
+            peer_uri,
             &mut reader,
             &mut writer,
             incoming,
@@ -244,21 +246,19 @@ impl<C: Core> Link<C> {
         // TODO establish timers
 
         let info = Arc::from(info);
-        let writer = Actor::start(writer).await?;
         let mut link = Link {
-            core: core.clone(),
+            core,
             info: info.clone(),
             peer: None,
             adapter: adapter.clone(),
             reader: Some(reader),
-            writer,
+            writer: Actor::start(writer).await?,
         };
 
         Ok((info, Actor::start(link).await?))
     }
 
     ///
-
     #[inline]
     fn notify(link: &mut Addr<Self>, msg: messages::Notification) -> Result<(), Error> {
         Ok(link
@@ -274,7 +274,7 @@ impl<C: Core> Link<C> {
     async fn init(
         config: &Arc<Config>,
         adapter: &Arc<LinkManager<C>>,
-        remote_uri: PeerURI,
+        peer_uri: PeerURI,
         reader: &mut LinkReader,
         writer: &mut LinkWriter,
         incoming: bool,
@@ -319,7 +319,7 @@ impl<C: Core> Link<C> {
         let MetadataKeys { sig, r#box, link } =
             meta.keys.expect("metadata keys should have been set");
         let info = LinkInfo {
-            remote_uri,
+            peer_uri,
             sig,
             r#box,
             link: BoxKeypair::new(secret, link),
@@ -338,17 +338,7 @@ impl<C: Core> Link<C> {
 
         Ok(info)
     }
-
-    // fn self_addr(addr: Addr<Self>) -> Addr<<C::LinkManager as link::LinkManager<C>>::Link>
-    // where
-    //     <C::LinkManager as link::LinkManager<C>>::Link: link::Link<C, C::LinkManager>,
-    // {
-    //     addr
-    // }
 }
-
-#[async_trait::async_trait]
-impl<C: Core> link::Link<C, LinkManager<C>> for Link<C> {}
 
 #[async_trait::async_trait]
 impl<C: Core> Actor for Link<C> {
@@ -370,7 +360,7 @@ impl<C: Core> Actor for Link<C> {
         self.peer.replace(peer.clone());
 
         let peer = peer.clone();
-        let reader = self.reader.take().expect("reader to have been initialized");
+        let reader = self.reader.take().expect("uninitialized LinkReader");
         let stream = wire::Packet::stream(reader)
             .map_err(Error::Wire)
             .and_then(move |packet| {

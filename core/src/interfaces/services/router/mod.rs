@@ -34,7 +34,6 @@ where
     Self: StreamHandler<wire::Traffic>,
     Self: StreamHandler<wire::ProtocolTraffic>,
 {
-    // type Interface: PeerInterface;
     type SearchManager: SearchManager<C>;
     type SessionManager: SessionManager<C>;
 

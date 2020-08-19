@@ -1,5 +1,6 @@
 use super::SigningPublicKey;
 use crate::dev::*;
+use derive_more::{Add, AddAssign, AsRef, From, Into};
 use smallvec::SmallVec;
 use std::{
     cmp::Ordering,
@@ -93,7 +94,10 @@ impl PartialOrd for WireCoords {
 /// Uniquely identifies a linked peer
 ///
 /// TODO docs Interface number of a given peer (in the switch?)
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(
+    AddAssign, AsRef, Clone, Copy, Debug, Default, Eq, From, Hash, Into, Ord, PartialEq, PartialOrd,
+)]
+#[repr(transparent)]
 pub struct SwitchPort(u64);
 
 /// Represents the topology and network state-dependent info about a node, sans
@@ -102,7 +106,7 @@ pub struct SwitchPort(u64);
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SwitchLocator {
     root: SigningPublicKey,
-    timestamp: u32,
+    timestamp: u32, // TODO? duration, instant?
     coords: Coords,
 }
 
