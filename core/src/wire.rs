@@ -1,3 +1,4 @@
+use self::packets::*;
 use crate::{
     dev::*,
     error::{Error, WireError},
@@ -5,61 +6,87 @@ use crate::{
 };
 use futures_codec::{Decoder, Encoder, FramedRead, FramedWrite};
 use std::marker::PhantomData;
+use zerocopy::{AsBytes, FromBytes, LayoutVerified};
 
 ///
+/// TODO
 #[derive(Debug)]
-pub enum Packet {
-    Traffic(Traffic),
-    Protocol(ProtocolTraffic),
-    LinkProtocol(LinkProtocolTraffic),
-}
-
-impl Packet {
-    #[inline]
-    pub fn len(&self) -> usize {
-        unimplemented!()
-    }
-}
-
-impl Wire for Packet {
-    #[inline]
-    fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
-        unimplemented!()
-    }
-
-    #[inline]
-    fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
-        unimplemented!()
-    }
-}
-
-///
-/// TODO:
-#[derive(Clone, Debug)]
-pub struct Traffic;
-
-impl Wire for Traffic {
-    #[inline]
-    fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
-        unimplemented!()
-    }
-
-    #[inline]
-    fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
-        unimplemented!()
-    }
-}
-
-///
-/// TODO:
-#[derive(Clone, Debug)]
-pub enum ProtocolTraffic {
+pub enum Code {
+    SessionTraffic = 0,
+    ProtocolTraffic,
+    LinkProtocolTraffic,
+    RootUpdate,
     SessionPing,
     SessionPong,
-    // DHTRequest,
-    // DHTResponse
+    // TODO
+    // DHTLookupRequest,
+    // DHTLookupResponse,
+    // NodeInfoRequest,
+    // NodeInfoResponse,
 }
 
+// ///
+// #[derive(Debug)]
+// pub enum Packet {
+//     Traffic(Traffic),
+//     Protocol(ProtocolTraffic),
+//     LinkProtocol(LinkProtocolTraffic),
+// }
+
+// impl Packet {
+//     #[inline]
+//     pub fn len(&self) -> usize {
+//         unimplemented!()
+//     }
+// }
+
+// impl Wire for Packet {
+//     #[inline]
+//     fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
+//         unimplemented!()
+//     }
+
+//     #[inline]
+//     fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
+//         unimplemented!()
+//     }
+// }
+
+#[derive(Debug)]
+pub struct SessionTraffic {
+    code: Code,
+    coords: Coords,
+    handle: Handle,
+    nonce: BoxNonce,
+    body: Bytes,
+}
+
+impl Global for SessionTraffic {}
+impl Wire for SessionTraffic {
+    #[inline]
+    fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
+        unimplemented!()
+    }
+
+    #[inline]
+    fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
+        unimplemented!()
+    }
+}
+
+///
+/// TODO:
+#[derive(Debug)]
+pub struct ProtocolTraffic<P: Debug + Wire> {
+    code: Code,
+    coords: Coords,
+    target_pub_key: BoxPublicKey,
+    sender_pub_key: BoxPublicKey,
+    nonce: BoxNonce,
+    payload: P,
+}
+
+impl Global for ProtocolTraffic {}
 impl Wire for ProtocolTraffic {
     #[inline]
     fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
@@ -72,13 +99,21 @@ impl Wire for ProtocolTraffic {
     }
 }
 
-///
-/// TODO:
-#[derive(Clone, Debug)]
-pub enum LinkProtocolTraffic {
-    RootUpdate,
+#[derive(Debug)]
+pub enum ProtocolMessage {
+    SessionPing
 }
 
+///
+/// TODO:
+#[derive(Debug)]
+pub struct LinkProtocolTraffic<P: Debug> {
+    code: Code,
+    nonce: BoxNonce,
+    payload: P,
+}
+
+impl Local for LinkProtocolTraffic {}
 impl Wire for LinkProtocolTraffic {
     #[inline]
     fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
@@ -91,21 +126,8 @@ impl Wire for LinkProtocolTraffic {
     }
 }
 
-// ///
-// /// TODO
-// pub enum Header {
-//     Traffic = 0,
-//     ProtocolTraffic,
-//     LinkProtocolTraffic,
-//     RootUpdate,
-//     SessionPing,
-//     SessionPong,
-//     // TODO
-//     // DHTLookupRequest,
-//     // DHTLookupResponse,
-//     // NodeInfoRequest,
-//     // NodeInfoResponse,
-// }
+#[derive(Debug)]
+pub struct SessionPingPongHeader {}
 
 /// A wire-encodable type.
 pub trait Wire: Sized {
@@ -128,6 +150,13 @@ pub trait Wire: Sized {
     fn encode(self, dst: &mut BytesMut) -> Result<(), WireError>;
 }
 
+/// Marker trait for packets that can be sent to any peer.
+pub trait Global: Wire {}
+
+/// Marker trait for packets that should only be sent to a [`Link`]ed peer.
+pub trait Local: Wire {}
+
+// TODO? byteorder?
 impl Wire for u64 {
     #[inline]
     fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
@@ -152,7 +181,7 @@ impl Wire for u64 {
     fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
         let mut bytes = [0u8; 10];
         let mut idx = 9usize;
-        let mut src = self; // TODO? byteorder?
+        let mut src = self;
 
         bytes[idx] = src as u8 & 0x7f;
         loop {
@@ -190,20 +219,20 @@ impl Wire for i64 {
     }
 }
 
-// impl Wire for Coords {
-//     const LENGTH: usize = 0;
+impl Wire for Coords {
+    // const LENGTH: usize = 0;
 
-//     fn decode<R: Read>(reader: R) -> Result<(Self, usize), Error> {
-//         unimplemented!()
-//     }
+    fn decode(src: &mut BytesMut) -> Result<Option<Self>, WireError> {
+        unimplemented!()
+    }
 
-//     fn encode<W: Write>(&self, writer: W) -> Result<usize, Error> {
-//         let coords_len = <u64>::encode(&(self.len() as u64), writer.by_ref())?;
-//         let bytes = [0u8; coords_len + self.len()];
-//         // writer.by_ref().write_all().map_err(WireError::Write)?;
-//         unimplemented!()
-//     }
-// }
+    fn encode(self, dst: &mut BytesMut) -> Result<(), WireError> {
+        // let coords_len = <u64>::encode(&(self.len() as u64), writer.by_ref())?;
+        // let bytes = [0u8; coords_len + self.len()];
+        // writer.by_ref().write_all().map_err(WireError::Write)?;
+        unimplemented!()
+    }
+}
 
 // impl Wire for WireCoords {
 //     const LENGTH: usize = 0;

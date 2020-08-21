@@ -98,7 +98,7 @@ pub mod messages {
 
     #[xactor::message(result = "Result<usize, Error>")]
     #[derive(Debug, From, Into)]
-    pub struct HandlePacket(wire::Packet);
+    pub struct HandlePacket();
 }
 
 // ///

@@ -1,8 +1,8 @@
 mod interface;
 mod tcp;
 
-use self::interface::{LinkHandle, LinkReader, LinkWriter};
-use futures::future::{select, Either};
+use self::interface::*;
+use futures::future::{join_all, select, Either};
 use futures_locks::{Mutex, RwLock};
 use smol::Timer;
 use std::{
@@ -141,24 +141,25 @@ impl<C: Core> LinkManager<C> {
             self.handles.write().await.insert(handle);
 
             let self_ = Arc::clone(&self);
-            let mut core_ = core.clone();
             spawn(async move {
                 while let Some((uri, r, w)) = listener.next().await {
                     // TODO? handle error
                     self_.accept(uri, r, w).await;
                 }
             });
+            // spawn(listener.for_each(|(uri, r, w)| self_.accept(uri, r, w))).await;
         }
 
-        // initialize links for peers
-        // TODO do these in parallel
+        // initialize links for pre-configured peers
         // TODO set a timer to attempt to add peers from config
-        // for peer_uri in config.peers.iter() {
-        //     self.open(ctx.address(), peer_uri.clone()).await?;
-        // }
-        // for peer_uri in config.peers_by_interface.iter() {
-        //     self.open(peer_uri.clone()).await?;
-        // }
+        join_all(
+            config
+                .peers
+                .iter()
+                // .chain(config.peers_by_interface.iter())
+                .map(move |peer_uri| self.open(peer_uri.clone())),
+        )
+        .await;
 
         Ok(())
     }
@@ -167,19 +168,20 @@ impl<C: Core> LinkManager<C> {
     async fn accept(
         self: &Arc<Self>,
         peer_uri: PeerURI,
-        reader: LinkReader,
-        writer: LinkWriter,
+        r: LinkReader,
+        w: LinkWriter,
     ) -> Result<(), Error> {
-        let (info, link) = Link::start(self, peer_uri, reader, writer, true).await?;
+        let (info, link) = Link::start(self, peer_uri, r, w, true).await?;
         self.links.write().await.insert(info, link);
         Ok(())
     }
 
     /// Opens a `Link` to an outbound peer.
     async fn open(self: &Arc<Self>, peer_uri: PeerURI) -> Result<(), Error> {
-        // let link = Link::start(info.clone(), self_addr).await?;
-        // (&mut self.links).insert(info, link);
-        unimplemented!()
+        let (r, w) = LinkListener::open(&peer_uri).await?;
+        let (info, link) = Link::start(self, peer_uri, r, w, false).await?;
+        self.links.write().await.insert(info, link);
+        Ok(())
     }
 
     /// Closes a `Link` to a linked peer.

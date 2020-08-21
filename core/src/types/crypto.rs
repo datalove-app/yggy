@@ -17,6 +17,7 @@ use std::{
     str::FromStr,
     sync::{Arc, Mutex},
 };
+use zerocopy::{AsBytes, FromBytes};
 
 // lazy_static! {
 //     ///
@@ -114,7 +115,7 @@ impl From<&SigningPublicKey> for TreeID {
 /// which an incoming packet belongs.
 ///
 /// [`Session`]: ../core_interfaces/services/router/session/trait.Session.html
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(AsBytes, Clone, Copy, Debug, Eq, FromBytes, Hash, PartialEq)]
 #[repr(C)]
 pub struct Handle([u8; 8]);
 
@@ -377,7 +378,7 @@ impl fmt::Debug for BoxSharedKey {
 
 ///
 /// TODO docs
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(AsBytes, Copy, Clone, Debug, Eq, FromBytes, PartialEq)]
 #[repr(C)]
 pub struct BoxNonce([u8; 24]);
 

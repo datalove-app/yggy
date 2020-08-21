@@ -209,3 +209,7 @@ impl SwitchOptions {
         Self::MAX_TOTAL_QUEUE_SIZE
     }
 }
+
+#[cfg(feature = "tor")]
+#[derive(Debug)]
+pub struct TorOptions {}

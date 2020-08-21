@@ -2,6 +2,7 @@ use super::{
     tcp::{TCPListener, TCPStream},
     LinkInfo,
 };
+use smol::Async;
 use std::{hash, sync::Arc};
 use stream_cancel::{StreamExt as _, Trigger, Tripwire};
 use yggy_core::{dev::*, types::PeerURI};
@@ -148,7 +149,7 @@ impl AsyncWrite for LinkWriter {
 
 /// Listens for incoming `Link`s.
 #[derive(Debug, Eq, Hash, PartialEq)]
-enum LinkListener {
+pub enum LinkListener {
     TCP(TCPListener),
     SOCKS,
     #[cfg(feature = "tor")]
@@ -162,6 +163,14 @@ impl LinkListener {
             PeerURI::TCP(addr) => Ok(Self::TCP(TCPListener::bind(*addr)?)),
             // PeerURI::SOCKS
             // PeerURI::TOR
+            _ => unimplemented!(),
+        }
+    }
+
+    ///
+    pub async fn open(peer_uri: &PeerURI) -> Result<(LinkReader, LinkWriter), Error> {
+        match peer_uri {
+            PeerURI::TCP(addr) => Ok(TCPStream::connect(*addr).await?.split()),
             _ => unimplemented!(),
         }
     }

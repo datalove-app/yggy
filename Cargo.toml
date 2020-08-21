@@ -35,6 +35,7 @@ members = [
 [dependencies]
 # main
 anyhow = "1.0"
+async-io = "0.1"
 async-trait = "0.1"
 etherparse = "0.9"
 futures-locks = { version = "0.5.1-pre", default-features = false }
